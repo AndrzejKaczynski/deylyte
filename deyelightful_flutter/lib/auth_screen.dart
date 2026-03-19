@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'package:serverpod_auth_email_flutter/serverpod_auth_email_flutter.dart';
+
 import 'main.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_styles.dart';
@@ -281,6 +280,7 @@ class _SignInFormState extends State<_SignInForm>
 
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isRegisterMode = false;
   String? _errorMessage;
 
   late final AnimationController _shakeController;
@@ -345,6 +345,58 @@ class _SignInFormState extends State<_SignInForm>
     }
   }
 
+  Future<void> _register() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _shakeController.forward(from: 0);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = client.modules.auth;
+      final response = await auth.email.createAccountRequest(
+        _emailController.text.trim(),
+        _emailController.text.trim().split('@').first,
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (!response) {
+        setState(() {
+          _errorMessage = 'Could not create account. Please try again.';
+          _isLoading = false;
+        });
+        _shakeController.forward(from: 0);
+      } else {
+        // Auto sign-in after registration
+        final signInResponse = await auth.email.authenticate(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+        if (!mounted) return;
+        if (!signInResponse.success) {
+          setState(() {
+            _errorMessage = 'Account created! Please check your email to verify, then sign in.';
+            _isRegisterMode = false;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Connection error. Please check the server.';
+        _isLoading = false;
+      });
+      _shakeController.forward(from: 0);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -379,7 +431,9 @@ class _SignInFormState extends State<_SignInForm>
               const SizedBox(height: 32),
             ],
             Text(
-              widget.isDesktop ? 'Welcome Back' : 'Welcome back',
+              _isRegisterMode
+                  ? 'Create Account'
+                  : (widget.isDesktop ? 'Welcome Back' : 'Welcome back'),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
@@ -387,9 +441,11 @@ class _SignInFormState extends State<_SignInForm>
             ),
             const SizedBox(height: 8),
             Text(
-              widget.isDesktop
-                  ? 'Sign in to manage your energy ecosystem.'
-                  : 'Sign in to your account',
+              _isRegisterMode
+                  ? 'Set up your energy management account.'
+                  : (widget.isDesktop
+                      ? 'Sign in to manage your energy ecosystem.'
+                      : 'Sign in to your account'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),
@@ -505,52 +561,51 @@ class _SignInFormState extends State<_SignInForm>
                   : const SizedBox.shrink(),
             ),
 
-            // Sign in button
+            // Action button
             GradientButton(
-              onPressed: _isLoading ? null : _signIn,
+              onPressed: _isLoading
+                  ? null
+                  : (_isRegisterMode ? _register : _signIn),
               isLoading: _isLoading,
-              label: 'Sign In',
+              label: _isRegisterMode ? 'Create Account' : 'Sign In',
             ),
             const SizedBox(height: 28),
 
-            // Register link
+            // Toggle sign-in / register
             Center(
-              child: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.onSurfaceVariant,
+              child: GestureDetector(
+                onTap: () => setState(() {
+                  _isRegisterMode = !_isRegisterMode;
+                  _errorMessage = null;
+                }),
+                child: Text.rich(
+                  TextSpan(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                    children: [
+                      TextSpan(
+                        text: _isRegisterMode
+                            ? 'Already have an account? '
+                            : (widget.isDesktop
+                                ? 'New to the platform? '
+                                : "Don't have an account? "),
                       ),
-                  children: [
-                    TextSpan(
-                      text: widget.isDesktop
-                          ? "New to the platform? "
-                          : "Don't have an account? ",
-                    ),
-                    TextSpan(
-                      text: widget.isDesktop ? 'Request Access' : 'Join now',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                      TextSpan(
+                        text: _isRegisterMode
+                            ? 'Sign In'
+                            : (widget.isDesktop ? 'Register' : 'Join now'),
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          // TODO: navigate to registration
-                        },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
 
-            if (!widget.isDesktop) ...[
-              const SizedBox(height: 8),
-              const _ServerpodEmailAuth(),
-            ],
-
-            if (widget.isDesktop) ...[
-              const SizedBox(height: 48),
-              const _ServerpodEmailAuth(),
-            ],
           ],
         ),
       ),
@@ -558,27 +613,7 @@ class _SignInFormState extends State<_SignInForm>
   }
 }
 
-/// Thin wrapper to keep Serverpod's standard email-auth button
-/// as a fallback / alternative sign-in path.
-class _ServerpodEmailAuth extends StatelessWidget {
-  const _ServerpodEmailAuth();
 
-  @override
-  Widget build(BuildContext context) {
-    // We wrap in a Theme override so the widget picks up our dark palette.
-    return Theme(
-      data: Theme.of(context).copyWith(
-        colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.primary,
-              surface: AppColors.surfaceContainerLow,
-            ),
-      ),
-      child: SignInWithEmailButton(
-        caller: client.modules.auth,
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Footer links (mobile only)
