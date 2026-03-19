@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "installations": {
+    "generic": {
+      "flutter": {
+        "skills": [
+          {
+            "name": "flutter-building-forms",
+            "installedAt": "2026-03-19T21:56:23.994499Z"
+          },
+          {
+            "name": "flutter-handling-http-and-json",
+            "installedAt": "2026-03-19T21:56:23.995156Z"
+          },
+          {
+            "name": "flutter-building-plugins",
+            "installedAt": "2026-03-19T21:56:23.995534Z"
+          },
+          {
+            "name": "flutter-caching-data",
+            "installedAt": "2026-03-19T21:56:23.995991Z"
+          },
+          {
+            "name": "flutter-embedding-native-views",
+            "installedAt": "2026-03-19T21:56:23.996398Z"
+          },
+          {
+            "name": "flutter-setting-up-on-macos",
+            "installedAt": "2026-03-19T21:56:23.996835Z"
+          },
+          {
+            "name": "flutter-adding-home-screen-widgets",
+            "installedAt": "2026-03-19T21:56:23.997282Z"
+          },
+          {
+            "name": "flutter-architecting-apps",
+            "installedAt": "2026-03-19T21:56:23.997719Z"
+          },
+          {
+            "name": "flutter-implementing-navigation-and-routing",
+            "installedAt": "2026-03-19T21:56:23.998168Z"
+          },
+          {
+            "name": "flutter-setting-up-on-windows",
+            "installedAt": "2026-03-19T21:56:23.998629Z"
+          },
+          {
+            "name": "flutter-improving-accessibility",
+            "installedAt": "2026-03-19T21:56:23.999079Z"
+          },
+          {
+            "name": "flutter-animating-apps",
+            "installedAt": "2026-03-19T21:56:23.999526Z"
+          },
+          {
+            "name": "flutter-working-with-databases",
+            "installedAt": "2026-03-19T21:56:23.999957Z"
+          },
+          {
+            "name": "flutter-setting-up-on-linux",
+            "installedAt": "2026-03-19T21:56:24.000397Z"
+          },
+          {
+            "name": "flutter-theming-apps",
+            "installedAt": "2026-03-19T21:56:24.000820Z"
+          },
+          {
+            "name": "flutter-building-layouts",
+            "installedAt": "2026-03-19T21:56:24.001263Z"
+          },
+          {
+            "name": "flutter-interoperating-with-native-apis",
+            "installedAt": "2026-03-19T21:56:24.001704Z"
+          },
+          {
+            "name": "flutter-managing-state",
+            "installedAt": "2026-03-19T21:56:24.002152Z"
+          },
+          {
+            "name": "flutter-testing-apps",
+            "installedAt": "2026-03-19T21:56:24.002587Z"
+          },
+          {
+            "name": "flutter-localizing-apps",
+            "installedAt": "2026-03-19T21:56:24.002984Z"
+          },
+          {
+            "name": "flutter-reducing-app-size",
+            "installedAt": "2026-03-19T21:56:24.003395Z"
+          },
+          {
+            "name": "flutter-handling-concurrency",
+            "installedAt": "2026-03-19T21:56:24.003801Z"
+          }
+        ]
+      }
+    }
+  }
+}

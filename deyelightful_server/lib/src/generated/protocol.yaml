@@ -1,0 +1,8 @@
+baseline:
+  - calculateBaseline:
+example:
+  - hello:
+forecast:
+  - updateForecast:
+price:
+  - updatePrices:

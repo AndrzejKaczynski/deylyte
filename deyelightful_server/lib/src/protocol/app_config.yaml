@@ -1,0 +1,12 @@
+class: AppConfig
+table: app_config
+fields:
+  userInfoId: int
+  dataGatheringSince: DateTime?
+  workModeEnabled: bool
+  alwaysChargePriceThreshold: double
+  minSellPriceThreshold: double?
+  batteryCapacityKwh: double?
+  batteryCost: double?
+  batteryLifecycles: int?
+  minSocPercentage: double?

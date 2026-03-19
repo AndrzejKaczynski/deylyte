@@ -1,0 +1,9 @@
+class: InverterData
+table: inverter_data
+fields:
+  userInfoId: int
+  timestamp: DateTime
+  pvPower: double
+  batteryLevel: double
+  gridPower: double
+  loadPower: double

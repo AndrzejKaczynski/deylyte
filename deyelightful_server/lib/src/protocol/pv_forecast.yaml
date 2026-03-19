@@ -1,0 +1,6 @@
+class: PvForecast
+table: pv_forecast
+fields:
+  userInfoId: int
+  timestamp: DateTime
+  expectedYieldWatts: double

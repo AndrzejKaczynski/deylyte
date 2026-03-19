@@ -1,0 +1,8 @@
+class: EnergyPrice
+table: energy_price
+fields:
+  userInfoId: int
+  timestamp: DateTime
+  buyPrice: double
+  sellPrice: double
+  currency: String
