@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart';
 
-import 'auth_screen.dart';
-import 'app_shell.dart';
 import 'theme/theme.dart';
 import 'providers/app_providers.dart';
+import 'router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,12 +34,12 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSignedIn = ref.watch(sessionManagerProvider).isSignedIn;
-    return MaterialApp(
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
       title: 'DeyLyte',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: isSignedIn ? const AppShell() : const AuthScreen(),
+      routerConfig: router,
     );
   }
 }

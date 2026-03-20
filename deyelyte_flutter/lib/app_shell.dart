@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'theme/theme.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/schedule_screen.dart';
-import 'screens/history_screen.dart';
-import 'screens/settings_screen.dart';
 import 'providers/app_providers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -15,46 +12,48 @@ import 'providers/app_providers.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AppShell extends ConsumerWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.child});
+
+  final Widget child;
 
   static const _destinations = [
     _NavDestination(
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard_rounded,
       label: 'Dashboard',
+      route: '/',
     ),
     _NavDestination(
       icon: Icons.calendar_today_outlined,
       activeIcon: Icons.calendar_today_rounded,
       label: 'Schedule',
+      route: '/schedule',
     ),
     _NavDestination(
       icon: Icons.history_outlined,
       activeIcon: Icons.history_rounded,
       label: 'History',
+      route: '/history',
     ),
     _NavDestination(
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings_rounded,
       label: 'Settings',
+      route: '/settings',
     ),
-  ];
-
-  static const _pages = <Widget>[
-    DashboardScreen(),
-    ScheduleScreen(),
-    HistoryScreen(),
-    SettingsScreen(),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedIndex = ref.watch(selectedNavIndexProvider);
-    final width = MediaQuery.sizeOf(context).width;
-    final isDesktop = width >= 900;
+    final location = GoRouterState.of(context).matchedLocation;
+    final selectedIndex = _destinations.indexWhere(
+      (d) => d.route == location,
+    ).clamp(0, _destinations.length - 1);
+
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     void onDestinationSelected(int i) =>
-        ref.read(selectedNavIndexProvider.notifier).state = i;
+        context.go(_destinations[i].route);
 
     void onSignOut() => ref.read(sessionManagerProvider).signOutDevice();
 
@@ -62,15 +61,15 @@ class AppShell extends ConsumerWidget {
         ? _DesktopShell(
             selectedIndex: selectedIndex,
             destinations: _destinations,
-            pages: _pages,
             onDestinationSelected: onDestinationSelected,
             onSignOut: onSignOut,
+            child: child,
           )
         : _MobileShell(
             selectedIndex: selectedIndex,
             destinations: _destinations,
-            pages: _pages,
             onDestinationSelected: onDestinationSelected,
+            child: child,
           );
   }
 }
@@ -83,16 +82,16 @@ class _DesktopShell extends StatelessWidget {
   const _DesktopShell({
     required this.selectedIndex,
     required this.destinations,
-    required this.pages,
     required this.onDestinationSelected,
     required this.onSignOut,
+    required this.child,
   });
 
   final int selectedIndex;
   final List<_NavDestination> destinations;
-  final List<Widget> pages;
   final ValueChanged<int> onDestinationSelected;
   final VoidCallback onSignOut;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -108,12 +107,7 @@ class _DesktopShell extends StatelessWidget {
             onSignOut: onSignOut,
           ),
           // ── Content ───────────────────────────────────────────────────────
-          Expanded(
-            child: IndexedStack(
-              index: selectedIndex,
-              children: pages,
-            ),
-          ),
+          Expanded(child: child),
         ],
       ),
     );
@@ -288,23 +282,20 @@ class _MobileShell extends StatelessWidget {
   const _MobileShell({
     required this.selectedIndex,
     required this.destinations,
-    required this.pages,
     required this.onDestinationSelected,
+    required this.child,
   });
 
   final int selectedIndex;
   final List<_NavDestination> destinations;
-  final List<Widget> pages;
   final ValueChanged<int> onDestinationSelected;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: IndexedStack(
-        index: selectedIndex,
-        children: pages,
-      ),
+      body: child,
       bottomNavigationBar: _GlassBottomBar(
         selectedIndex: selectedIndex,
         destinations: destinations,
@@ -417,11 +408,13 @@ class _NavDestination {
     required this.icon,
     required this.activeIcon,
     required this.label,
+    required this.route,
   });
 
   final IconData icon;
   final IconData activeIcon;
   final String label;
+  final String route;
 }
 
 /// Reusable lightning-bolt icon used across the app shell.

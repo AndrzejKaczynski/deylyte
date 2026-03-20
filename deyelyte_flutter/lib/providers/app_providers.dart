@@ -13,8 +13,5 @@ final sessionManagerProvider = ChangeNotifierProvider<SessionManager>(
   (ref) => throw UnimplementedError('sessionManagerProvider not overridden'),
 );
 
-/// Currently selected navigation index for AppShell.
-final selectedNavIndexProvider = StateProvider<int>((ref) => 0);
-
 /// Selected date range index for HistoryScreen (0=7d, 1=30d, 2=90d).
 final historyRangeProvider = StateProvider<int>((ref) => 1);
