@@ -28,6 +28,8 @@ abstract class AppConfig implements _i1.SerializableModel {
     this.batteryLifecycles,
     this.minSocPercentage,
     this.maxDischargeRateKw,
+    this.maxChargeRateKw,
+    this.gridConnectionKw,
     this.cityName,
     this.latitude,
     this.longitude,
@@ -48,6 +50,8 @@ abstract class AppConfig implements _i1.SerializableModel {
     int? batteryLifecycles,
     double? minSocPercentage,
     double? maxDischargeRateKw,
+    double? maxChargeRateKw,
+    double? gridConnectionKw,
     String? cityName,
     double? latitude,
     double? longitude,
@@ -86,6 +90,10 @@ abstract class AppConfig implements _i1.SerializableModel {
           ?.toDouble(),
       maxDischargeRateKw: (jsonSerialization['maxDischargeRateKw'] as num?)
           ?.toDouble(),
+      maxChargeRateKw: (jsonSerialization['maxChargeRateKw'] as num?)
+          ?.toDouble(),
+      gridConnectionKw: (jsonSerialization['gridConnectionKw'] as num?)
+          ?.toDouble(),
       cityName: jsonSerialization['cityName'] as String?,
       latitude: (jsonSerialization['latitude'] as num?)?.toDouble(),
       longitude: (jsonSerialization['longitude'] as num?)?.toDouble(),
@@ -123,6 +131,10 @@ abstract class AppConfig implements _i1.SerializableModel {
 
   double? maxDischargeRateKw;
 
+  double? maxChargeRateKw;
+
+  double? gridConnectionKw;
+
   String? cityName;
 
   double? latitude;
@@ -147,6 +159,8 @@ abstract class AppConfig implements _i1.SerializableModel {
     int? batteryLifecycles,
     double? minSocPercentage,
     double? maxDischargeRateKw,
+    double? maxChargeRateKw,
+    double? gridConnectionKw,
     String? cityName,
     double? latitude,
     double? longitude,
@@ -171,6 +185,8 @@ abstract class AppConfig implements _i1.SerializableModel {
       if (batteryLifecycles != null) 'batteryLifecycles': batteryLifecycles,
       if (minSocPercentage != null) 'minSocPercentage': minSocPercentage,
       if (maxDischargeRateKw != null) 'maxDischargeRateKw': maxDischargeRateKw,
+      if (maxChargeRateKw != null) 'maxChargeRateKw': maxChargeRateKw,
+      if (gridConnectionKw != null) 'gridConnectionKw': gridConnectionKw,
       if (cityName != null) 'cityName': cityName,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
@@ -201,6 +217,8 @@ class _AppConfigImpl extends AppConfig {
     int? batteryLifecycles,
     double? minSocPercentage,
     double? maxDischargeRateKw,
+    double? maxChargeRateKw,
+    double? gridConnectionKw,
     String? cityName,
     double? latitude,
     double? longitude,
@@ -219,6 +237,8 @@ class _AppConfigImpl extends AppConfig {
          batteryLifecycles: batteryLifecycles,
          minSocPercentage: minSocPercentage,
          maxDischargeRateKw: maxDischargeRateKw,
+         maxChargeRateKw: maxChargeRateKw,
+         gridConnectionKw: gridConnectionKw,
          cityName: cityName,
          latitude: latitude,
          longitude: longitude,
@@ -243,6 +263,8 @@ class _AppConfigImpl extends AppConfig {
     Object? batteryLifecycles = _Undefined,
     Object? minSocPercentage = _Undefined,
     Object? maxDischargeRateKw = _Undefined,
+    Object? maxChargeRateKw = _Undefined,
+    Object? gridConnectionKw = _Undefined,
     Object? cityName = _Undefined,
     Object? latitude = _Undefined,
     Object? longitude = _Undefined,
@@ -275,6 +297,12 @@ class _AppConfigImpl extends AppConfig {
       maxDischargeRateKw: maxDischargeRateKw is double?
           ? maxDischargeRateKw
           : this.maxDischargeRateKw,
+      maxChargeRateKw: maxChargeRateKw is double?
+          ? maxChargeRateKw
+          : this.maxChargeRateKw,
+      gridConnectionKw: gridConnectionKw is double?
+          ? gridConnectionKw
+          : this.gridConnectionKw,
       cityName: cityName is String? ? cityName : this.cityName,
       latitude: latitude is double? ? latitude : this.latitude,
       longitude: longitude is double? ? longitude : this.longitude,

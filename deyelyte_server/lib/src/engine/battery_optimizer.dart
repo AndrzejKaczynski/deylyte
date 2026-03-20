@@ -80,6 +80,19 @@ class BatteryOptimizer {
     final batteryCost = config.batteryCost ?? 0.0;
     final lifecycles = config.batteryLifecycles ?? 6000;
     final maxDischargeRateKw = config.maxDischargeRateKw ?? 5.0;
+    // Charge rate defaults to discharge rate if not set separately
+    final maxChargeRateKw = config.maxChargeRateKw ?? maxDischargeRateKw;
+    // Grid connection limit: if set, battery charging is scaled down so that
+    // battery charge + household load never exceeds the breaker capacity
+    final gridConnectionKw = config.gridConnectionKw;
+
+    // Returns the effective charge rate for an hour given its net load.
+    // Ensures total grid draw (charge + load) stays within the breaker limit.
+    double effectiveChargeKw(double netLoadW) {
+      if (gridConnectionKw == null) return maxChargeRateKw;
+      final available = gridConnectionKw - netLoadW / 1000.0;
+      return min(maxChargeRateKw, max(0.0, available));
+    }
 
     // Wear cost per kWh discharged: batteryCost / (cycles × capacityKwh)
     final wearCostPerKwh = (lifecycles > 0 && batteryCapKwh > 0)
@@ -160,7 +173,7 @@ class BatteryOptimizer {
         for (var c in preOutageCandidates) {
           if (remaining <= 0) break;
           preOutageChargeHours.add(c.price.timestamp);
-          remaining -= maxDischargeRateKw;
+          remaining -= effectiveChargeKw(c.netLoadW);
         }
       }
     }
@@ -305,7 +318,7 @@ class BatteryOptimizer {
       // Advance SoC estimate for next hour
       switch (command) {
         case EmsCommand.chargeFromGrid:
-          estimatedSoc = min(targetSoc!, estimatedSoc + (maxDischargeRateKw / batteryCapKwh) * 100.0);
+          estimatedSoc = min(targetSoc!, estimatedSoc + (effectiveChargeKw(c.netLoadW) / batteryCapKwh) * 100.0);
         case EmsCommand.dischargeToGrid:
           estimatedSoc = max(minSoc, estimatedSoc - (maxDischargeRateKw / batteryCapKwh) * 100.0);
         case EmsCommand.neutral:

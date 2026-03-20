@@ -12,6 +12,8 @@ class SettingsState {
     this.batteryCost,
     this.batteryLifecycles = 6000,
     this.maxDischargeRateKw = 5.0,
+    this.maxChargeRateKw,
+    this.gridConnectionKw,
     this.deye = false,
     this.solcast = false,
     this.pstryk = false,
@@ -32,6 +34,8 @@ class SettingsState {
   final double? batteryCost;
   final int batteryLifecycles;
   final double maxDischargeRateKw;
+  final double? maxChargeRateKw;
+  final double? gridConnectionKw;
 
   final bool deye;
   final bool solcast;
@@ -49,6 +53,8 @@ class SettingsState {
     Object? batteryCost = _sentinel,
     int? batteryLifecycles,
     double? maxDischargeRateKw,
+    Object? maxChargeRateKw = _sentinel,
+    Object? gridConnectionKw = _sentinel,
     bool? deye,
     bool? solcast,
     bool? pstryk,
@@ -69,6 +75,8 @@ class SettingsState {
             : batteryCost as double?,
         batteryLifecycles: batteryLifecycles ?? this.batteryLifecycles,
         maxDischargeRateKw: maxDischargeRateKw ?? this.maxDischargeRateKw,
+        maxChargeRateKw: maxChargeRateKw == _sentinel ? this.maxChargeRateKw : maxChargeRateKw as double?,
+        gridConnectionKw: gridConnectionKw == _sentinel ? this.gridConnectionKw : gridConnectionKw as double?,
         deye: deye ?? this.deye,
         solcast: solcast ?? this.solcast,
         pstryk: pstryk ?? this.pstryk,
@@ -97,6 +105,10 @@ class SettingsNotifier extends Notifier<SettingsState> {
       state = state.copyWith(batteryLifecycles: v);
   void setMaxDischargeRateKw(double v) =>
       state = state.copyWith(maxDischargeRateKw: v);
+  void setMaxChargeRateKw(double? v) =>
+      state = state.copyWith(maxChargeRateKw: v);
+  void setGridConnectionKw(double? v) =>
+      state = state.copyWith(gridConnectionKw: v);
   void setDeye(bool v) => state = state.copyWith(deye: v);
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);

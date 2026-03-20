@@ -51,10 +51,14 @@ class SettingsScreen extends ConsumerWidget {
                     batteryCost: settings.batteryCost,
                     batteryLifecycles: settings.batteryLifecycles,
                     maxDischargeRateKw: settings.maxDischargeRateKw,
+                    maxChargeRateKw: settings.maxChargeRateKw,
+                    gridConnectionKw: settings.gridConnectionKw,
                     onCapacityChanged: notifier.setBatteryCapacityKwh,
                     onCostChanged: notifier.setBatteryCost,
                     onLifecyclesChanged: notifier.setBatteryLifecycles,
                     onDischargeRateChanged: notifier.setMaxDischargeRateKw,
+                    onChargeRateChanged: notifier.setMaxChargeRateKw,
+                    onGridConnectionChanged: notifier.setGridConnectionKw,
                   ),
                 ]),
                 sidebar: Column(children: [
@@ -406,20 +410,28 @@ class _HardwareCard extends StatefulWidget {
     required this.batteryCost,
     required this.batteryLifecycles,
     required this.maxDischargeRateKw,
+    required this.maxChargeRateKw,
+    required this.gridConnectionKw,
     required this.onCapacityChanged,
     required this.onCostChanged,
     required this.onLifecyclesChanged,
     required this.onDischargeRateChanged,
+    required this.onChargeRateChanged,
+    required this.onGridConnectionChanged,
   });
 
   final double batteryCapacityKwh;
   final double? batteryCost;
   final int batteryLifecycles;
   final double maxDischargeRateKw;
+  final double? maxChargeRateKw;
+  final double? gridConnectionKw;
   final ValueChanged<double> onCapacityChanged;
   final ValueChanged<double?> onCostChanged;
   final ValueChanged<int> onLifecyclesChanged;
   final ValueChanged<double> onDischargeRateChanged;
+  final ValueChanged<double?> onChargeRateChanged;
+  final ValueChanged<double?> onGridConnectionChanged;
 
   @override
   State<_HardwareCard> createState() => _HardwareCardState();
@@ -430,6 +442,8 @@ class _HardwareCardState extends State<_HardwareCard> {
   late final TextEditingController _costCtrl;
   late final TextEditingController _lifecyclesCtrl;
   late final TextEditingController _dischargeRateCtrl;
+  late final TextEditingController _chargeRateCtrl;
+  late final TextEditingController _gridConnectionCtrl;
 
   @override
   void initState() {
@@ -442,6 +456,10 @@ class _HardwareCardState extends State<_HardwareCard> {
         text: widget.batteryLifecycles.toString());
     _dischargeRateCtrl = TextEditingController(
         text: widget.maxDischargeRateKw.toStringAsFixed(1));
+    _chargeRateCtrl = TextEditingController(
+        text: widget.maxChargeRateKw?.toStringAsFixed(1) ?? '');
+    _gridConnectionCtrl = TextEditingController(
+        text: widget.gridConnectionKw?.toStringAsFixed(1) ?? '');
   }
 
   @override
@@ -450,6 +468,8 @@ class _HardwareCardState extends State<_HardwareCard> {
     _costCtrl.dispose();
     _lifecyclesCtrl.dispose();
     _dischargeRateCtrl.dispose();
+    _chargeRateCtrl.dispose();
+    _gridConnectionCtrl.dispose();
     super.dispose();
   }
 
@@ -520,6 +540,31 @@ class _HardwareCardState extends State<_HardwareCard> {
           const SizedBox(width: 12),
           Expanded(
             child: _NumericField(
+              label: 'Grid Connection',
+              controller: _gridConnectionCtrl,
+              suffix: 'kW',
+              onChanged: widget.onGridConnectionChanged,
+            ),
+          ),
+        ]),
+        const SizedBox(height: 4),
+        Text(
+          'Grid connection limit. Battery charging scales down to keep total draw within breaker capacity.',
+          style: tt.bodySmall?.copyWith(color: AppColors.outline),
+        ),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+            child: _NumericField(
+              label: 'Max Charge Rate',
+              controller: _chargeRateCtrl,
+              suffix: 'kW',
+              onChanged: widget.onChargeRateChanged,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _NumericField(
               label: 'Max Discharge Rate',
               controller: _dischargeRateCtrl,
               suffix: 'kW',
@@ -546,6 +591,7 @@ class _HardwareCardState extends State<_HardwareCard> {
               label: 'Rated Cycles',
               controller: _lifecyclesCtrl,
               hint: '6000',
+              optional: true,
               onChanged: (v) {
                 if (v != null) widget.onLifecyclesChanged(v.toInt());
               },
