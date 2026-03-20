@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/theme.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
+import 'providers/app_providers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AppShell – adaptive navigation container
@@ -13,15 +14,8 @@ import 'screens/settings_screen.dart';
 // Mobile   →  bottom navigation bar   (semi-transparent, backdrop-blur)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key});
-
-  @override
-  State<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends State<AppShell> {
-  int _selectedIndex = 0;
 
   static const _destinations = [
     _NavDestination(
@@ -54,22 +48,29 @@ class _AppShellState extends State<AppShell> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(selectedNavIndexProvider);
     final width = MediaQuery.sizeOf(context).width;
     final isDesktop = width >= 900;
 
+    void onDestinationSelected(int i) =>
+        ref.read(selectedNavIndexProvider.notifier).state = i;
+
+    void onSignOut() => ref.read(sessionManagerProvider).signOutDevice();
+
     return isDesktop
         ? _DesktopShell(
-            selectedIndex: _selectedIndex,
+            selectedIndex: selectedIndex,
             destinations: _destinations,
             pages: _pages,
-            onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+            onDestinationSelected: onDestinationSelected,
+            onSignOut: onSignOut,
           )
         : _MobileShell(
-            selectedIndex: _selectedIndex,
+            selectedIndex: selectedIndex,
             destinations: _destinations,
             pages: _pages,
-            onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+            onDestinationSelected: onDestinationSelected,
           );
   }
 }
@@ -84,12 +85,14 @@ class _DesktopShell extends StatelessWidget {
     required this.destinations,
     required this.pages,
     required this.onDestinationSelected,
+    required this.onSignOut,
   });
 
   final int selectedIndex;
   final List<_NavDestination> destinations;
   final List<Widget> pages;
   final ValueChanged<int> onDestinationSelected;
+  final VoidCallback onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +105,7 @@ class _DesktopShell extends StatelessWidget {
             selectedIndex: selectedIndex,
             destinations: destinations,
             onDestinationSelected: onDestinationSelected,
+            onSignOut: onSignOut,
           ),
           // ── Content ───────────────────────────────────────────────────────
           Expanded(
@@ -121,11 +125,13 @@ class _DesktopSidebar extends StatelessWidget {
     required this.selectedIndex,
     required this.destinations,
     required this.onDestinationSelected,
+    required this.onSignOut,
   });
 
   final int selectedIndex;
   final List<_NavDestination> destinations;
   final ValueChanged<int> onDestinationSelected;
+  final VoidCallback onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +191,7 @@ class _DesktopSidebar extends StatelessWidget {
               icon: Icons.logout_rounded,
               label: 'Sign Out',
               isActive: false,
-              onTap: () => sessionManager.signOutDevice(),
+              onTap: onSignOut,
               isDanger: true,
             ),
           ),

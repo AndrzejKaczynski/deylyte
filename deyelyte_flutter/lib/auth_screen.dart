@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:serverpod_auth_email_flutter/serverpod_auth_email_flutter.dart';
 
-import 'main.dart';
+import 'providers/app_providers.dart';
 import 'theme/theme.dart';
 import 'components/components.dart';
 
@@ -264,16 +265,16 @@ class _MobileLogo extends StatelessWidget {
 // Sign-in form (shared between mobile & desktop)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SignInForm extends StatefulWidget {
+class _SignInForm extends ConsumerStatefulWidget {
   const _SignInForm({required this.isDesktop});
 
   final bool isDesktop;
 
   @override
-  State<_SignInForm> createState() => _SignInFormState();
+  ConsumerState<_SignInForm> createState() => _SignInFormState();
 }
 
-class _SignInFormState extends State<_SignInForm>
+class _SignInFormState extends ConsumerState<_SignInForm>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -322,7 +323,7 @@ class _SignInFormState extends State<_SignInForm>
     });
 
     try {
-      final emailAuth = EmailAuthController(client.modules.auth);
+      final emailAuth = EmailAuthController(ref.read(clientProvider).modules.auth);
       final userInfo = await emailAuth.signIn(
         _emailController.text.trim(),
         _passwordController.text,
@@ -337,7 +338,7 @@ class _SignInFormState extends State<_SignInForm>
         });
         _shakeController.forward(from: 0);
       }
-      // On success, sessionManager listener in main.dart rebuilds the app
+      // On success, sessionManagerProvider listener in main.dart rebuilds the app
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -360,7 +361,7 @@ class _SignInFormState extends State<_SignInForm>
     });
 
     try {
-      final emailAuth = EmailAuthController(client.modules.auth);
+      final emailAuth = EmailAuthController(ref.read(clientProvider).modules.auth);
       final sent = await emailAuth.createAccountRequest(
         _emailController.text.trim().split('@').first,
         _emailController.text.trim(),
@@ -402,7 +403,7 @@ class _SignInFormState extends State<_SignInForm>
     });
 
     try {
-      final emailAuth = EmailAuthController(client.modules.auth);
+      final emailAuth = EmailAuthController(ref.read(clientProvider).modules.auth);
       final userInfo = await emailAuth.validateAccount(
         _emailController.text.trim(),
         code,

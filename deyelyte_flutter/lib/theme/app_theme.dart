@@ -16,28 +16,28 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get dark {
-    final colorScheme = ColorScheme(
+    const colorScheme = ColorScheme(
       brightness: Brightness.dark,
       // Primary
       primary: AppColors.primary,
       onPrimary: AppColors.onPrimary,
       primaryContainer: AppColors.primaryContainer,
-      onPrimaryContainer: const Color(0xFF00285D),
+      onPrimaryContainer: Color(0xFF00285D),
       // Secondary
       secondary: AppColors.secondary,
       onSecondary: AppColors.onSecondary,
       secondaryContainer: AppColors.secondaryContainer,
-      onSecondaryContainer: const Color(0xFF004119),
+      onSecondaryContainer: Color(0xFF004119),
       // Tertiary
       tertiary: AppColors.tertiary,
-      onTertiary: const Color(0xFF472A00),
+      onTertiary: Color(0xFF472A00),
       tertiaryContainer: AppColors.tertiaryContainer,
-      onTertiaryContainer: const Color(0xFF3E2400),
+      onTertiaryContainer: Color(0xFF3E2400),
       // Error
       error: AppColors.error,
-      onError: const Color(0xFF690005),
+      onError: Color(0xFF690005),
       errorContainer: AppColors.errorContainer,
-      onErrorContainer: const Color(0xFFFFDAD6),
+      onErrorContainer: Color(0xFFFFDAD6),
       // Surface
       surface: AppColors.surface,
       onSurface: AppColors.onSurface,
@@ -47,8 +47,8 @@ class AppTheme {
       outline: AppColors.outline,
       outlineVariant: AppColors.outlineVariant,
       // Inverse
-      inverseSurface: const Color(0xFFDAE2FD),
-      onInverseSurface: const Color(0xFF283044),
+      inverseSurface: Color(0xFFDAE2FD),
+      onInverseSurface: Color(0xFF283044),
       inversePrimary: AppColors.inversePrimary,
     );
 
@@ -421,14 +421,14 @@ class AppTheme {
         ),
       ),
 
-      bottomSheetTheme: BottomSheetThemeData(
+      bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surfaceContainerHigh,
         modalBackgroundColor: AppColors.surfaceContainerHigh,
         elevation: 0,
         modalElevation: 0,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.xl),
           ),

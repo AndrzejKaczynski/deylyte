@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme.dart';
 import '../components/components.dart';
+import '../providers/app_providers.dart';
 
-class HistoryScreen extends StatefulWidget {
+class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
-
-  @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
-}
-
-class _HistoryScreenState extends State<HistoryScreen> {
-  int _selectedRange = 1; // 0=7d 1=30d 2=90d
 
   static const _ranges = ['7 days', '30 days', '90 days'];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedRange = ref.watch(historyRangeProvider);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -26,9 +23,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _HistoryHeader(
-                selectedRange: _selectedRange,
+                selectedRange: selectedRange,
                 ranges: _ranges,
-                onRangeChanged: (i) => setState(() => _selectedRange = i),
+                onRangeChanged: (i) =>
+                    ref.read(historyRangeProvider.notifier).state = i,
               ),
               SizedBox(height: AppSpacing.sp4),
               // KPI row

@@ -1,27 +1,19 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme.dart';
 import '../components/components.dart';
+import '../providers/app_providers.dart';
+import '../providers/settings_provider.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  // Threshold sliders
-  double _minSoc = 0.20;
-  double _exportSoc = 0.80;
-  bool _aiEnabled = true;
-  bool _deye = true;
-  bool _solcast = true;
-  bool _pstryk = true;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -38,32 +30,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 gap: AppSpacing.sp4,
                 primary: Column(children: [
                   _ThresholdsCard(
-                    minSoc: _minSoc,
-                    exportSoc: _exportSoc,
-                    onMinSocChanged: (v) => setState(() => _minSoc = v),
-                    onExportSocChanged: (v) => setState(() => _exportSoc = v),
+                    minSoc: settings.minSoc,
+                    exportSoc: settings.exportSoc,
+                    onMinSocChanged: notifier.setMinSoc,
+                    onExportSocChanged: notifier.setExportSoc,
                   ),
                   SizedBox(height: AppSpacing.sp4),
                   _AiOptimizerCard(
-                    enabled: _aiEnabled,
-                    onChanged: (v) => setState(() => _aiEnabled = v),
+                    enabled: settings.aiEnabled,
+                    onChanged: notifier.setAiEnabled,
                   ),
                   SizedBox(height: AppSpacing.sp4),
                   _HardwareCard(),
                 ]),
                 sidebar: Column(children: [
-                  _AiStatusCard(aiEnabled: _aiEnabled),
+                  _AiStatusCard(aiEnabled: settings.aiEnabled),
                   SizedBox(height: AppSpacing.sp4),
                   _ApiIntegrationsCard(
-                    deye: _deye,
-                    solcast: _solcast,
-                    pstryk: _pstryk,
-                    onDeyeChanged: (v) => setState(() => _deye = v),
-                    onSolcastChanged: (v) => setState(() => _solcast = v),
-                    onPstrykChanged: (v) => setState(() => _pstryk = v),
+                    deye: settings.deye,
+                    solcast: settings.solcast,
+                    pstryk: settings.pstryk,
+                    onDeyeChanged: notifier.setDeye,
+                    onSolcastChanged: notifier.setSolcast,
+                    onPstrykChanged: notifier.setPstryk,
                   ),
                   SizedBox(height: AppSpacing.sp4),
-                  _DangerZoneCard(),
+                  _DangerZoneCard(
+                    onSignOut: () => ref.read(sessionManagerProvider).signOutDevice(),
+                  ),
                 ]),
               ),
             ],
@@ -108,7 +102,6 @@ class _ThresholdsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SectionHeader(title: 'Thresholds & Logic'),
@@ -469,7 +462,6 @@ class _ApiIntegrationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SectionHeader(title: 'API Integrations'),
@@ -563,6 +555,10 @@ class _IntegrationRow extends StatelessWidget {
 // ── Danger Zone ───────────────────────────────────────────────────────────────
 
 class _DangerZoneCard extends StatelessWidget {
+  const _DangerZoneCard({required this.onSignOut});
+
+  final VoidCallback onSignOut;
+
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
@@ -583,9 +579,8 @@ class _DangerZoneCard extends StatelessWidget {
           onPressed: () {},
         ),
         const SizedBox(height: 10),
-        // Sign out button
         GestureDetector(
-          onTap: () => sessionManager.signOutDevice(),
+          onTap: onSignOut,
           child: Container(
             width: double.infinity,
             height: 48,
