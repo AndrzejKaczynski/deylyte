@@ -18,10 +18,10 @@ class DashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _DashboardHeader(),
-              SizedBox(height: AppSpacing.sp4),
+              const SizedBox(height: AppSpacing.sp4),
               // KPI stat strip
               _KpiStrip(),
-              SizedBox(height: AppSpacing.sp6),
+              const SizedBox(height: AppSpacing.sp6),
               // Main asymmetric grid
               AsymmetricGrid(
                 primaryFlex: 7,
@@ -30,14 +30,14 @@ class DashboardScreen extends StatelessWidget {
                 primary: Column(
                   children: [
                     _PowerFlowCard(),
-                    SizedBox(height: AppSpacing.sp4),
+                    const SizedBox(height: AppSpacing.sp4),
                     _ConsumptionChartCard(),
                   ],
                 ),
                 sidebar: Column(
                   children: [
                     _EnergySourcesCard(),
-                    SizedBox(height: AppSpacing.sp4),
+                    const SizedBox(height: AppSpacing.sp4),
                     _ApplianceStatusCard(),
                   ],
                 ),
@@ -66,7 +66,7 @@ class _DashboardHeader extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  PulseIndicator(color: AppColors.secondary, size: 6),
+                  const PulseIndicator(color: AppColors.secondary, size: 6),
                   const SizedBox(width: 8),
                   Text(
                     'Real-time optimization active for Household 402',
@@ -104,7 +104,7 @@ class _KpiStrip extends StatelessWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth > 600;
       final items = [
-        _KpiItem(
+        const _KpiItem(
           title: 'Battery SoC',
           value: '84%',
           subtitle: '⚡ Charging',
@@ -113,21 +113,21 @@ class _KpiStrip extends StatelessWidget {
           iconColor: AppColors.secondary,
           child: _BatterySocBar(soc: 0.84),
         ),
-        _KpiItem(
+        const _KpiItem(
           title: 'Net Balance',
           value: '12.40 PLN',
           subtitle: 'Today',
           icon: Icons.trending_up_rounded,
           iconColor: AppColors.secondary,
         ),
-        _KpiItem(
+        const _KpiItem(
           title: 'Grid Status',
           value: 'Stable',
           subtitle: 'Frequency: 50.02 Hz',
           icon: Icons.bolt_rounded,
           iconColor: AppColors.primary,
         ),
-        _KpiItem(
+        const _KpiItem(
           title: 'Solar Yield',
           value: '4.2 kWh',
           subtitle: 'Today so far',
@@ -265,12 +265,11 @@ class _BatterySocBar extends StatelessWidget {
 class _PowerFlowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
     return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          const SectionHeader(
             title: 'Power Flow',
             subtitle: 'Live energy routing',
           ),
@@ -285,12 +284,11 @@ class _PowerFlowCard extends StatelessWidget {
 class _PowerFlowDiagram extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
     return SizedBox(
       height: 200,
       child: CustomPaint(
         painter: _FlowPainter(),
-        child: Stack(
+        child: const Stack(
           children: [
             // Solar – top left
             Positioned(
@@ -406,7 +404,7 @@ class _FlowPainter extends CustomPainter {
     final cy = size.height / 2;
 
     // Dashed cross lines from centre to each corner node
-    _drawDashed(canvas, Offset(cx, cy), Offset(80, 50), paint);
+    _drawDashed(canvas, Offset(cx, cy), const Offset(80, 50), paint);
     _drawDashed(canvas, Offset(cx, cy), Offset(size.width - 80, 50), paint);
     _drawDashed(canvas, Offset(cx, cy), Offset(80, size.height - 50), paint);
     _drawDashed(canvas, Offset(cx, cy), Offset(size.width - 80, size.height - 50), paint);
@@ -453,7 +451,7 @@ class _ConsumptionChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          const SectionHeader(
             title: 'Consumption Trends',
             subtitle: 'Last 24 hours',
             actionLabel: 'View History',
@@ -467,12 +465,12 @@ class _ConsumptionChartCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          const Row(
             children: [
               _ChartLegendDot(color: AppColors.primary, label: 'Consumption'),
-              const SizedBox(width: 20),
+              SizedBox(width: 20),
               _ChartLegendDot(color: AppColors.secondary, label: 'Solar'),
-              const SizedBox(width: 20),
+              SizedBox(width: 20),
               _ChartLegendDot(
                   color: AppColors.tertiary, label: 'Grid import'),
             ],
@@ -595,7 +593,7 @@ class _EnergySourcesCard extends StatelessWidget {
         children: [
           Text('Energy Sources', style: tt.titleMedium),
           const SizedBox(height: 16),
-          _SourceRow(
+          const _SourceRow(
             icon: Icons.wb_sunny_rounded,
             label: 'Solar Panels',
             value: '3.2 kW',
@@ -603,7 +601,7 @@ class _EnergySourcesCard extends StatelessWidget {
             fraction: 0.68,
           ),
           const SizedBox(height: 12),
-          _SourceRow(
+          const _SourceRow(
             icon: Icons.battery_charging_full_rounded,
             label: 'Battery Storage',
             value: '8.4 kWh @ 84%',
@@ -611,7 +609,7 @@ class _EnergySourcesCard extends StatelessWidget {
             fraction: 0.84,
           ),
           const SizedBox(height: 12),
-          _SourceRow(
+          const _SourceRow(
             icon: Icons.electric_meter_rounded,
             label: 'Public Grid',
             value: 'Idle / Exporting',
@@ -694,7 +692,7 @@ class _ApplianceStatusCard extends StatelessWidget {
         children: [
           Text('Appliance Status', style: tt.titleMedium),
           const SizedBox(height: 16),
-          _ApplianceRow(
+          const _ApplianceRow(
             icon: Icons.local_laundry_service_rounded,
             label: 'Dishwasher',
             status: 'Active',
@@ -702,7 +700,7 @@ class _ApplianceStatusCard extends StatelessWidget {
             statusColor: AppColors.secondary,
           ),
           const SizedBox(height: 12),
-          _ApplianceRow(
+          const _ApplianceRow(
             icon: Icons.ev_station_rounded,
             label: 'Tesla Wallbox',
             status: 'Scheduled',
@@ -710,7 +708,7 @@ class _ApplianceStatusCard extends StatelessWidget {
             statusColor: AppColors.tertiary,
           ),
           const SizedBox(height: 12),
-          _ApplianceRow(
+          const _ApplianceRow(
             icon: Icons.heat_pump_rounded,
             label: 'Heat Pump',
             status: 'Idle',

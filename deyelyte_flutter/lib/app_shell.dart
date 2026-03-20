@@ -146,7 +146,7 @@ class _DesktopSidebar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
             child: Row(
               children: [
-                _BoltIcon(size: 22),
+                const _BoltIcon(size: 22),
                 const SizedBox(width: 10),
                 Text(
                   'DeyLyte',

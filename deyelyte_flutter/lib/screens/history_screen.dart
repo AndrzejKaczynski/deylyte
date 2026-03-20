@@ -28,22 +28,22 @@ class HistoryScreen extends ConsumerWidget {
                 onRangeChanged: (i) =>
                     ref.read(historyRangeProvider.notifier).state = i,
               ),
-              SizedBox(height: AppSpacing.sp4),
+              const SizedBox(height: AppSpacing.sp4),
               // KPI row
               _HistoryKpiRow(),
-              SizedBox(height: AppSpacing.sp6),
+              const SizedBox(height: AppSpacing.sp6),
               AsymmetricGrid(
                 primaryFlex: 7,
                 sidebarFlex: 3,
                 gap: AppSpacing.sp4,
                 primary: Column(children: [
                   _MarketArbitrageChart(),
-                  SizedBox(height: AppSpacing.sp4),
+                  const SizedBox(height: AppSpacing.sp4),
                   _YieldVsExpenditureChart(),
                 ]),
                 sidebar: Column(children: [
                   _NetProfitCard(),
-                  SizedBox(height: AppSpacing.sp4),
+                  const SizedBox(height: AppSpacing.sp4),
                   _RecentEventsCard(),
                 ]),
               ),
@@ -187,13 +187,13 @@ class _MarketArbitrageChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SurfaceCard(
+    return const SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SectionHeader(
           title: 'Market Arbitrage & Storage',
           subtitle: 'Real-time buy/sell pressure vs battery capacity',
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SizedBox(
           height: 160,
           child: CustomPaint(
@@ -208,10 +208,10 @@ class _MarketArbitrageChart extends StatelessWidget {
             size: Size.infinite,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(children: [
           _ChartKey(color: AppColors.error, label: 'Buy pressure'),
-          const SizedBox(width: 20),
+          SizedBox(width: 20),
           _ChartKey(color: AppColors.secondary, label: 'Battery SoC'),
         ]),
       ]),
@@ -325,13 +325,13 @@ class _YieldVsExpenditureChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SurfaceCard(
+    return const SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SectionHeader(
           title: 'Yield vs Expenditure',
           subtitle: 'Net balance over historical cycle',
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SizedBox(
           height: 140,
           child: CustomPaint(
@@ -346,10 +346,10 @@ class _YieldVsExpenditureChart extends StatelessWidget {
             size: Size.infinite,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(children: [
           _ChartKey(color: AppColors.secondary, label: 'Yield'),
-          const SizedBox(width: 20),
+          SizedBox(width: 20),
           _ChartKey(color: AppColors.error, label: 'Expenditure'),
         ]),
       ]),
@@ -367,23 +367,23 @@ class _NetProfitCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Total Net Profit', style: tt.titleMedium),
         const SizedBox(height: 8),
-        HeroMetric(
+        const HeroMetric(
           value: '+\$1,240',
           unit: '.42',
           valueColor: AppColors.secondary,
           size: HeroMetricSize.small,
         ),
         const SizedBox(height: 20),
-        _StatRow(label: 'Total Savings', value: '\$4,821.00',
+        const _StatRow(label: 'Total Savings', value: '\$4,821.00',
             color: AppColors.secondary),
         const SizedBox(height: 12),
-        _StatRow(label: 'Storage Efficiency', value: '94.2%',
+        const _StatRow(label: 'Storage Efficiency', value: '94.2%',
             color: AppColors.primary),
         const SizedBox(height: 12),
-        _StatRow(label: 'Carbon Offset', value: '1.2 Tons',
+        const _StatRow(label: 'Carbon Offset', value: '1.2 Tons',
             color: AppColors.secondary),
         const SizedBox(height: 12),
-        _StatRow(label: 'Peak Demand', value: '4.8 kW',
+        const _StatRow(label: 'Peak Demand', value: '4.8 kW',
             color: AppColors.tertiary),
       ]),
     );
@@ -418,7 +418,7 @@ class _RecentEventsCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Recent Market Events', style: tt.titleMedium),
         const SizedBox(height: 16),
-        _EventRow(
+        const _EventRow(
           icon: Icons.upload_rounded,
           title: 'Feed-in Export',
           subtitle: 'Grid sale @ 0.14/kWh',
@@ -427,7 +427,7 @@ class _RecentEventsCard extends StatelessWidget {
           valueColor: AppColors.secondary,
         ),
         const SizedBox(height: 12),
-        _EventRow(
+        const _EventRow(
           icon: Icons.battery_charging_full_rounded,
           title: 'Smart Charging',
           subtitle: 'Battery fill @ 0.08/kWh',
@@ -436,7 +436,7 @@ class _RecentEventsCard extends StatelessWidget {
           valueColor: AppColors.error,
         ),
         const SizedBox(height: 12),
-        _EventRow(
+        const _EventRow(
           icon: Icons.bolt_rounded,
           title: 'Peak Load Shaving',
           subtitle: 'Battery discharge to offset AC',

@@ -23,7 +23,7 @@ class SettingsScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SettingsHeader(),
-              SizedBox(height: AppSpacing.sp4),
+              const SizedBox(height: AppSpacing.sp4),
               AsymmetricGrid(
                 primaryFlex: 6,
                 sidebarFlex: 4,
@@ -35,17 +35,17 @@ class SettingsScreen extends ConsumerWidget {
                     onMinSocChanged: notifier.setMinSoc,
                     onExportSocChanged: notifier.setExportSoc,
                   ),
-                  SizedBox(height: AppSpacing.sp4),
+                  const SizedBox(height: AppSpacing.sp4),
                   _AiOptimizerCard(
                     enabled: settings.aiEnabled,
                     onChanged: notifier.setAiEnabled,
                   ),
-                  SizedBox(height: AppSpacing.sp4),
+                  const SizedBox(height: AppSpacing.sp4),
                   _HardwareCard(),
                 ]),
                 sidebar: Column(children: [
                   _AiStatusCard(aiEnabled: settings.aiEnabled),
-                  SizedBox(height: AppSpacing.sp4),
+                  const SizedBox(height: AppSpacing.sp4),
                   _ApiIntegrationsCard(
                     deye: settings.deye,
                     solcast: settings.solcast,
@@ -54,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
                     onSolcastChanged: notifier.setSolcast,
                     onPstrykChanged: notifier.setPstryk,
                   ),
-                  SizedBox(height: AppSpacing.sp4),
+                  const SizedBox(height: AppSpacing.sp4),
                   _DangerZoneCard(
                     onSignOut: () => ref.read(sessionManagerProvider).signOutDevice(),
                   ),
@@ -104,7 +104,7 @@ class _ThresholdsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SectionHeader(title: 'Thresholds & Logic'),
+        const SectionHeader(title: 'Thresholds & Logic'),
         const SizedBox(height: 20),
         _SliderSetting(
           icon: Icons.battery_alert_rounded,
@@ -215,11 +215,11 @@ class _AiOptimizerCard extends StatelessWidget {
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Expanded(child: SectionHeader(title: 'AI Optimizer')),
+          const Expanded(child: SectionHeader(title: 'AI Optimizer')),
           Switch(
             value: enabled,
             onChanged: onChanged,
-            activeColor: AppColors.secondary,
+            activeThumbColor: AppColors.secondary,
           ),
         ]),
         const SizedBox(height: 4),
@@ -236,19 +236,19 @@ class _AiOptimizerCard extends StatelessWidget {
           Text('Refining forecasting models based on PV history.',
               style: tt.bodySmall),
           const SizedBox(height: 12),
-          _TrainingProgressBar(
+          const _TrainingProgressBar(
             label: 'Consumption patterns',
             fraction: 0.84,
             color: AppColors.primary,
           ),
           const SizedBox(height: 8),
-          _TrainingProgressBar(
+          const _TrainingProgressBar(
             label: 'PV yield model',
             fraction: 0.71,
             color: AppColors.secondary,
           ),
           const SizedBox(height: 8),
-          _TrainingProgressBar(
+          const _TrainingProgressBar(
             label: 'Price forecasting',
             fraction: 0.62,
             color: AppColors.tertiary,
@@ -312,7 +312,7 @@ class _HardwareCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SectionHeader(title: 'Hardware Setup'),
+        const SectionHeader(title: 'Hardware Setup'),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -340,17 +340,17 @@ class _HardwareCard extends StatelessWidget {
                     style: tt.bodySmall?.copyWith(color: AppColors.outline)),
               ]),
             ),
-            ProfitBadge(label: 'Online'),
+            const ProfitBadge(label: 'Online'),
           ]),
         ),
         const SizedBox(height: 12),
-        _HardwareRow(label: 'Max Charge Rate', value: '6.0 kW'),
+        const _HardwareRow(label: 'Max Charge Rate', value: '6.0 kW'),
         const SizedBox(height: 8),
-        _HardwareRow(label: 'Max Discharge Rate', value: '6.0 kW'),
+        const _HardwareRow(label: 'Max Discharge Rate', value: '6.0 kW'),
         const SizedBox(height: 8),
-        _HardwareRow(label: 'Nominal Capacity', value: '15.0 kWh'),
+        const _HardwareRow(label: 'Nominal Capacity', value: '15.0 kWh'),
         const SizedBox(height: 8),
-        _HardwareRow(label: 'Usable Capacity', value: '13.5 kWh'),
+        const _HardwareRow(label: 'Usable Capacity', value: '13.5 kWh'),
       ]),
     );
   }
@@ -464,7 +464,7 @@ class _ApiIntegrationsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SectionHeader(title: 'API Integrations'),
+        const SectionHeader(title: 'API Integrations'),
         const SizedBox(height: 16),
         _IntegrationRow(
           icon: Icons.developer_board_rounded,
@@ -544,7 +544,7 @@ class _IntegrationRow extends StatelessWidget {
         Switch(
           value: enabled,
           onChanged: onChanged,
-          activeColor: color,
+          activeThumbColor: color,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ]),

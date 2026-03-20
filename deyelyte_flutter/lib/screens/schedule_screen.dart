@@ -17,7 +17,7 @@ class ScheduleScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ScheduleHeader(),
-              SizedBox(height: AppSpacing.sp4),
+              const SizedBox(height: AppSpacing.sp4),
               AsymmetricGrid(
                 primaryFlex: 7,
                 sidebarFlex: 3,
@@ -25,14 +25,14 @@ class ScheduleScreen extends StatelessWidget {
                 primary: Column(
                   children: [
                     _ForecastBarCard(),
-                    SizedBox(height: AppSpacing.sp4),
+                    const SizedBox(height: AppSpacing.sp4),
                     _PowerAllocationCard(),
                   ],
                 ),
                 sidebar: Column(
                   children: [
                     _StrategyAnalysisCard(),
-                    SizedBox(height: AppSpacing.sp4),
+                    const SizedBox(height: AppSpacing.sp4),
                     _UpcomingEventsCard(),
                   ],
                 ),
@@ -67,7 +67,7 @@ class _ScheduleHeader extends StatelessWidget {
             ],
           ),
         ),
-        ProfitBadge(
+        const ProfitBadge(
           label: 'Est. Net Profit · Varies \$0.08–\$0.42',
           icon: Icons.trending_up_rounded,
         ),
@@ -103,21 +103,21 @@ class _ForecastBarCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          const SectionHeader(
             title: '24-Hour Forecast',
             subtitle: 'Price tiers & battery SoC projection',
           ),
           const SizedBox(height: 8),
           // Legend
-          Row(children: [
+          const Row(children: [
             _Legend(color: AppColors.secondary, label: 'Off-peak (charge)'),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             _Legend(color: AppColors.tertiary, label: 'Mid'),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             _Legend(color: AppColors.error, label: 'Peak (discharge)'),
           ]),
           const SizedBox(height: 20),
-          SizedBox(
+          const SizedBox(
             height: 160,
             child: CustomPaint(
               painter: _ForecastPainter(_priceTiers, _soc, _colors),
@@ -221,7 +221,7 @@ class _ForecastPainter extends CustomPainter {
     );
 
     // SoC label
-    final top = barY;
+    const top = barY;
     final textPainter = TextPainter(
       text: const TextSpan(
         text: '── Battery SoC',
@@ -233,7 +233,7 @@ class _ForecastPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(canvas, Offset(4, top));
+    textPainter.paint(canvas, const Offset(4, top));
   }
 
   @override
@@ -245,13 +245,12 @@ class _ForecastPainter extends CustomPainter {
 class _PowerAllocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    return SurfaceCard(
+    return const SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(title: 'Power Allocation Flow'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Timeline events
           _TimelineEvent(
             time: '02:00–04:00',
@@ -262,7 +261,7 @@ class _PowerAllocationCard extends StatelessWidget {
             color: AppColors.secondary,
             badge: 'Completed',
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _TimelineEvent(
             time: '08:00–14:00',
             title: 'Solar Harvest',
@@ -272,7 +271,7 @@ class _PowerAllocationCard extends StatelessWidget {
             badge: 'In Progress',
             badgeColor: AppColors.tertiary,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _TimelineEvent(
             time: '12:00',
             title: 'High-Yield Feed-in',
@@ -283,7 +282,7 @@ class _PowerAllocationCard extends StatelessWidget {
             badge: 'Upcoming',
             badgeColor: AppColors.primary,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _TimelineEvent(
             time: '17:00–21:00',
             title: 'Evening Peak Shaving',
@@ -390,21 +389,21 @@ class _StrategyAnalysisCard extends StatelessWidget {
         Text('AI Kinetic · Learning User Behaviour',
             style: tt.bodySmall?.copyWith(color: AppColors.secondary)),
         const SizedBox(height: 16),
-        _StrategyRow(
+        const _StrategyRow(
           label: 'Morning Peak',
           detail: 'Charge at off-peak rates starts in 4h',
           icon: Icons.battery_charging_full_rounded,
           color: AppColors.secondary,
         ),
         const SizedBox(height: 12),
-        _StrategyRow(
+        const _StrategyRow(
           label: 'Weather',
           detail: 'Sunny · PV forecast 12.4 kWh',
           icon: Icons.wb_sunny_rounded,
           color: AppColors.tertiary,
         ),
         const SizedBox(height: 12),
-        _StrategyRow(
+        const _StrategyRow(
           label: 'Historical',
           detail: 'Based on Monday usage patterns',
           icon: Icons.history_rounded,
@@ -415,7 +414,7 @@ class _StrategyAnalysisCard extends StatelessWidget {
         Text('Est. Net Profit Today',
             style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
-        HeroMetric(
+        const HeroMetric(
           value: '\$0.08–\$0.42',
           size: HeroMetricSize.small,
           valueColor: AppColors.secondary,
@@ -473,25 +472,25 @@ class _UpcomingEventsCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Upcoming Events', style: tt.titleMedium),
         const SizedBox(height: 16),
-        _UpcomingRow(
+        const _UpcomingRow(
           time: '12:00',
           event: 'Feed-in spike',
           color: AppColors.secondary,
         ),
         const SizedBox(height: 12),
-        _UpcomingRow(
+        const _UpcomingRow(
           time: '17:00',
           event: 'Peak shaving start',
           color: AppColors.error,
         ),
         const SizedBox(height: 12),
-        _UpcomingRow(
+        const _UpcomingRow(
           time: '22:00',
           event: 'Tesla Wallbox charge',
           color: AppColors.primary,
         ),
         const SizedBox(height: 12),
-        _UpcomingRow(
+        const _UpcomingRow(
           time: '02:00',
           event: 'Next off-peak window',
           color: AppColors.secondary,

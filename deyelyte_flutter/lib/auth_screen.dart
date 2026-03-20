@@ -12,7 +12,7 @@ import 'components/components.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AuthScreen extends StatelessWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  const AuthScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class _DesktopAuthLayout extends StatelessWidget {
     return Row(
       children: [
         // Left hero panel
-        Expanded(
+        const Expanded(
           flex: 55,
           child: _HeroPanel(),
         ),
@@ -51,7 +51,7 @@ class _DesktopAuthLayout extends StatelessWidget {
             color: AppColors.surfaceContainerLowest,
             child: Center(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 64, vertical: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 48),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 440),
                   child: const _SignInForm(isDesktop: true),
@@ -74,17 +74,17 @@ class _MobileAuthLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return const SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _MobileLogo(),
-            const SizedBox(height: 48),
-            const _SignInForm(isDesktop: false),
-            const SizedBox(height: 40),
-            const _FooterLinks(),
+            _MobileLogo(),
+            SizedBox(height: 48),
+            _SignInForm(isDesktop: false),
+            SizedBox(height: 40),
+            _FooterLinks(),
           ],
         ),
       ),
@@ -134,7 +134,7 @@ class _HeroPanel extends StatelessWidget {
             ),
           ),
           // Energy grid decoration
-          Positioned.fill(
+          const Positioned.fill(
             child: CustomPaint(painter: EnergyGridPainter()),
           ),
           // Content
@@ -147,7 +147,7 @@ class _HeroPanel extends StatelessWidget {
                 // Top brand
                 Row(
                   children: [
-                    _EnergyBoltIcon(size: 28),
+                    const _EnergyBoltIcon(size: 28),
                     const SizedBox(width: 10),
                     Text(
                       'DeyLyte',
@@ -208,12 +208,12 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       children: [
         _StatChip(value: '98%', label: 'Uptime'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _StatChip(value: '3.2×', label: 'Avg. ROI'),
-        const SizedBox(width: 24),
+        SizedBox(width: 24),
         _StatChip(value: '24/7', label: 'Monitoring'),
       ],
     );
@@ -237,7 +237,7 @@ class _MobileLogo extends StatelessWidget {
       children: [
         Row(
           children: [
-            _EnergyBoltIcon(size: 32),
+            const _EnergyBoltIcon(size: 32),
             const SizedBox(width: 12),
             Text(
               'DeyLyte',
@@ -449,7 +449,7 @@ class _SignInFormState extends ConsumerState<_SignInForm>
             if (widget.isDesktop) ...[
               Row(
                 children: [
-                  _EnergyBoltIcon(size: 22),
+                  const _EnergyBoltIcon(size: 22),
                   const SizedBox(width: 8),
                   Text(
                     'DeyLyte',
@@ -591,7 +591,7 @@ class _SignInFormState extends ConsumerState<_SignInForm>
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.warning_amber_rounded,
                             size: 16,
                             color: AppColors.error,
@@ -651,7 +651,7 @@ class _SignInFormState extends ConsumerState<_SignInForm>
                           text: _isRegisterMode
                               ? 'Sign In'
                               : (widget.isDesktop ? 'Register' : 'Join now'),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -676,8 +676,8 @@ class _SignInFormState extends ConsumerState<_SignInForm>
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
-                      children: [
-                        const TextSpan(text: 'Wrong email? '),
+                      children: const [
+                        TextSpan(text: 'Wrong email? '),
                         TextSpan(
                           text: 'Go back',
                           style: TextStyle(
