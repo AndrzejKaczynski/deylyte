@@ -1,96 +1,208 @@
 {
   "version": 1,
   "installations": {
-    "generic": {
+    "claude": {
+      "relic": {
+        "skills": [
+          {
+            "name": "relic-static-files",
+            "installedAt": "2026-03-20T09:14:02.793018Z"
+          },
+          {
+            "name": "relic-app-setup",
+            "installedAt": "2026-03-20T09:14:02.793834Z"
+          },
+          {
+            "name": "relic-shelf-migration",
+            "installedAt": "2026-03-20T09:14:02.794530Z"
+          },
+          {
+            "name": "relic-routing",
+            "installedAt": "2026-03-20T09:14:02.795148Z"
+          },
+          {
+            "name": "relic-request-response",
+            "installedAt": "2026-03-20T09:14:02.795667Z"
+          },
+          {
+            "name": "relic-middleware",
+            "installedAt": "2026-03-20T09:14:02.796255Z"
+          },
+          {
+            "name": "relic-websockets",
+            "installedAt": "2026-03-20T09:14:02.796724Z"
+          }
+        ]
+      },
+      "serverpod": {
+        "skills": [
+          {
+            "name": "serverpod-logging",
+            "installedAt": "2026-03-20T09:14:02.797928Z"
+          },
+          {
+            "name": "serverpod-endpoints",
+            "installedAt": "2026-03-20T09:14:02.798649Z"
+          },
+          {
+            "name": "serverpod-configuration",
+            "installedAt": "2026-03-20T09:14:02.799328Z"
+          },
+          {
+            "name": "serverpod-modules",
+            "installedAt": "2026-03-20T09:14:02.799805Z"
+          },
+          {
+            "name": "serverpod-caching",
+            "installedAt": "2026-03-20T09:14:02.800294Z"
+          },
+          {
+            "name": "serverpod-health-checks",
+            "installedAt": "2026-03-20T09:14:02.800861Z"
+          },
+          {
+            "name": "serverpod-auth-module",
+            "installedAt": "2026-03-20T09:14:02.801539Z"
+          },
+          {
+            "name": "serverpod-database",
+            "installedAt": "2026-03-20T09:14:02.802059Z"
+          },
+          {
+            "name": "serverpod-testing",
+            "installedAt": "2026-03-20T09:14:02.802616Z"
+          },
+          {
+            "name": "serverpod-scheduling",
+            "installedAt": "2026-03-20T09:14:02.803155Z"
+          },
+          {
+            "name": "serverpod-server-events",
+            "installedAt": "2026-03-20T09:14:02.803681Z"
+          },
+          {
+            "name": "serverpod-file-uploads",
+            "installedAt": "2026-03-20T09:14:02.804198Z"
+          },
+          {
+            "name": "serverpod-cli",
+            "installedAt": "2026-03-20T09:14:02.804689Z"
+          },
+          {
+            "name": "serverpod-models",
+            "installedAt": "2026-03-20T09:14:02.805241Z"
+          },
+          {
+            "name": "serverpod-overview",
+            "installedAt": "2026-03-20T09:14:02.805826Z"
+          },
+          {
+            "name": "serverpod-streams",
+            "installedAt": "2026-03-20T09:14:02.806371Z"
+          },
+          {
+            "name": "serverpod-webserver",
+            "installedAt": "2026-03-20T09:14:02.807204Z"
+          },
+          {
+            "name": "serverpod-sessions",
+            "installedAt": "2026-03-20T09:14:02.807717Z"
+          },
+          {
+            "name": "serverpod-upgrading",
+            "installedAt": "2026-03-20T09:14:02.808363Z"
+          }
+        ]
+      },
       "flutter": {
         "skills": [
           {
             "name": "flutter-building-forms",
-            "installedAt": "2026-03-19T21:56:23.994499Z"
+            "installedAt": "2026-03-20T09:14:02.809233Z"
           },
           {
             "name": "flutter-handling-http-and-json",
-            "installedAt": "2026-03-19T21:56:23.995156Z"
+            "installedAt": "2026-03-20T09:14:02.809737Z"
           },
           {
             "name": "flutter-building-plugins",
-            "installedAt": "2026-03-19T21:56:23.995534Z"
+            "installedAt": "2026-03-20T09:14:02.810358Z"
           },
           {
             "name": "flutter-caching-data",
-            "installedAt": "2026-03-19T21:56:23.995991Z"
+            "installedAt": "2026-03-20T09:14:02.810817Z"
           },
           {
             "name": "flutter-embedding-native-views",
-            "installedAt": "2026-03-19T21:56:23.996398Z"
+            "installedAt": "2026-03-20T09:14:02.811425Z"
           },
           {
             "name": "flutter-setting-up-on-macos",
-            "installedAt": "2026-03-19T21:56:23.996835Z"
+            "installedAt": "2026-03-20T09:14:02.811899Z"
           },
           {
             "name": "flutter-adding-home-screen-widgets",
-            "installedAt": "2026-03-19T21:56:23.997282Z"
+            "installedAt": "2026-03-20T09:14:02.812508Z"
           },
           {
             "name": "flutter-architecting-apps",
-            "installedAt": "2026-03-19T21:56:23.997719Z"
+            "installedAt": "2026-03-20T09:14:02.812945Z"
           },
           {
             "name": "flutter-implementing-navigation-and-routing",
-            "installedAt": "2026-03-19T21:56:23.998168Z"
+            "installedAt": "2026-03-20T09:14:02.813508Z"
           },
           {
             "name": "flutter-setting-up-on-windows",
-            "installedAt": "2026-03-19T21:56:23.998629Z"
+            "installedAt": "2026-03-20T09:14:02.813928Z"
           },
           {
             "name": "flutter-improving-accessibility",
-            "installedAt": "2026-03-19T21:56:23.999079Z"
+            "installedAt": "2026-03-20T09:14:02.814353Z"
           },
           {
             "name": "flutter-animating-apps",
-            "installedAt": "2026-03-19T21:56:23.999526Z"
+            "installedAt": "2026-03-20T09:14:02.814816Z"
           },
           {
             "name": "flutter-working-with-databases",
-            "installedAt": "2026-03-19T21:56:23.999957Z"
+            "installedAt": "2026-03-20T09:14:02.815371Z"
           },
           {
             "name": "flutter-setting-up-on-linux",
-            "installedAt": "2026-03-19T21:56:24.000397Z"
+            "installedAt": "2026-03-20T09:14:02.815834Z"
           },
           {
             "name": "flutter-theming-apps",
-            "installedAt": "2026-03-19T21:56:24.000820Z"
+            "installedAt": "2026-03-20T09:14:02.816262Z"
           },
           {
             "name": "flutter-building-layouts",
-            "installedAt": "2026-03-19T21:56:24.001263Z"
+            "installedAt": "2026-03-20T09:14:02.816714Z"
           },
           {
             "name": "flutter-interoperating-with-native-apis",
-            "installedAt": "2026-03-19T21:56:24.001704Z"
+            "installedAt": "2026-03-20T09:14:02.817305Z"
           },
           {
             "name": "flutter-managing-state",
-            "installedAt": "2026-03-19T21:56:24.002152Z"
+            "installedAt": "2026-03-20T09:14:02.818200Z"
           },
           {
             "name": "flutter-testing-apps",
-            "installedAt": "2026-03-19T21:56:24.002587Z"
+            "installedAt": "2026-03-20T09:14:02.818836Z"
           },
           {
             "name": "flutter-localizing-apps",
-            "installedAt": "2026-03-19T21:56:24.002984Z"
+            "installedAt": "2026-03-20T09:14:02.819382Z"
           },
           {
             "name": "flutter-reducing-app-size",
-            "installedAt": "2026-03-19T21:56:24.003395Z"
+            "installedAt": "2026-03-20T09:14:02.819914Z"
           },
           {
             "name": "flutter-handling-concurrency",
-            "installedAt": "2026-03-19T21:56:24.003801Z"
+            "installedAt": "2026-03-20T09:14:02.820401Z"
           }
         ]
       }
