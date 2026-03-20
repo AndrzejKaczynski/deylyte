@@ -37,9 +37,21 @@ class SettingsState {
   final double? maxChargeRateKw;
   final double? gridConnectionKw;
 
+  // Integration enabled flags. Credentials (API keys, tokens) are stored
+  // server-side in IntegrationCredentials table, keyed by userInfoId.
+
+  /// Whether the Deye inverter integration is enabled.
+  /// Credentials: deyeUsername, deyePasswordHash, deyeAppId.
   final bool deye;
+
+  /// Whether the Solcast PV forecast integration is enabled.
+  /// Credentials: solcastApiKey, solcastSiteId.
   final bool solcast;
+
+  /// Whether the Pstryk energy price integration is enabled.
+  /// Credentials: pstrykToken.
   final bool pstryk;
+
   final String? cityName;
 
   SettingsState copyWith({

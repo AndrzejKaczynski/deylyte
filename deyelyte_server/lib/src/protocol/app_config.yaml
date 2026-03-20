@@ -1,21 +1,29 @@
+# Per-user EMS configuration. One row per user (userInfoId FK → UserInfo).
 class: AppConfig
 table: app_config
 fields:
   userInfoId: int
+  # Timestamp from which energy data collection started for this user
   dataGatheringSince: DateTime?
+  # EMS control flags
   chargingEnabled: bool
   sellingEnabled: bool
+  # true = only sell PV-generated surplus; false = allow grid arbitrage (buy cheap, sell high)
   pvOnlySelling: bool
+  # Requested a one-time battery top-up to minSoc before the next dispatch cycle
   topUpRequested: bool
+  # Price thresholds (PLN/kWh)
   alwaysChargePriceThreshold: double
   minSellPriceThreshold: double?
+  # Battery hardware specs
   batteryCapacityKwh: double?
-  batteryCost: double?
-  batteryLifecycles: int?
-  minSocPercentage: double?
+  batteryCost: double?         # Purchase cost in PLN, used for ROI calculations
+  batteryLifecycles: int?      # Total charge/discharge cycles before end-of-life
+  minSocPercentage: double?    # Minimum state-of-charge to maintain (0.0–1.0)
   maxDischargeRateKw: double?
   maxChargeRateKw: double?
-  gridConnectionKw: double?
+  # Site / grid
+  gridConnectionKw: double?    # Maximum grid import/export limit for the site
   cityName: String?
   latitude: double?
   longitude: double?
