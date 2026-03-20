@@ -1,7 +1,7 @@
 import 'package:mailer/mailer.dart' as mailer;
 import 'package:mailer/smtp_server.dart';
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_auth_server/module.dart' as auth;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as auth;
 
 import 'src/generated/protocol.dart';
 import 'src/generated/endpoints.dart';
@@ -11,19 +11,21 @@ void run(List<String> args) async {
     args,
     Protocol(),
     Endpoints(),
+    authenticationHandler: auth.authenticationHandler,
   );
 
-  await pod.start();
-
-  // Read SMTP credentials from passwords.yaml
+  // Read SMTP credentials from passwords.yaml — available after the
+  // Serverpod() constructor, before pod.start().
   final smtpHost = pod.getPassword('smtpHost') ?? '';
   final smtpPort = int.tryParse(pod.getPassword('smtpPort') ?? '587') ?? 587;
   final smtpUsername = pod.getPassword('smtpUsername') ?? '';
   final smtpPassword = pod.getPassword('smtpPassword') ?? '';
-  // The 'from' address in SES must be verified in the AWS console. 
+  // The 'from' address in SES must be verified in the AWS console.
   // For local testing, using the username if it looks like an email.
   final senderEmail = smtpUsername.contains('@') ? smtpUsername : 'noreply@deyelyte.com';
 
+  // AuthConfig MUST be set before pod.start() so that auth endpoints
+  // (e.g. serverpod_auth.status) never see an un-configured AuthConfig.
   auth.AuthConfig.set(auth.AuthConfig(
     sendValidationEmail: (session, email, validationCode) async {
       if (smtpHost.isEmpty || smtpUsername.isEmpty) {
@@ -84,5 +86,7 @@ void run(List<String> args) async {
       }
     },
   ));
+
+  await pod.start();
 }
 
