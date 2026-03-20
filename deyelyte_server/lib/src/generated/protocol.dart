@@ -281,6 +281,18 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String?',
         ),
         _i2.ColumnDefinition(
+          name: 'deyeAppSecret',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'deyeDeviceSn',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'solcastApiKey',
           columnType: _i2.ColumnType.text,
           isNullable: true,
@@ -684,6 +696,12 @@ class Protocol extends _i1.SerializationManagerServer {
     }
     if (t == _i1.getType<_i11.PvForecast?>()) {
       return (data != null ? _i11.PvForecast.fromJson(data) : null) as T;
+    }
+    if (t == Map<String, bool>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<bool>(v)),
+          )
+          as T;
     }
     if (t == List<_i12.OptimizationFrame>) {
       return (data as List)

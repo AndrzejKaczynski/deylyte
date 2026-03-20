@@ -60,6 +60,81 @@ class EndpointBaseline extends _i1.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointCredentials extends _i1.EndpointRef {
+  EndpointCredentials(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'credentials';
+
+  /// Save Deye Cloud credentials. The password is stored as a SHA256 hash.
+  /// Schedules InitUserCall on the first save to fetch the device SN.
+  _i2.Future<void> saveDeye(
+    String username,
+    String password,
+    String appId,
+    String appSecret,
+  ) => caller.callServerEndpoint<void>(
+    'credentials',
+    'saveDeye',
+    {
+      'username': username,
+      'password': password,
+      'appId': appId,
+      'appSecret': appSecret,
+    },
+  );
+
+  /// Save Solcast PV forecast credentials.
+  _i2.Future<void> saveSolcast(
+    String apiKey,
+    String siteId,
+  ) => caller.callServerEndpoint<void>(
+    'credentials',
+    'saveSolcast',
+    {
+      'apiKey': apiKey,
+      'siteId': siteId,
+    },
+  );
+
+  /// Save Pstryk energy pricing token.
+  _i2.Future<void> savePstryk(String token) => caller.callServerEndpoint<void>(
+    'credentials',
+    'savePstryk',
+    {'token': token},
+  );
+
+  /// Remove Deye credentials. Also clears deviceSn and resets dataGatheringSince.
+  _i2.Future<void> removeDeye() => caller.callServerEndpoint<void>(
+    'credentials',
+    'removeDeye',
+    {},
+  );
+
+  /// Remove Solcast credentials.
+  _i2.Future<void> removeSolcast() => caller.callServerEndpoint<void>(
+    'credentials',
+    'removeSolcast',
+    {},
+  );
+
+  /// Remove Pstryk credentials.
+  _i2.Future<void> removePstryk() => caller.callServerEndpoint<void>(
+    'credentials',
+    'removePstryk',
+    {},
+  );
+
+  /// Returns which integrations are currently configured.
+  _i2.Future<Map<String, bool>> getStatus() =>
+      caller.callServerEndpoint<Map<String, bool>>(
+        'credentials',
+        'getStatus',
+        {},
+      );
+}
+
+/// {@category Endpoint}
 class EndpointExample extends _i1.EndpointRef {
   EndpointExample(_i1.EndpointCaller caller) : super(caller);
 
@@ -220,6 +295,7 @@ class Client extends _i1.ServerpodClientShared {
        ) {
     appConfig = EndpointAppConfig(this);
     baseline = EndpointBaseline(this);
+    credentials = EndpointCredentials(this);
     example = EndpointExample(this);
     forecast = EndpointForecast(this);
     optimizer = EndpointOptimizer(this);
@@ -230,6 +306,8 @@ class Client extends _i1.ServerpodClientShared {
   late final EndpointAppConfig appConfig;
 
   late final EndpointBaseline baseline;
+
+  late final EndpointCredentials credentials;
 
   late final EndpointExample example;
 
@@ -245,6 +323,7 @@ class Client extends _i1.ServerpodClientShared {
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
     'appConfig': appConfig,
     'baseline': baseline,
+    'credentials': credentials,
     'example': example,
     'forecast': forecast,
     'optimizer': optimizer,

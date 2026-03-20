@@ -20,6 +20,8 @@ abstract class IntegrationCredentials
     this.deyeUsername,
     this.deyePasswordHash,
     this.deyeAppId,
+    this.deyeAppSecret,
+    this.deyeDeviceSn,
     this.solcastApiKey,
     this.solcastSiteId,
     this.pstrykToken,
@@ -31,6 +33,8 @@ abstract class IntegrationCredentials
     String? deyeUsername,
     String? deyePasswordHash,
     String? deyeAppId,
+    String? deyeAppSecret,
+    String? deyeDeviceSn,
     String? solcastApiKey,
     String? solcastSiteId,
     String? pstrykToken,
@@ -45,6 +49,8 @@ abstract class IntegrationCredentials
       deyeUsername: jsonSerialization['deyeUsername'] as String?,
       deyePasswordHash: jsonSerialization['deyePasswordHash'] as String?,
       deyeAppId: jsonSerialization['deyeAppId'] as String?,
+      deyeAppSecret: jsonSerialization['deyeAppSecret'] as String?,
+      deyeDeviceSn: jsonSerialization['deyeDeviceSn'] as String?,
       solcastApiKey: jsonSerialization['solcastApiKey'] as String?,
       solcastSiteId: jsonSerialization['solcastSiteId'] as String?,
       pstrykToken: jsonSerialization['pstrykToken'] as String?,
@@ -66,6 +72,10 @@ abstract class IntegrationCredentials
 
   String? deyeAppId;
 
+  String? deyeAppSecret;
+
+  String? deyeDeviceSn;
+
   String? solcastApiKey;
 
   String? solcastSiteId;
@@ -84,6 +94,8 @@ abstract class IntegrationCredentials
     String? deyeUsername,
     String? deyePasswordHash,
     String? deyeAppId,
+    String? deyeAppSecret,
+    String? deyeDeviceSn,
     String? solcastApiKey,
     String? solcastSiteId,
     String? pstrykToken,
@@ -97,6 +109,8 @@ abstract class IntegrationCredentials
       if (deyeUsername != null) 'deyeUsername': deyeUsername,
       if (deyePasswordHash != null) 'deyePasswordHash': deyePasswordHash,
       if (deyeAppId != null) 'deyeAppId': deyeAppId,
+      if (deyeAppSecret != null) 'deyeAppSecret': deyeAppSecret,
+      if (deyeDeviceSn != null) 'deyeDeviceSn': deyeDeviceSn,
       if (solcastApiKey != null) 'solcastApiKey': solcastApiKey,
       if (solcastSiteId != null) 'solcastSiteId': solcastSiteId,
       if (pstrykToken != null) 'pstrykToken': pstrykToken,
@@ -112,6 +126,8 @@ abstract class IntegrationCredentials
       if (deyeUsername != null) 'deyeUsername': deyeUsername,
       if (deyePasswordHash != null) 'deyePasswordHash': deyePasswordHash,
       if (deyeAppId != null) 'deyeAppId': deyeAppId,
+      if (deyeAppSecret != null) 'deyeAppSecret': deyeAppSecret,
+      if (deyeDeviceSn != null) 'deyeDeviceSn': deyeDeviceSn,
       if (solcastApiKey != null) 'solcastApiKey': solcastApiKey,
       if (solcastSiteId != null) 'solcastSiteId': solcastSiteId,
       if (pstrykToken != null) 'pstrykToken': pstrykToken,
@@ -157,6 +173,8 @@ class _IntegrationCredentialsImpl extends IntegrationCredentials {
     String? deyeUsername,
     String? deyePasswordHash,
     String? deyeAppId,
+    String? deyeAppSecret,
+    String? deyeDeviceSn,
     String? solcastApiKey,
     String? solcastSiteId,
     String? pstrykToken,
@@ -166,6 +184,8 @@ class _IntegrationCredentialsImpl extends IntegrationCredentials {
          deyeUsername: deyeUsername,
          deyePasswordHash: deyePasswordHash,
          deyeAppId: deyeAppId,
+         deyeAppSecret: deyeAppSecret,
+         deyeDeviceSn: deyeDeviceSn,
          solcastApiKey: solcastApiKey,
          solcastSiteId: solcastSiteId,
          pstrykToken: pstrykToken,
@@ -181,6 +201,8 @@ class _IntegrationCredentialsImpl extends IntegrationCredentials {
     Object? deyeUsername = _Undefined,
     Object? deyePasswordHash = _Undefined,
     Object? deyeAppId = _Undefined,
+    Object? deyeAppSecret = _Undefined,
+    Object? deyeDeviceSn = _Undefined,
     Object? solcastApiKey = _Undefined,
     Object? solcastSiteId = _Undefined,
     Object? pstrykToken = _Undefined,
@@ -193,6 +215,10 @@ class _IntegrationCredentialsImpl extends IntegrationCredentials {
           ? deyePasswordHash
           : this.deyePasswordHash,
       deyeAppId: deyeAppId is String? ? deyeAppId : this.deyeAppId,
+      deyeAppSecret: deyeAppSecret is String?
+          ? deyeAppSecret
+          : this.deyeAppSecret,
+      deyeDeviceSn: deyeDeviceSn is String? ? deyeDeviceSn : this.deyeDeviceSn,
       solcastApiKey: solcastApiKey is String?
           ? solcastApiKey
           : this.solcastApiKey,
@@ -229,6 +255,18 @@ class IntegrationCredentialsUpdateTable
     table.deyeAppId,
     value,
   );
+
+  _i1.ColumnValue<String, String> deyeAppSecret(String? value) =>
+      _i1.ColumnValue(
+        table.deyeAppSecret,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> deyeDeviceSn(String? value) =>
+      _i1.ColumnValue(
+        table.deyeDeviceSn,
+        value,
+      );
 
   _i1.ColumnValue<String, String> solcastApiKey(String? value) =>
       _i1.ColumnValue(
@@ -268,6 +306,14 @@ class IntegrationCredentialsTable extends _i1.Table<int?> {
       'deyeAppId',
       this,
     );
+    deyeAppSecret = _i1.ColumnString(
+      'deyeAppSecret',
+      this,
+    );
+    deyeDeviceSn = _i1.ColumnString(
+      'deyeDeviceSn',
+      this,
+    );
     solcastApiKey = _i1.ColumnString(
       'solcastApiKey',
       this,
@@ -292,6 +338,10 @@ class IntegrationCredentialsTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString deyeAppId;
 
+  late final _i1.ColumnString deyeAppSecret;
+
+  late final _i1.ColumnString deyeDeviceSn;
+
   late final _i1.ColumnString solcastApiKey;
 
   late final _i1.ColumnString solcastSiteId;
@@ -305,6 +355,8 @@ class IntegrationCredentialsTable extends _i1.Table<int?> {
     deyeUsername,
     deyePasswordHash,
     deyeAppId,
+    deyeAppSecret,
+    deyeDeviceSn,
     solcastApiKey,
     solcastSiteId,
     pstrykToken,

@@ -3,6 +3,14 @@ appConfig:
   - saveConfig:
 baseline:
   - calculateBaseline:
+credentials:
+  - saveDeye:
+  - saveSolcast:
+  - savePstryk:
+  - removeDeye:
+  - removeSolcast:
+  - removePstryk:
+  - getStatus:
 example:
   - hello:
 forecast:

@@ -115,6 +115,12 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i9.PvForecast?>()) {
       return (data != null ? _i9.PvForecast.fromJson(data) : null) as T;
     }
+    if (t == Map<String, bool>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<bool>(v)),
+          )
+          as T;
+    }
     if (t == List<_i10.OptimizationFrame>) {
       return (data as List)
               .map((e) => deserialize<_i10.OptimizationFrame>(e))

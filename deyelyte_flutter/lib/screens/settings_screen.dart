@@ -39,6 +39,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final config = configAsync.valueOrNull;
+    final lockInfo = _emsLockInfo(config);
 
     if (configAsync.isLoading && !_configLoaded) {
       return const Scaffold(
@@ -71,22 +73,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               _SettingsHeader(),
               const SizedBox(height: AppSpacing.sp4),
+              if (lockInfo != null) ...[
+                _EmsLockBanner(message: lockInfo),
+                const SizedBox(height: AppSpacing.sp4),
+              ],
               AsymmetricGrid(
                 primaryFlex: 6,
                 sidebarFlex: 4,
                 gap: AppSpacing.sp4,
                 primary: Column(children: [
-                  _EmsControlCard(
-                    chargingEnabled: settings.chargingEnabled,
-                    sellingEnabled: settings.sellingEnabled,
-                    pvOnlySelling: settings.pvOnlySelling,
-                    maxBuyPrice: settings.maxBuyPrice,
-                    minSellPrice: settings.minSellPrice,
-                    onChargingChanged: notifier.setChargingEnabled,
-                    onSellingChanged: notifier.setSellingEnabled,
-                    onPvOnlySellingChanged: notifier.setPvOnlySelling,
-                    onMaxBuyPriceChanged: notifier.setMaxBuyPrice,
-                    onMinSellPriceChanged: notifier.setMinSellPrice,
+                  IgnorePointer(
+                    ignoring: lockInfo != null,
+                    child: Opacity(
+                      opacity: lockInfo != null ? 0.45 : 1.0,
+                      child: _EmsControlCard(
+                        chargingEnabled: settings.chargingEnabled,
+                        sellingEnabled: settings.sellingEnabled,
+                        pvOnlySelling: settings.pvOnlySelling,
+                        maxBuyPrice: settings.maxBuyPrice,
+                        minSellPrice: settings.minSellPrice,
+                        onChargingChanged: notifier.setChargingEnabled,
+                        onSellingChanged: notifier.setSellingEnabled,
+                        onPvOnlySellingChanged: notifier.setPvOnlySelling,
+                        onMaxBuyPriceChanged: notifier.setMaxBuyPrice,
+                        onMinSellPriceChanged: notifier.setMinSellPrice,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sp4),
                   _ThresholdsCard(
@@ -139,6 +151,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  /// Returns a human-readable reason why EMS control is locked, or null if
+  /// the controls are available.
+  String? _emsLockInfo(AppConfig? config) {
+    if (config == null || config.dataGatheringSince == null) {
+      return 'Connect your Deye inverter to enable EMS control. '
+          'After connecting, a 7-day baseline collection period begins.';
+    }
+    final since = config.dataGatheringSince!;
+    final unlockDate = since.add(const Duration(days: 7));
+    if (DateTime.now().toUtc().isBefore(unlockDate)) {
+      final day = '${unlockDate.day.toString().padLeft(2, '0')}.'
+          '${unlockDate.month.toString().padLeft(2, '0')}.'
+          '${unlockDate.year}';
+      return 'Collecting baseline data — EMS control unlocks on $day. '
+          'Your inverter continues operating normally during this period.';
+    }
+    return null;
   }
 
   Future<void> _save() async {
@@ -1159,6 +1190,38 @@ class _CityAutocomplete extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── EMS Lock Banner ───────────────────────────────────────────────────────────
+
+class _EmsLockBanner extends StatelessWidget {
+  const _EmsLockBanner({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: AppRadius.radiusMd,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              size: 20, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message,
+                style: tt.bodyMedium?.copyWith(color: AppColors.primary)),
+          ),
+        ],
       ),
     );
   }

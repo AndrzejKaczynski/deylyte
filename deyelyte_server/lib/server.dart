@@ -5,6 +5,9 @@ import 'package:serverpod_auth_server/serverpod_auth_server.dart' as auth;
 
 import 'src/generated/protocol.dart';
 import 'src/generated/endpoints.dart';
+import 'src/future_calls/init_user_call.dart';
+import 'src/future_calls/poll_inverter_call.dart';
+import 'src/future_calls/run_optimizer_call.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(
@@ -87,6 +90,37 @@ void run(List<String> args) async {
     },
   ));
 
+  pod.registerFutureCall(InitUserCall(), 'InitUserCall');
+  pod.registerFutureCall(PollInverterCall(), 'PollInverterCall');
+  pod.registerFutureCall(RunOptimizerCall(), 'RunOptimizerCall');
+
   await pod.start();
+
+  // Bootstrap recurring calls after start so the DB session is available.
+  // Ensures polls resume if the server restarts while users are configured.
+  await _bootstrapRecurringCalls(pod);
+}
+
+Future<void> _bootstrapRecurringCalls(Serverpod pod) async {
+  final session = await pod.createSession();
+  try {
+    final anyConfigured = await IntegrationCredentials.db.findFirstRow(
+      session,
+      where: (t) => t.deyeDeviceSn.notEquals(null),
+    );
+    if (anyConfigured == null) return;
+
+    // Schedule both recurring calls on startup. The self-rescheduling pattern
+    // means they normally persist across restarts via the future_calls table,
+    // but this ensures they resume even if the server crashed mid-reschedule.
+    // A brief overlap (one extra poll) is acceptable.
+    await pod.futureCallWithDelay('PollInverterCall', null, Duration.zero);
+    await pod.futureCallWithDelay(
+        'RunOptimizerCall', null, const Duration(minutes: 5));
+  } catch (e) {
+    print('Bootstrap FutureCalls error: $e');
+  } finally {
+    await session.close();
+  }
 }
 

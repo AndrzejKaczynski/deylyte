@@ -13,12 +13,15 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../endpoints/app_config_endpoint.dart' as _i2;
 import '../endpoints/baseline_endpoint.dart' as _i3;
-import '../endpoints/example_endpoint.dart' as _i4;
-import '../endpoints/forecast_endpoint.dart' as _i5;
-import '../endpoints/optimizer_endpoint.dart' as _i6;
-import '../endpoints/price_endpoint.dart' as _i7;
-import 'package:deyelyte_server/src/generated/app_config.dart' as _i8;
-import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i9;
+import '../endpoints/credentials_endpoint.dart' as _i4;
+import '../endpoints/example_endpoint.dart' as _i5;
+import '../endpoints/forecast_endpoint.dart' as _i6;
+import '../endpoints/optimizer_endpoint.dart' as _i7;
+import '../endpoints/price_endpoint.dart' as _i8;
+import 'package:deyelyte_server/src/generated/app_config.dart' as _i9;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i10;
+import 'package:deyelyte_server/src/generated/future_calls.dart' as _i11;
+export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -36,25 +39,31 @@ class Endpoints extends _i1.EndpointDispatch {
           'baseline',
           null,
         ),
-      'example': _i4.ExampleEndpoint()
+      'credentials': _i4.CredentialsEndpoint()
+        ..initialize(
+          server,
+          'credentials',
+          null,
+        ),
+      'example': _i5.ExampleEndpoint()
         ..initialize(
           server,
           'example',
           null,
         ),
-      'forecast': _i5.ForecastEndpoint()
+      'forecast': _i6.ForecastEndpoint()
         ..initialize(
           server,
           'forecast',
           null,
         ),
-      'optimizer': _i6.OptimizerEndpoint()
+      'optimizer': _i7.OptimizerEndpoint()
         ..initialize(
           server,
           'optimizer',
           null,
         ),
-      'price': _i7.PriceEndpoint()
+      'price': _i8.PriceEndpoint()
         ..initialize(
           server,
           'price',
@@ -80,7 +89,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'config': _i1.ParameterDescription(
               name: 'config',
-              type: _i1.getType<_i8.AppConfig>(),
+              type: _i1.getType<_i9.AppConfig>(),
               nullable: false,
             ),
           },
@@ -121,6 +130,133 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['credentials'] = _i1.EndpointConnector(
+      name: 'credentials',
+      endpoint: endpoints['credentials']!,
+      methodConnectors: {
+        'saveDeye': _i1.MethodConnector(
+          name: 'saveDeye',
+          params: {
+            'username': _i1.ParameterDescription(
+              name: 'username',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'password': _i1.ParameterDescription(
+              name: 'password',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'appId': _i1.ParameterDescription(
+              name: 'appId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'appSecret': _i1.ParameterDescription(
+              name: 'appSecret',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .saveDeye(
+                    session,
+                    params['username'],
+                    params['password'],
+                    params['appId'],
+                    params['appSecret'],
+                  ),
+        ),
+        'saveSolcast': _i1.MethodConnector(
+          name: 'saveSolcast',
+          params: {
+            'apiKey': _i1.ParameterDescription(
+              name: 'apiKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'siteId': _i1.ParameterDescription(
+              name: 'siteId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .saveSolcast(
+                    session,
+                    params['apiKey'],
+                    params['siteId'],
+                  ),
+        ),
+        'savePstryk': _i1.MethodConnector(
+          name: 'savePstryk',
+          params: {
+            'token': _i1.ParameterDescription(
+              name: 'token',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .savePstryk(
+                    session,
+                    params['token'],
+                  ),
+        ),
+        'removeDeye': _i1.MethodConnector(
+          name: 'removeDeye',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .removeDeye(session),
+        ),
+        'removeSolcast': _i1.MethodConnector(
+          name: 'removeSolcast',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .removeSolcast(session),
+        ),
+        'removePstryk': _i1.MethodConnector(
+          name: 'removePstryk',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .removePstryk(session),
+        ),
+        'getStatus': _i1.MethodConnector(
+          name: 'getStatus',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['credentials'] as _i4.CredentialsEndpoint)
+                  .getStatus(session),
+        ),
+      },
+    );
     connectors['example'] = _i1.EndpointConnector(
       name: 'example',
       endpoint: endpoints['example']!,
@@ -138,7 +274,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['example'] as _i4.ExampleEndpoint).hello(
+              ) async => (endpoints['example'] as _i5.ExampleEndpoint).hello(
                 session,
                 params['name'],
               ),
@@ -156,7 +292,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['forecast'] as _i5.ForecastEndpoint)
+              ) async => (endpoints['forecast'] as _i6.ForecastEndpoint)
                   .updateForecast(session),
         ),
       },
@@ -172,7 +308,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .calculateAndStore(session),
         ),
         'getSchedule': _i1.MethodConnector(
@@ -182,7 +318,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .getSchedule(session),
         ),
         'requestTopUp': _i1.MethodConnector(
@@ -192,7 +328,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .requestTopUp(session),
         ),
         'cancelTopUp': _i1.MethodConnector(
@@ -202,7 +338,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .cancelTopUp(session),
         ),
         'addOutageReserve': _i1.MethodConnector(
@@ -223,7 +359,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .addOutageReserve(
                     session,
                     params['date'],
@@ -243,7 +379,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .removeOutageReserve(
                     session,
                     params['date'],
@@ -256,7 +392,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
                   .getOutageReserves(session),
         ),
       },
@@ -283,7 +419,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['price'] as _i7.PriceEndpoint).updatePrices(
+              ) async => (endpoints['price'] as _i8.PriceEndpoint).updatePrices(
                 session,
                 params['token'],
                 params['userInfoId'],
@@ -291,6 +427,11 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth'] = _i9.Endpoints()..initializeEndpoints(server);
+    modules['serverpod_auth'] = _i10.Endpoints()..initializeEndpoints(server);
+  }
+
+  @override
+  _i1.FutureCallDispatch? get futureCalls {
+    return _i11.FutureCalls();
   }
 }
