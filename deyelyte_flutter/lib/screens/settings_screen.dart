@@ -70,9 +70,11 @@ class SettingsScreen extends ConsumerWidget {
                     deye: settings.deye,
                     solcast: settings.solcast,
                     pstryk: settings.pstryk,
+                    cityName: settings.cityName,
                     onDeyeChanged: notifier.setDeye,
                     onSolcastChanged: notifier.setSolcast,
                     onPstrykChanged: notifier.setPstryk,
+                    onCityNameChanged: notifier.setCityName,
                   ),
                   const SizedBox(height: AppSpacing.sp4),
                   const _DangerZoneCard(),
@@ -703,25 +705,49 @@ class _StatusRow extends StatelessWidget {
 
 // ── API Integrations ──────────────────────────────────────────────────────────
 
-class _ApiIntegrationsCard extends StatelessWidget {
+class _ApiIntegrationsCard extends StatefulWidget {
   const _ApiIntegrationsCard({
     required this.deye,
     required this.solcast,
     required this.pstryk,
+    required this.cityName,
     required this.onDeyeChanged,
     required this.onSolcastChanged,
     required this.onPstrykChanged,
+    required this.onCityNameChanged,
   });
 
   final bool deye;
   final bool solcast;
   final bool pstryk;
+  final String? cityName;
   final ValueChanged<bool> onDeyeChanged;
   final ValueChanged<bool> onSolcastChanged;
   final ValueChanged<bool> onPstrykChanged;
+  final ValueChanged<String?> onCityNameChanged;
+
+  @override
+  State<_ApiIntegrationsCard> createState() => _ApiIntegrationsCardState();
+}
+
+class _ApiIntegrationsCardState extends State<_ApiIntegrationsCard> {
+  late final TextEditingController _cityCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _cityCtrl = TextEditingController(text: widget.cityName ?? '');
+  }
+
+  @override
+  void dispose() {
+    _cityCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SectionHeader(title: 'API Integrations'),
@@ -729,28 +755,72 @@ class _ApiIntegrationsCard extends StatelessWidget {
         _IntegrationRow(
           icon: Icons.developer_board_rounded,
           label: 'Deye Cloud Sync',
-          detail: deye ? 'Polling every 15 min' : 'Not configured',
-          enabled: deye,
-          onChanged: onDeyeChanged,
+          detail: widget.deye ? 'Polling every 15 min' : 'Not configured',
+          enabled: widget.deye,
+          onChanged: widget.onDeyeChanged,
           color: AppColors.secondary,
         ),
         const SizedBox(height: 12),
         _IntegrationRow(
           icon: Icons.wb_sunny_rounded,
           label: 'Solcast Forecasting',
-          detail: solcast ? 'PV forecast active' : 'Not configured',
-          enabled: solcast,
-          onChanged: onSolcastChanged,
+          detail: widget.solcast ? 'PV forecast active' : 'Not configured',
+          enabled: widget.solcast,
+          onChanged: widget.onSolcastChanged,
           color: AppColors.tertiary,
         ),
         const SizedBox(height: 12),
         _IntegrationRow(
           icon: Icons.price_change_rounded,
           label: 'Pstryk Pricing Hub',
-          detail: pstryk ? 'Prices loading hourly' : 'Not configured',
-          enabled: pstryk,
-          onChanged: onPstrykChanged,
+          detail: widget.pstryk ? 'Prices loading hourly' : 'Not configured',
+          enabled: widget.pstryk,
+          onChanged: widget.onPstrykChanged,
           color: AppColors.primary,
+        ),
+        const SizedBox(height: 16),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
+        // City for PV fallback
+        Row(children: [
+          const Icon(Icons.location_on_outlined,
+              size: 14, color: AppColors.outline),
+          const SizedBox(width: 6),
+          Text('Fallback PV Location',
+              style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        ]),
+        const SizedBox(height: 4),
+        Text(
+          'Used to estimate solar production when Solcast is not configured.',
+          style: tt.bodySmall?.copyWith(color: AppColors.outline),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _cityCtrl,
+          style: tt.bodyMedium,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (v) =>
+              widget.onCityNameChanged(v.trim().isEmpty ? null : v.trim()),
+          decoration: InputDecoration(
+            hintText: 'e.g. Warsaw',
+            filled: true,
+            fillColor: AppColors.surfaceContainerLow,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: AppRadius.radiusMd,
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: AppRadius.radiusMd,
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: AppRadius.radiusMd,
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+          ),
         ),
       ]),
     );

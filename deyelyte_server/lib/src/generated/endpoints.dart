@@ -151,34 +151,13 @@ class Endpoints extends _i1.EndpointDispatch {
       methodConnectors: {
         'updateForecast': _i1.MethodConnector(
           name: 'updateForecast',
-          params: {
-            'apiKey': _i1.ParameterDescription(
-              name: 'apiKey',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'siteId': _i1.ParameterDescription(
-              name: 'siteId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'userInfoId': _i1.ParameterDescription(
-              name: 'userInfoId',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
+          params: {},
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async => (endpoints['forecast'] as _i5.ForecastEndpoint)
-                  .updateForecast(
-                    session,
-                    params['apiKey'],
-                    params['siteId'],
-                    params['userInfoId'],
-                  ),
+                  .updateForecast(session),
         ),
       },
     );

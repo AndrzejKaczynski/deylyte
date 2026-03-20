@@ -15,6 +15,7 @@ class SettingsState {
     this.deye = false,
     this.solcast = false,
     this.pstryk = false,
+    this.cityName,
   });
 
   final double minSoc;
@@ -35,6 +36,7 @@ class SettingsState {
   final bool deye;
   final bool solcast;
   final bool pstryk;
+  final String? cityName;
 
   SettingsState copyWith({
     double? minSoc,
@@ -50,6 +52,7 @@ class SettingsState {
     bool? deye,
     bool? solcast,
     bool? pstryk,
+    Object? cityName = _sentinel,
   }) =>
       SettingsState(
         minSoc: minSoc ?? this.minSoc,
@@ -69,6 +72,7 @@ class SettingsState {
         deye: deye ?? this.deye,
         solcast: solcast ?? this.solcast,
         pstryk: pstryk ?? this.pstryk,
+        cityName: cityName == _sentinel ? this.cityName : cityName as String?,
       );
 }
 
@@ -96,6 +100,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setDeye(bool v) => state = state.copyWith(deye: v);
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);
+  void setCityName(String? v) => state = state.copyWith(cityName: v);
 }
 
 final settingsProvider =

@@ -29,6 +29,9 @@ abstract class AppConfig
     this.batteryLifecycles,
     this.minSocPercentage,
     this.maxDischargeRateKw,
+    this.cityName,
+    this.latitude,
+    this.longitude,
   });
 
   factory AppConfig({
@@ -46,6 +49,9 @@ abstract class AppConfig
     int? batteryLifecycles,
     double? minSocPercentage,
     double? maxDischargeRateKw,
+    String? cityName,
+    double? latitude,
+    double? longitude,
   }) = _AppConfigImpl;
 
   factory AppConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -81,6 +87,9 @@ abstract class AppConfig
           ?.toDouble(),
       maxDischargeRateKw: (jsonSerialization['maxDischargeRateKw'] as num?)
           ?.toDouble(),
+      cityName: jsonSerialization['cityName'] as String?,
+      latitude: (jsonSerialization['latitude'] as num?)?.toDouble(),
+      longitude: (jsonSerialization['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -117,6 +126,12 @@ abstract class AppConfig
 
   double? maxDischargeRateKw;
 
+  String? cityName;
+
+  double? latitude;
+
+  double? longitude;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -138,6 +153,9 @@ abstract class AppConfig
     int? batteryLifecycles,
     double? minSocPercentage,
     double? maxDischargeRateKw,
+    String? cityName,
+    double? latitude,
+    double? longitude,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -159,6 +177,9 @@ abstract class AppConfig
       if (batteryLifecycles != null) 'batteryLifecycles': batteryLifecycles,
       if (minSocPercentage != null) 'minSocPercentage': minSocPercentage,
       if (maxDischargeRateKw != null) 'maxDischargeRateKw': maxDischargeRateKw,
+      if (cityName != null) 'cityName': cityName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 
@@ -182,6 +203,9 @@ abstract class AppConfig
       if (batteryLifecycles != null) 'batteryLifecycles': batteryLifecycles,
       if (minSocPercentage != null) 'minSocPercentage': minSocPercentage,
       if (maxDischargeRateKw != null) 'maxDischargeRateKw': maxDischargeRateKw,
+      if (cityName != null) 'cityName': cityName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 
@@ -233,6 +257,9 @@ class _AppConfigImpl extends AppConfig {
     int? batteryLifecycles,
     double? minSocPercentage,
     double? maxDischargeRateKw,
+    String? cityName,
+    double? latitude,
+    double? longitude,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
@@ -248,6 +275,9 @@ class _AppConfigImpl extends AppConfig {
          batteryLifecycles: batteryLifecycles,
          minSocPercentage: minSocPercentage,
          maxDischargeRateKw: maxDischargeRateKw,
+         cityName: cityName,
+         latitude: latitude,
+         longitude: longitude,
        );
 
   /// Returns a shallow copy of this [AppConfig]
@@ -269,6 +299,9 @@ class _AppConfigImpl extends AppConfig {
     Object? batteryLifecycles = _Undefined,
     Object? minSocPercentage = _Undefined,
     Object? maxDischargeRateKw = _Undefined,
+    Object? cityName = _Undefined,
+    Object? latitude = _Undefined,
+    Object? longitude = _Undefined,
   }) {
     return AppConfig(
       id: id is int? ? id : this.id,
@@ -298,6 +331,9 @@ class _AppConfigImpl extends AppConfig {
       maxDischargeRateKw: maxDischargeRateKw is double?
           ? maxDischargeRateKw
           : this.maxDischargeRateKw,
+      cityName: cityName is String? ? cityName : this.cityName,
+      latitude: latitude is double? ? latitude : this.latitude,
+      longitude: longitude is double? ? longitude : this.longitude,
     );
   }
 }
@@ -375,6 +411,21 @@ class AppConfigUpdateTable extends _i1.UpdateTable<AppConfigTable> {
         table.maxDischargeRateKw,
         value,
       );
+
+  _i1.ColumnValue<String, String> cityName(String? value) => _i1.ColumnValue(
+    table.cityName,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> latitude(double? value) => _i1.ColumnValue(
+    table.latitude,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> longitude(double? value) => _i1.ColumnValue(
+    table.longitude,
+    value,
+  );
 }
 
 class AppConfigTable extends _i1.Table<int?> {
@@ -432,6 +483,18 @@ class AppConfigTable extends _i1.Table<int?> {
       'maxDischargeRateKw',
       this,
     );
+    cityName = _i1.ColumnString(
+      'cityName',
+      this,
+    );
+    latitude = _i1.ColumnDouble(
+      'latitude',
+      this,
+    );
+    longitude = _i1.ColumnDouble(
+      'longitude',
+      this,
+    );
   }
 
   late final AppConfigUpdateTable updateTable;
@@ -462,6 +525,12 @@ class AppConfigTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDouble maxDischargeRateKw;
 
+  late final _i1.ColumnString cityName;
+
+  late final _i1.ColumnDouble latitude;
+
+  late final _i1.ColumnDouble longitude;
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -478,6 +547,9 @@ class AppConfigTable extends _i1.Table<int?> {
     batteryLifecycles,
     minSocPercentage,
     maxDischargeRateKw,
+    cityName,
+    latitude,
+    longitude,
   ];
 }
 

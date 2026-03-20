@@ -80,18 +80,13 @@ class EndpointForecast extends _i1.EndpointRef {
   @override
   String get name => 'forecast';
 
-  _i2.Future<void> updateForecast(
-    String apiKey,
-    String siteId,
-    int userInfoId,
-  ) => caller.callServerEndpoint<void>(
+  /// Refreshes the PV forecast for the authenticated user.
+  /// Uses Solcast if credentials are configured; falls back to the
+  /// Open-Meteo estimator (requires cityName in AppConfig) if not.
+  _i2.Future<void> updateForecast() => caller.callServerEndpoint<void>(
     'forecast',
     'updateForecast',
-    {
-      'apiKey': apiKey,
-      'siteId': siteId,
-      'userInfoId': userInfoId,
-    },
+    {},
   );
 }
 

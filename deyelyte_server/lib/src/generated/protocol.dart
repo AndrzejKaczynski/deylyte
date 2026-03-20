@@ -131,6 +131,24 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: true,
           dartType: 'double?',
         ),
+        _i2.ColumnDefinition(
+          name: 'cityName',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'latitude',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'longitude',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
       ],
       foreignKeys: [],
       indexes: [
