@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(dart bin/main.dart)",
-      "Bash(kill -9 23036)"
+      "Bash(kill -9 23036)",
+      "Bash(flutter analyze:*)",
+      "Bash(dart fix:*)"
     ]
   }
 }
