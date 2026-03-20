@@ -4,7 +4,7 @@ import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart
 
 import 'auth_screen.dart';
 import 'app_shell.dart';
-import 'theme/app_theme.dart';
+import 'theme/theme.dart';
 
 late Client client;
 late SessionManager sessionManager;

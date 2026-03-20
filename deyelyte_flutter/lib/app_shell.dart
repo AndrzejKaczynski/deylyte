@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
-import 'theme/app_theme.dart';
+import 'theme/theme.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/history_screen.dart';

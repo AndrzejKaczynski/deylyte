@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:serverpod_auth_email_flutter/serverpod_auth_email_flutter.dart';
 
 import 'main.dart';
-import 'theme/app_theme.dart';
-import 'theme/app_styles.dart';
+import 'theme/theme.dart';
+import 'components/components.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Screen – adaptive (mobile / desktop) entry point
