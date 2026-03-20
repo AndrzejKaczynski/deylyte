@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:serverpod_auth_email_flutter/serverpod_auth_email_flutter.dart';
 
 import 'main.dart';
 import 'theme/app_theme.dart';
@@ -277,10 +278,12 @@ class _SignInFormState extends State<_SignInForm>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _verificationController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _isRegisterMode = false;
+  bool _isAwaitingVerification = false;
   String? _errorMessage;
 
   late final AnimationController _shakeController;
@@ -302,6 +305,7 @@ class _SignInFormState extends State<_SignInForm>
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _verificationController.dispose();
     _shakeController.dispose();
     super.dispose();
   }
@@ -318,23 +322,22 @@ class _SignInFormState extends State<_SignInForm>
     });
 
     try {
-      final auth = client.modules.auth;
-      final response = await auth.email.authenticate(
+      final emailAuth = EmailAuthController(client.modules.auth);
+      final userInfo = await emailAuth.signIn(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
       if (!mounted) return;
 
-      if (!response.success) {
+      if (userInfo == null) {
         setState(() {
-          _errorMessage =
-              response.failReason?.toString() ?? 'Invalid credentials. Please try again.';
+          _errorMessage = 'Invalid credentials. Please try again.';
           _isLoading = false;
         });
         _shakeController.forward(from: 0);
       }
-      // On success, sessionManager listener in main.dart will rebuild the app
+      // On success, sessionManager listener in main.dart rebuilds the app
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -345,7 +348,7 @@ class _SignInFormState extends State<_SignInForm>
     }
   }
 
-  Future<void> _register() async {
+  Future<void> _requestRegistration() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       _shakeController.forward(from: 0);
       return;
@@ -357,36 +360,64 @@ class _SignInFormState extends State<_SignInForm>
     });
 
     try {
-      final auth = client.modules.auth;
-      final response = await auth.email.createAccountRequest(
-        _emailController.text.trim(),
+      final emailAuth = EmailAuthController(client.modules.auth);
+      final sent = await emailAuth.createAccountRequest(
         _emailController.text.trim().split('@').first,
+        _emailController.text.trim(),
         _passwordController.text,
       );
 
       if (!mounted) return;
 
-      if (!response) {
+      if (!sent) {
         setState(() {
-          _errorMessage = 'Could not create account. Please try again.';
+          _errorMessage = 'Could not send verification email. Email may already be in use.';
           _isLoading = false;
         });
         _shakeController.forward(from: 0);
       } else {
-        // Auto sign-in after registration
-        final signInResponse = await auth.email.authenticate(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-        if (!mounted) return;
-        if (!signInResponse.success) {
-          setState(() {
-            _errorMessage = 'Account created! Please check your email to verify, then sign in.';
-            _isRegisterMode = false;
-            _isLoading = false;
-          });
-        }
+        setState(() {
+          _isAwaitingVerification = true;
+          _isLoading = false;
+          _errorMessage = null;
+        });
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Connection error. Please check the server.';
+        _isLoading = false;
+      });
+      _shakeController.forward(from: 0);
+    }
+  }
+
+  Future<void> _verifyCode() async {
+    final code = _verificationController.text.trim();
+    if (code.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final emailAuth = EmailAuthController(client.modules.auth);
+      final userInfo = await emailAuth.validateAccount(
+        _emailController.text.trim(),
+        code,
+      );
+
+      if (!mounted) return;
+
+      if (userInfo == null) {
+        setState(() {
+          _errorMessage = 'Invalid or expired code. Please try again.';
+          _isLoading = false;
+        });
+        _shakeController.forward(from: 0);
+      }
+      // On success, session is registered and app rebuilds
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -431,9 +462,11 @@ class _SignInFormState extends State<_SignInForm>
               const SizedBox(height: 32),
             ],
             Text(
-              _isRegisterMode
-                  ? 'Create Account'
-                  : (widget.isDesktop ? 'Welcome Back' : 'Welcome back'),
+              _isAwaitingVerification
+                  ? 'Check your email'
+                  : (_isRegisterMode
+                      ? 'Create Account'
+                      : (widget.isDesktop ? 'Welcome Back' : 'Welcome back')),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
@@ -441,61 +474,78 @@ class _SignInFormState extends State<_SignInForm>
             ),
             const SizedBox(height: 8),
             Text(
-              _isRegisterMode
-                  ? 'Set up your energy management account.'
-                  : (widget.isDesktop
-                      ? 'Sign in to manage your energy ecosystem.'
-                      : 'Sign in to your account'),
+              _isAwaitingVerification
+                  ? 'We sent a verification code to ${_emailController.text.trim()}. Enter it below to activate your account.'
+                  : (_isRegisterMode
+                      ? 'Set up your energy management account.'
+                      : (widget.isDesktop
+                          ? 'Sign in to manage your energy ecosystem.'
+                          : 'Sign in to your account')),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 36),
 
-            // Email field
-            _AnimatedInputField(
-              controller: _emailController,
-              label: 'Email address',
-              hint: 'you@example.com',
-              prefixIcon: Icons.alternate_email_rounded,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Email is required';
-                if (!v.contains('@')) return 'Enter a valid email address';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Password field
-            _AnimatedInputField(
-              controller: _passwordController,
-              label: 'Password',
-              hint: '••••••••',
-              prefixIcon: Icons.lock_outline_rounded,
-              obscureText: _obscurePassword,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _signIn(),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  size: 20,
-                  color: AppColors.onSurfaceVariant,
-                ),
-                onPressed: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
+            // Email & password fields (hidden during verification step)
+            if (!_isAwaitingVerification) ...[
+              _AnimatedInputField(
+                controller: _emailController,
+                label: 'Email address',
+                hint: 'you@example.com',
+                prefixIcon: Icons.alternate_email_rounded,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Email is required';
+                  if (!v.contains('@')) return 'Enter a valid email address';
+                  return null;
+                },
               ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Password is required';
-                if (v.length < 6) return 'Password must be at least 6 characters';
-                return null;
-              },
-            ),
+              const SizedBox(height: 16),
+              _AnimatedInputField(
+                controller: _passwordController,
+                label: 'Password',
+                hint: '••••••••',
+                prefixIcon: Icons.lock_outline_rounded,
+                obscureText: _obscurePassword,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _isRegisterMode ? _requestRegistration() : _signIn(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 20,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Password is required';
+                  if (v.length < 6) return 'Password must be at least 6 characters';
+                  return null;
+                },
+              ),
+            ],
 
-            // Forgot password
+            // Verification code field (shown only after registration request)
+            if (_isAwaitingVerification) ...[
+              const SizedBox(height: 8),
+              _AnimatedInputField(
+                controller: _verificationController,
+                label: 'Verification code',
+                hint: 'Enter code from email',
+                prefixIcon: Icons.verified_outlined,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _verifyCode(),
+              ),
+            ],
+
+            // Forgot password (sign-in mode only)
+            if (!_isRegisterMode && !_isAwaitingVerification)
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -565,46 +615,80 @@ class _SignInFormState extends State<_SignInForm>
             GradientButton(
               onPressed: _isLoading
                   ? null
-                  : (_isRegisterMode ? _register : _signIn),
+                  : (_isAwaitingVerification
+                      ? _verifyCode
+                      : (_isRegisterMode ? _requestRegistration : _signIn)),
               isLoading: _isLoading,
-              label: _isRegisterMode ? 'Create Account' : 'Sign In',
+              label: _isAwaitingVerification
+                  ? 'Verify & Activate'
+                  : (_isRegisterMode ? 'Send Verification Email' : 'Sign In'),
             ),
             const SizedBox(height: 28),
 
-            // Toggle sign-in / register
-            Center(
-              child: GestureDetector(
-                onTap: () => setState(() {
-                  _isRegisterMode = !_isRegisterMode;
-                  _errorMessage = null;
-                }),
-                child: Text.rich(
-                  TextSpan(
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceVariant,
+            // Toggle sign-in / register (hidden during verification)
+            if (!_isAwaitingVerification)
+              Center(
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _isRegisterMode = !_isRegisterMode;
+                    _errorMessage = null;
+                  }),
+                  child: Text.rich(
+                    TextSpan(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                      children: [
+                        TextSpan(
+                          text: _isRegisterMode
+                              ? 'Already have an account? '
+                              : (widget.isDesktop
+                                  ? 'New to the platform? '
+                                  : "Don't have an account? "),
                         ),
-                    children: [
-                      TextSpan(
-                        text: _isRegisterMode
-                            ? 'Already have an account? '
-                            : (widget.isDesktop
-                                ? 'New to the platform? '
-                                : "Don't have an account? "),
-                      ),
-                      TextSpan(
-                        text: _isRegisterMode
-                            ? 'Sign In'
-                            : (widget.isDesktop ? 'Register' : 'Join now'),
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                        TextSpan(
+                          text: _isRegisterMode
+                              ? 'Sign In'
+                              : (widget.isDesktop ? 'Register' : 'Join now'),
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+
+            // Back to register (shown during verification)
+            if (_isAwaitingVerification)
+              Center(
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _isAwaitingVerification = false;
+                    _verificationController.clear();
+                    _errorMessage = null;
+                  }),
+                  child: Text.rich(
+                    TextSpan(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                      children: [
+                        const TextSpan(text: 'Wrong email? '),
+                        TextSpan(
+                          text: 'Go back',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
           ],
         ),
