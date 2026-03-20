@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dart bin/main.dart)",
+      "Bash(kill -9 23036)"
+    ]
+  }
+}
