@@ -27,10 +27,7 @@ void run(List<String> args) async {
   auth.AuthConfig.set(auth.AuthConfig(
     sendValidationEmail: (session, email, validationCode) async {
       if (smtpHost.isEmpty || smtpUsername.isEmpty) {
-        session.log(
-          'No SMTP credentials configured. Validation code for $email: $validationCode',
-          level: LogLevel.info,
-        );
+        print('>>> VALIDATION CODE for $email: $validationCode <<<');
         return true; // fallback: log code only (dev without credentials)
       }
       try {
@@ -46,7 +43,7 @@ void run(List<String> args) async {
   <div style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1a1a2e;
               background:#f0f4ff;padding:16px 24px;border-radius:8px;
               text-align:center;margin:24px 0">$validationCode</div>
-  <p style="color:#666">This code expires in 24 hours. If you didn\'t request this, ignore this email.</p>
+  <p style="color:#666">This code expires in 24 hours. If you didn't request this, ignore this email.</p>
 </div>''';
         await mailer.send(message, smtpServer);
         session.log('Verification email sent to $email');
@@ -77,7 +74,7 @@ void run(List<String> args) async {
   <div style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1a1a2e;
               background:#f0f4ff;padding:16px 24px;border-radius:8px;
               text-align:center;margin:24px 0">$validationCode</div>
-  <p style="color:#666">Expires in 24 hours. Didn\'t request this? Ignore it.</p>
+  <p style="color:#666">Expires in 24 hours. Didn't request this? Ignore it.</p>
 </div>''';
         await mailer.send(message, smtpServer);
         return true;

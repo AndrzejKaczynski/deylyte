@@ -1,8 +1,4 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
-import '../../generated/protocol.dart';
 
 class DeyeCloudClient {
   final String username;
@@ -16,14 +12,8 @@ class DeyeCloudClient {
 
   Future<bool> authenticate(Session session) async {
     // Deye Cloud API expects SHA256 hashed password in lowercase
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    final hashedPassword = digest.toString().toLowerCase();
-
-    final uri = Uri.parse('$baseUrl/v1.0/account/token');
-    
-    // This is the structure for the payload
-    // Authentication usually involves the app id, signature, and timestamp
+    // TODO: implement — hash password and POST to $baseUrl/v1.0/account/token
+    // final hashedPassword = sha256.convert(utf8.encode(password)).toString();
     session.log('Authenticating with DeyeCloud using username: $username');
     
     // _accessToken = ...

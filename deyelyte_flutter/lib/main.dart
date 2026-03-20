@@ -11,10 +11,8 @@ import 'providers/app_providers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final client = Client(
-    'http://localhost:8080/',
-    authenticationKeyManager: FlutterAuthenticationKeyManager(),
-  );
+  final client = Client('http://localhost:8080/')
+    ..authKeyProvider = FlutterAuthenticationKeyManager();
 
   final sessionManager = SessionManager(
     caller: client.modules.auth,

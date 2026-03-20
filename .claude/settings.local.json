@@ -4,7 +4,13 @@
       "Bash(dart bin/main.dart)",
       "Bash(kill -9 23036)",
       "Bash(flutter analyze:*)",
-      "Bash(dart fix:*)"
+      "Bash(dart fix:*)",
+      "Bash(dart analyze:*)",
+      "Bash(find ~/.pub-cache -path */serverpod_client*/serverpod_client_shared.dart)",
+      "Bash(serverpod generate:*)",
+      "Bash(xargs kill:*)",
+      "Bash(dart run:*)",
+      "Bash(serverpod version:*)"
     ]
   }
 }
