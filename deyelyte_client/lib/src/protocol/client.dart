@@ -67,20 +67,17 @@ class EndpointCredentials extends _i1.EndpointRef {
   String get name => 'credentials';
 
   /// Save Deye Cloud credentials. The password is stored as a SHA256 hash.
+  /// appId and appSecret are read from server config — not supplied by the user.
   /// Schedules InitUserCall on the first save to fetch the device SN.
   _i2.Future<void> saveDeye(
     String username,
     String password,
-    String appId,
-    String appSecret,
   ) => caller.callServerEndpoint<void>(
     'credentials',
     'saveDeye',
     {
       'username': username,
       'password': password,
-      'appId': appId,
-      'appSecret': appSecret,
     },
   );
 

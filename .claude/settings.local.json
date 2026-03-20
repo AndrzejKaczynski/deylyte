@@ -17,7 +17,11 @@
       "Bash(serverpod create-migration:*)",
       "Bash(flutter pub:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(flutter test:*)"
     ]
   }
 }

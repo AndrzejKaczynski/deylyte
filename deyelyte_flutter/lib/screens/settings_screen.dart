@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../theme/theme.dart';
 import '../components/components.dart';
+import '../components/deye_credentials_dialog.dart';
 import '../providers/app_providers.dart';
 import '../providers/settings_provider.dart';
 
@@ -18,6 +19,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _configLoaded = false;
+  bool _statusLoaded = false;
   bool _saving = false;
 
   @override
@@ -32,6 +34,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       } else if (next is AsyncData) {
         // Server returned null — no config yet, use defaults.
         _configLoaded = true;
+      }
+    });
+
+    // Populate integration-enabled flags from server once on first load.
+    ref.listen<AsyncValue<Map<String, bool>>>(integrationStatusProvider,
+        (_, next) {
+      if (_statusLoaded) return;
+      final status = next.valueOrNull;
+      if (status != null) {
+        _statusLoaded = true;
+        ref.read(settingsProvider.notifier).loadIntegrationStatus(status);
+      } else if (next is AsyncData) {
+        _statusLoaded = true;
       }
     });
 
@@ -135,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     solcast: settings.solcast,
                     pstryk: settings.pstryk,
                     cityName: settings.cityName,
-                    onDeyeChanged: notifier.setDeye,
+                    onDeyeChanged: _handleDeyeToggle,
                     onSolcastChanged: notifier.setSolcast,
                     onPstrykChanged: notifier.setPstryk,
                     onCityNameChanged: notifier.setCityName,
@@ -170,6 +185,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           'Your inverter continues operating normally during this period.';
     }
     return null;
+  }
+
+  void _handleDeyeToggle(bool value) async {
+    final notifier = ref.read(settingsProvider.notifier);
+    if (value) {
+      await DeyeCredentialsDialog.show(
+        context,
+        onSave: (username, password) async {
+          await ref
+              .read(clientProvider)
+              .credentials
+              .saveDeye(username, password);
+          notifier.setDeye(true);
+          ref.invalidate(appConfigProvider);
+          ref.invalidate(integrationStatusProvider);
+        },
+      );
+    } else {
+      try {
+        await ref.read(clientProvider).credentials.removeDeye();
+        notifier.setDeye(false);
+        ref.invalidate(appConfigProvider);
+        ref.invalidate(integrationStatusProvider);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to disconnect Deye: $e')),
+          );
+        }
+      }
+    }
   }
 
   Future<void> _save() async {

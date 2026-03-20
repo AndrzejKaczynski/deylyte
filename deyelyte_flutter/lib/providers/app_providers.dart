@@ -30,3 +30,9 @@ class AppConfigNotifier extends AsyncNotifier<AppConfig?> {
 
 final appConfigProvider =
     AsyncNotifierProvider<AppConfigNotifier, AppConfig?>(AppConfigNotifier.new);
+
+/// Loads integration-enabled flags from server (stored in IntegrationCredentials,
+/// not in AppConfig).
+final integrationStatusProvider = FutureProvider<Map<String, bool>>((ref) async {
+  return ref.read(clientProvider).credentials.getStatus();
+});

@@ -125,6 +125,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setDeye(bool v) => state = state.copyWith(deye: v);
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);
+
+  void loadIntegrationStatus(Map<String, bool> status) => state = state.copyWith(
+        deye: status['deye'] ?? state.deye,
+        solcast: status['solcast'] ?? state.solcast,
+        pstryk: status['pstryk'] ?? state.pstryk,
+      );
   void setCityName(String? v) => state = state.copyWith(cityName: v);
 
   void loadFrom(AppConfig c) => state = SettingsState(

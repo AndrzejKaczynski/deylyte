@@ -9,18 +9,21 @@ class CredentialsEndpoint extends Endpoint {
   // ---------------------------------------------------------------------------
 
   /// Save Deye Cloud credentials. The password is stored as a SHA256 hash.
+  /// appId and appSecret are read from server config (passwords.yaml) — not
+  /// supplied by the user.
   /// Schedules InitUserCall on the first save to fetch the device SN.
   Future<void> saveDeye(
     Session session,
     String username,
     String password,
-    String appId,
-    String appSecret,
   ) async {
     final userInfoId = _requireUserInfoId(session);
     final existing = await _loadCredentials(session, userInfoId);
     final isFirstSave = existing?.deyeUsername == null;
     final passwordHash = sha256.convert(utf8.encode(password)).toString();
+
+    final appId = session.passwords['deyeAppId'] ?? '';
+    final appSecret = session.passwords['deyeAppSecret'] ?? '';
 
     await _upsert(
       session,
