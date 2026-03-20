@@ -1,3 +1,4 @@
+import 'package:deyelyte_client/deyelyte_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SettingsState {
@@ -125,6 +126,22 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);
   void setCityName(String? v) => state = state.copyWith(cityName: v);
+
+  void loadFrom(AppConfig c) => state = SettingsState(
+        chargingEnabled: c.chargingEnabled,
+        sellingEnabled: c.sellingEnabled,
+        pvOnlySelling: c.pvOnlySelling,
+        maxBuyPrice: c.alwaysChargePriceThreshold,
+        minSellPrice: c.minSellPriceThreshold,
+        batteryCapacityKwh: c.batteryCapacityKwh ?? 10.0,
+        batteryCost: c.batteryCost,
+        batteryLifecycles: c.batteryLifecycles ?? 6000,
+        minSoc: c.minSocPercentage ?? 0.15,
+        maxDischargeRateKw: c.maxDischargeRateKw ?? 5.0,
+        maxChargeRateKw: c.maxChargeRateKw,
+        gridConnectionKw: c.gridConnectionKw,
+        cityName: c.cityName,
+      );
 }
 
 final settingsProvider =

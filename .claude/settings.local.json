@@ -15,7 +15,9 @@
       "Bash(xargs cat:*)",
       "Bash(grep -E \"\\\\.dart$\")",
       "Bash(serverpod create-migration:*)",
-      "Bash(flutter pub:*)"
+      "Bash(flutter pub:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

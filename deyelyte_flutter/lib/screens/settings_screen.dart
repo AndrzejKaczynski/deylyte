@@ -1,20 +1,68 @@
+import 'dart:convert';
+
+import 'package:deyelyte_client/deyelyte_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import '../theme/theme.dart';
 import '../components/components.dart';
+import '../providers/app_providers.dart';
 import '../providers/settings_provider.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _configLoaded = false;
+  bool _saving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Populate local settings from server config once on first load.
+    ref.listen<AsyncValue<AppConfig?>>(appConfigProvider, (_, next) {
+      if (_configLoaded) return;
+      final config = next.valueOrNull;
+      if (config != null) {
+        _configLoaded = true;
+        ref.read(settingsProvider.notifier).loadFrom(config);
+      } else if (next is AsyncData) {
+        // Server returned null — no config yet, use defaults.
+        _configLoaded = true;
+      }
+    });
+
+    final configAsync = ref.watch(appConfigProvider);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
+    if (configAsync.isLoading && !_configLoaded) {
+      return const Scaffold(
+        backgroundColor: AppColors.surface,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.surface,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _saving ? null : _save,
+        icon: _saving
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white),
+              )
+            : const Icon(Icons.save_rounded),
+        label: const Text('Save'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(isDesktop ? AppSpacing.sp6 : AppSpacing.sp4),
@@ -84,11 +132,55 @@ class SettingsScreen extends ConsumerWidget {
                   const _DangerZoneCard(),
                 ]),
               ),
+              // Extra bottom padding so FAB doesn't overlap last card.
+              const SizedBox(height: 80),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final s = ref.read(settingsProvider);
+      // Preserve topUpRequested from the existing config if available.
+      final existing = ref.read(appConfigProvider).valueOrNull;
+      final config = AppConfig(
+        userInfoId: 0, // server always overwrites with authenticated user's id
+        chargingEnabled: s.chargingEnabled,
+        sellingEnabled: s.sellingEnabled,
+        pvOnlySelling: s.pvOnlySelling,
+        topUpRequested: existing?.topUpRequested ?? false,
+        alwaysChargePriceThreshold: s.maxBuyPrice,
+        minSellPriceThreshold: s.minSellPrice,
+        batteryCapacityKwh: s.batteryCapacityKwh,
+        batteryCost: s.batteryCost,
+        batteryLifecycles: s.batteryLifecycles,
+        minSocPercentage: s.minSoc,
+        maxDischargeRateKw: s.maxDischargeRateKw,
+        maxChargeRateKw: s.maxChargeRateKw,
+        gridConnectionKw: s.gridConnectionKw,
+        cityName: s.cityName,
+        latitude: existing?.latitude,
+        longitude: existing?.longitude,
+      );
+      await ref.read(appConfigProvider.notifier).save(config);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Settings saved')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
 
@@ -249,7 +341,6 @@ class _EmsControlCardState extends State<_EmsControlCard> {
                           value: !widget.pvOnlySelling,
                           onChanged: (v) =>
                               widget.onPvOnlySellingChanged(!v),
-                          activeThumbColor: AppColors.tertiary,
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                         ),
@@ -777,20 +868,6 @@ class _ApiIntegrationsCard extends StatefulWidget {
 }
 
 class _ApiIntegrationsCardState extends State<_ApiIntegrationsCard> {
-  late final TextEditingController _cityCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _cityCtrl = TextEditingController(text: widget.cityName ?? '');
-  }
-
-  @override
-  void dispose() {
-    _cityCtrl.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
@@ -841,32 +918,9 @@ class _ApiIntegrationsCardState extends State<_ApiIntegrationsCard> {
           style: tt.bodySmall?.copyWith(color: AppColors.outline),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _cityCtrl,
-          style: tt.bodyMedium,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (v) =>
-              widget.onCityNameChanged(v.trim().isEmpty ? null : v.trim()),
-          decoration: InputDecoration(
-            hintText: 'e.g. Warsaw',
-            filled: true,
-            fillColor: AppColors.surfaceContainerLow,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.radiusMd,
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.radiusMd,
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.radiusMd,
-              borderSide:
-                  const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
+        _CityAutocomplete(
+          initialValue: widget.cityName,
+          onChanged: widget.onCityNameChanged,
         ),
       ]),
     );
@@ -923,7 +977,6 @@ class _IntegrationRow extends StatelessWidget {
         Switch(
           value: enabled,
           onChanged: onChanged,
-          activeThumbColor: color,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ]),
@@ -983,6 +1036,134 @@ class _DangerZoneCard extends StatelessWidget {
   }
 }
 
+// ── City Autocomplete ─────────────────────────────────────────────────────────
+
+class _CityOption {
+  const _CityOption({
+    required this.name,
+    required this.country,
+    required this.displayName,
+  });
+  final String name;
+  final String country;
+  final String displayName;
+}
+
+class _CityAutocomplete extends StatelessWidget {
+  const _CityAutocomplete({required this.initialValue, required this.onChanged});
+
+  final String? initialValue;
+  final ValueChanged<String?> onChanged;
+
+  static Future<List<_CityOption>> _searchCities(String query) async {
+    if (query.length < 3) return const [];
+    try {
+      final uri = Uri.parse(
+        'https://geocoding-api.open-meteo.com/v1/search'
+        '?name=${Uri.encodeComponent(query)}&count=5&format=json',
+      );
+      final response = await http.get(uri);
+      if (response.statusCode != 200) return const [];
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = (data['results'] as List?) ?? [];
+      return results.map((r) {
+        final m = r as Map<String, dynamic>;
+        final name = m['name'] as String;
+        final country = (m['country'] as String?) ?? '';
+        return _CityOption(
+          name: name,
+          country: country,
+          displayName: country.isNotEmpty ? '$name, $country' : name,
+        );
+      }).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final inputDecoration = InputDecoration(
+      hintText: 'e.g. Warsaw',
+      hintStyle: tt.bodyMedium?.copyWith(color: AppColors.outline),
+      filled: true,
+      fillColor: AppColors.surfaceContainerLow,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      border: OutlineInputBorder(
+        borderRadius: AppRadius.radiusMd,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: AppRadius.radiusMd,
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AppRadius.radiusMd,
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+    );
+
+    return Autocomplete<_CityOption>(
+      initialValue: TextEditingValue(text: initialValue ?? ''),
+      displayStringForOption: (opt) => opt.displayName,
+      optionsBuilder: (value) => _searchCities(value.text.trim()),
+      onSelected: (opt) => onChanged(opt.name),
+      fieldViewBuilder: (context, ctrl, focusNode, onSubmitted) => TextField(
+        controller: ctrl,
+        focusNode: focusNode,
+        style: tt.bodyMedium,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) {
+          onSubmitted();
+          final trimmed = ctrl.text.trim();
+          if (trimmed.isEmpty) onChanged(null);
+        },
+        decoration: inputDecoration,
+      ),
+      optionsViewBuilder: (context, onSelected, options) => Align(
+        alignment: Alignment.topLeft,
+        child: Material(
+          elevation: 4,
+          borderRadius: AppRadius.radiusMd,
+          color: AppColors.surfaceContainerLow,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              shrinkWrap: true,
+              itemCount: options.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 12, endIndent: 12),
+              itemBuilder: (context, i) {
+                final opt = options.elementAt(i);
+                return InkWell(
+                  onTap: () => onSelected(opt),
+                  borderRadius: AppRadius.radiusMd,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(opt.name, style: tt.bodyMedium),
+                        if (opt.country.isNotEmpty)
+                          Text(opt.country,
+                              style: tt.bodySmall
+                                  ?.copyWith(color: AppColors.outline)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
 class _ToggleSetting extends StatelessWidget {
@@ -1023,7 +1204,6 @@ class _ToggleSetting extends StatelessWidget {
       Switch(
         value: value,
         onChanged: onChanged,
-        activeThumbColor: iconColor,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     ]);
