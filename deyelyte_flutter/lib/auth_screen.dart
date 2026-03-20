@@ -417,8 +417,14 @@ class _SignInFormState extends ConsumerState<_SignInForm>
           _isLoading = false;
         });
         _shakeController.forward(from: 0);
+      } else {
+        final emailAuth = EmailAuthController(ref.read(clientProvider).modules.auth);
+        await emailAuth.signIn(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+        if (mounted) setState(() => _isLoading = false);
       }
-      // On success, session is registered and app rebuilds
     } catch (e) {
       if (!mounted) return;
       setState(() {
