@@ -1,0 +1,16 @@
+class: OptimizationFrame
+table: optimization_frames
+fields:
+  userInfoId: int
+  generatedAt: DateTime
+  hour: DateTime
+  command: String
+  targetSocPercent: double?
+  reason: String
+  estimatedSocAtStart: double
+  expectedNetLoadW: double
+  expectedPvW: double
+indexes:
+  optimization_frames_user_hour_idx:
+    fields: userInfoId, hour
+    unique: true

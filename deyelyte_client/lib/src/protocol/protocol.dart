@@ -16,13 +16,19 @@ import 'energy_price.dart' as _i3;
 import 'example.dart' as _i4;
 import 'integration_credentials.dart' as _i5;
 import 'inverter_data.dart' as _i6;
-import 'pv_forecast.dart' as _i7;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i8;
+import 'optimization_frame.dart' as _i7;
+import 'outage_reserve.dart' as _i8;
+import 'pv_forecast.dart' as _i9;
+import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i10;
+import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i11;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i12;
 export 'app_config.dart';
 export 'energy_price.dart';
 export 'example.dart';
 export 'integration_credentials.dart';
 export 'inverter_data.dart';
+export 'optimization_frame.dart';
+export 'outage_reserve.dart';
 export 'pv_forecast.dart';
 export 'client.dart';
 
@@ -75,8 +81,14 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i6.InverterData) {
       return _i6.InverterData.fromJson(data) as T;
     }
-    if (t == _i7.PvForecast) {
-      return _i7.PvForecast.fromJson(data) as T;
+    if (t == _i7.OptimizationFrame) {
+      return _i7.OptimizationFrame.fromJson(data) as T;
+    }
+    if (t == _i8.OutageReserve) {
+      return _i8.OutageReserve.fromJson(data) as T;
+    }
+    if (t == _i9.PvForecast) {
+      return _i9.PvForecast.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.AppConfig?>()) {
       return (data != null ? _i2.AppConfig.fromJson(data) : null) as T;
@@ -94,11 +106,29 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i6.InverterData?>()) {
       return (data != null ? _i6.InverterData.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.PvForecast?>()) {
-      return (data != null ? _i7.PvForecast.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.OptimizationFrame?>()) {
+      return (data != null ? _i7.OptimizationFrame.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i8.OutageReserve?>()) {
+      return (data != null ? _i8.OutageReserve.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i9.PvForecast?>()) {
+      return (data != null ? _i9.PvForecast.fromJson(data) : null) as T;
+    }
+    if (t == List<_i10.OptimizationFrame>) {
+      return (data as List)
+              .map((e) => deserialize<_i10.OptimizationFrame>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i11.OutageReserve>) {
+      return (data as List)
+              .map((e) => deserialize<_i11.OutageReserve>(e))
+              .toList()
+          as T;
     }
     try {
-      return _i8.Protocol().deserialize<T>(data, t);
+      return _i12.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -110,7 +140,9 @@ class Protocol extends _i1.SerializationManager {
       _i4.Example => 'Example',
       _i5.IntegrationCredentials => 'IntegrationCredentials',
       _i6.InverterData => 'InverterData',
-      _i7.PvForecast => 'PvForecast',
+      _i7.OptimizationFrame => 'OptimizationFrame',
+      _i8.OutageReserve => 'OutageReserve',
+      _i9.PvForecast => 'PvForecast',
       _ => null,
     };
   }
@@ -135,10 +167,14 @@ class Protocol extends _i1.SerializationManager {
         return 'IntegrationCredentials';
       case _i6.InverterData():
         return 'InverterData';
-      case _i7.PvForecast():
+      case _i7.OptimizationFrame():
+        return 'OptimizationFrame';
+      case _i8.OutageReserve():
+        return 'OutageReserve';
+      case _i9.PvForecast():
         return 'PvForecast';
     }
-    className = _i8.Protocol().getClassNameForObject(data);
+    className = _i12.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
@@ -166,12 +202,18 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'InverterData') {
       return deserialize<_i6.InverterData>(data['data']);
     }
+    if (dataClassName == 'OptimizationFrame') {
+      return deserialize<_i7.OptimizationFrame>(data['data']);
+    }
+    if (dataClassName == 'OutageReserve') {
+      return deserialize<_i8.OutageReserve>(data['data']);
+    }
     if (dataClassName == 'PvForecast') {
-      return deserialize<_i7.PvForecast>(data['data']);
+      return deserialize<_i9.PvForecast>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i8.Protocol().deserializeByClassName(data);
+      return _i12.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -186,7 +228,7 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i8.Protocol().mapRecordToJson(record);
+      return _i12.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

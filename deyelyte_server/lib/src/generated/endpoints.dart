@@ -11,41 +11,91 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
-import '../endpoints/baseline_endpoint.dart' as _i2;
-import '../endpoints/example_endpoint.dart' as _i3;
-import '../endpoints/forecast_endpoint.dart' as _i4;
-import '../endpoints/price_endpoint.dart' as _i5;
-import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i6;
+import '../endpoints/app_config_endpoint.dart' as _i2;
+import '../endpoints/baseline_endpoint.dart' as _i3;
+import '../endpoints/example_endpoint.dart' as _i4;
+import '../endpoints/forecast_endpoint.dart' as _i5;
+import '../endpoints/optimizer_endpoint.dart' as _i6;
+import '../endpoints/price_endpoint.dart' as _i7;
+import 'package:deyelyte_server/src/generated/app_config.dart' as _i8;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i9;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
   void initializeEndpoints(_i1.Server server) {
     var endpoints = <String, _i1.Endpoint>{
-      'baseline': _i2.BaselineEndpoint()
+      'appConfig': _i2.AppConfigEndpoint()
+        ..initialize(
+          server,
+          'appConfig',
+          null,
+        ),
+      'baseline': _i3.BaselineEndpoint()
         ..initialize(
           server,
           'baseline',
           null,
         ),
-      'example': _i3.ExampleEndpoint()
+      'example': _i4.ExampleEndpoint()
         ..initialize(
           server,
           'example',
           null,
         ),
-      'forecast': _i4.ForecastEndpoint()
+      'forecast': _i5.ForecastEndpoint()
         ..initialize(
           server,
           'forecast',
           null,
         ),
-      'price': _i5.PriceEndpoint()
+      'optimizer': _i6.OptimizerEndpoint()
+        ..initialize(
+          server,
+          'optimizer',
+          null,
+        ),
+      'price': _i7.PriceEndpoint()
         ..initialize(
           server,
           'price',
           null,
         ),
     };
+    connectors['appConfig'] = _i1.EndpointConnector(
+      name: 'appConfig',
+      endpoint: endpoints['appConfig']!,
+      methodConnectors: {
+        'getConfig': _i1.MethodConnector(
+          name: 'getConfig',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['appConfig'] as _i2.AppConfigEndpoint)
+                  .getConfig(session),
+        ),
+        'saveConfig': _i1.MethodConnector(
+          name: 'saveConfig',
+          params: {
+            'config': _i1.ParameterDescription(
+              name: 'config',
+              type: _i1.getType<_i8.AppConfig>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['appConfig'] as _i2.AppConfigEndpoint).saveConfig(
+                    session,
+                    params['config'],
+                  ),
+        ),
+      },
+    );
     connectors['baseline'] = _i1.EndpointConnector(
       name: 'baseline',
       endpoint: endpoints['baseline']!,
@@ -63,7 +113,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['baseline'] as _i2.BaselineEndpoint)
+              ) async => (endpoints['baseline'] as _i3.BaselineEndpoint)
                   .calculateBaseline(
                     session,
                     params['userInfoId'],
@@ -88,7 +138,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['example'] as _i3.ExampleEndpoint).hello(
+              ) async => (endpoints['example'] as _i4.ExampleEndpoint).hello(
                 session,
                 params['name'],
               ),
@@ -122,13 +172,113 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['forecast'] as _i4.ForecastEndpoint)
+              ) async => (endpoints['forecast'] as _i5.ForecastEndpoint)
                   .updateForecast(
                     session,
                     params['apiKey'],
                     params['siteId'],
                     params['userInfoId'],
                   ),
+        ),
+      },
+    );
+    connectors['optimizer'] = _i1.EndpointConnector(
+      name: 'optimizer',
+      endpoint: endpoints['optimizer']!,
+      methodConnectors: {
+        'calculateAndStore': _i1.MethodConnector(
+          name: 'calculateAndStore',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .calculateAndStore(session),
+        ),
+        'getSchedule': _i1.MethodConnector(
+          name: 'getSchedule',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .getSchedule(session),
+        ),
+        'requestTopUp': _i1.MethodConnector(
+          name: 'requestTopUp',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .requestTopUp(session),
+        ),
+        'cancelTopUp': _i1.MethodConnector(
+          name: 'cancelTopUp',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .cancelTopUp(session),
+        ),
+        'addOutageReserve': _i1.MethodConnector(
+          name: 'addOutageReserve',
+          params: {
+            'date': _i1.ParameterDescription(
+              name: 'date',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'note': _i1.ParameterDescription(
+              name: 'note',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .addOutageReserve(
+                    session,
+                    params['date'],
+                    params['note'],
+                  ),
+        ),
+        'removeOutageReserve': _i1.MethodConnector(
+          name: 'removeOutageReserve',
+          params: {
+            'date': _i1.ParameterDescription(
+              name: 'date',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .removeOutageReserve(
+                    session,
+                    params['date'],
+                  ),
+        ),
+        'getOutageReserves': _i1.MethodConnector(
+          name: 'getOutageReserves',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['optimizer'] as _i6.OptimizerEndpoint)
+                  .getOutageReserves(session),
         ),
       },
     );
@@ -154,7 +304,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['price'] as _i5.PriceEndpoint).updatePrices(
+              ) async => (endpoints['price'] as _i7.PriceEndpoint).updatePrices(
                 session,
                 params['token'],
                 params['userInfoId'],
@@ -162,6 +312,6 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth'] = _i6.Endpoints()..initializeEndpoints(server);
+    modules['serverpod_auth'] = _i9.Endpoints()..initializeEndpoints(server);
   }
 }

@@ -12,8 +12,37 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i3;
-import 'protocol.dart' as _i4;
+import 'package:deyelyte_client/src/protocol/app_config.dart' as _i3;
+import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i4;
+import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i5;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i6;
+import 'protocol.dart' as _i7;
+
+/// {@category Endpoint}
+class EndpointAppConfig extends _i1.EndpointRef {
+  EndpointAppConfig(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'appConfig';
+
+  /// Returns the AppConfig for the authenticated user, or null if not yet set.
+  _i2.Future<_i3.AppConfig?> getConfig() =>
+      caller.callServerEndpoint<_i3.AppConfig?>(
+        'appConfig',
+        'getConfig',
+        {},
+      );
+
+  /// Upserts the AppConfig for the authenticated user.
+  /// The userInfoId field on the incoming config is ignored — it is always set
+  /// to the authenticated user's ID.
+  _i2.Future<void> saveConfig(_i3.AppConfig config) =>
+      caller.callServerEndpoint<void>(
+        'appConfig',
+        'saveConfig',
+        {'config': config},
+      );
+}
 
 /// {@category Endpoint}
 class EndpointBaseline extends _i1.EndpointRef {
@@ -67,6 +96,77 @@ class EndpointForecast extends _i1.EndpointRef {
 }
 
 /// {@category Endpoint}
+class EndpointOptimizer extends _i1.EndpointRef {
+  EndpointOptimizer(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'optimizer';
+
+  /// Run the optimizer for the authenticated user, persist the 24-frame plan,
+  /// and return it. Upserts by (userInfoId, hour) so repeated calls refresh
+  /// the plan in place.
+  _i2.Future<List<_i4.OptimizationFrame>> calculateAndStore() =>
+      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+        'optimizer',
+        'calculateAndStore',
+        {},
+      );
+
+  /// Return the stored 24-hour plan for the authenticated user, ordered by hour.
+  _i2.Future<List<_i4.OptimizationFrame>> getSchedule() =>
+      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+        'optimizer',
+        'getSchedule',
+        {},
+      );
+
+  /// Set the one-off top-up flag — the next plan recalculation will charge
+  /// to 100% at the cheapest available hours.
+  _i2.Future<void> requestTopUp() => caller.callServerEndpoint<void>(
+    'optimizer',
+    'requestTopUp',
+    {},
+  );
+
+  /// Cancel a pending top-up request.
+  _i2.Future<void> cancelTopUp() => caller.callServerEndpoint<void>(
+    'optimizer',
+    'cancelTopUp',
+    {},
+  );
+
+  /// Add an outage-reserve date. The optimizer will pre-charge cheaply to 100%
+  /// before this date and block all selling on the day itself.
+  _i2.Future<void> addOutageReserve(
+    DateTime date,
+    String? note,
+  ) => caller.callServerEndpoint<void>(
+    'optimizer',
+    'addOutageReserve',
+    {
+      'date': date,
+      'note': note,
+    },
+  );
+
+  /// Remove an outage-reserve date.
+  _i2.Future<void> removeOutageReserve(DateTime date) =>
+      caller.callServerEndpoint<void>(
+        'optimizer',
+        'removeOutageReserve',
+        {'date': date},
+      );
+
+  /// List all upcoming outage-reserve dates for the authenticated user.
+  _i2.Future<List<_i5.OutageReserve>> getOutageReserves() =>
+      caller.callServerEndpoint<List<_i5.OutageReserve>>(
+        'optimizer',
+        'getOutageReserves',
+        {},
+      );
+}
+
+/// {@category Endpoint}
 class EndpointPrice extends _i1.EndpointRef {
   EndpointPrice(_i1.EndpointCaller caller) : super(caller);
 
@@ -88,10 +188,10 @@ class EndpointPrice extends _i1.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    auth = _i3.Caller(client);
+    auth = _i6.Caller(client);
   }
 
-  late final _i3.Caller auth;
+  late final _i6.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -114,7 +214,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i4.Protocol(),
+         _i7.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -123,12 +223,16 @@ class Client extends _i1.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    appConfig = EndpointAppConfig(this);
     baseline = EndpointBaseline(this);
     example = EndpointExample(this);
     forecast = EndpointForecast(this);
+    optimizer = EndpointOptimizer(this);
     price = EndpointPrice(this);
     modules = Modules(this);
   }
+
+  late final EndpointAppConfig appConfig;
 
   late final EndpointBaseline baseline;
 
@@ -136,15 +240,19 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointForecast forecast;
 
+  late final EndpointOptimizer optimizer;
+
   late final EndpointPrice price;
 
   late final Modules modules;
 
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'appConfig': appConfig,
     'baseline': baseline,
     'example': example,
     'forecast': forecast,
+    'optimizer': optimizer,
     'price': price,
   };
 

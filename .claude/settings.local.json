@@ -10,7 +10,11 @@
       "Bash(serverpod generate:*)",
       "Bash(xargs kill:*)",
       "Bash(dart run:*)",
-      "Bash(serverpod version:*)"
+      "Bash(serverpod version:*)",
+      "Bash(find /Users/andrzejkaczynski/workspace/deylyte/deyelyte_server/lib/src/protocol -name *.yaml -type f)",
+      "Bash(xargs cat:*)",
+      "Bash(grep -E \"\\\\.dart$\")",
+      "Bash(serverpod create-migration:*)"
     ]
   }
 }

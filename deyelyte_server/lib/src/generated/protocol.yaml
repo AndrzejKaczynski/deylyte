@@ -1,8 +1,19 @@
+appConfig:
+  - getConfig:
+  - saveConfig:
 baseline:
   - calculateBaseline:
 example:
   - hello:
 forecast:
   - updateForecast:
+optimizer:
+  - calculateAndStore:
+  - getSchedule:
+  - requestTopUp:
+  - cancelTopUp:
+  - addOutageReserve:
+  - removeOutageReserve:
+  - getOutageReserves:
 price:
   - updatePrices:

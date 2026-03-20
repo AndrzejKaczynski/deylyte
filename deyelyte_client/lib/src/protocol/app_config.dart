@@ -17,26 +17,34 @@ abstract class AppConfig implements _i1.SerializableModel {
     this.id,
     required this.userInfoId,
     this.dataGatheringSince,
-    required this.workModeEnabled,
+    required this.chargingEnabled,
+    required this.sellingEnabled,
+    required this.pvOnlySelling,
+    required this.topUpRequested,
     required this.alwaysChargePriceThreshold,
     this.minSellPriceThreshold,
     this.batteryCapacityKwh,
     this.batteryCost,
     this.batteryLifecycles,
     this.minSocPercentage,
+    this.maxDischargeRateKw,
   });
 
   factory AppConfig({
     int? id,
     required int userInfoId,
     DateTime? dataGatheringSince,
-    required bool workModeEnabled,
+    required bool chargingEnabled,
+    required bool sellingEnabled,
+    required bool pvOnlySelling,
+    required bool topUpRequested,
     required double alwaysChargePriceThreshold,
     double? minSellPriceThreshold,
     double? batteryCapacityKwh,
     double? batteryCost,
     int? batteryLifecycles,
     double? minSocPercentage,
+    double? maxDischargeRateKw,
   }) = _AppConfigImpl;
 
   factory AppConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -48,8 +56,17 @@ abstract class AppConfig implements _i1.SerializableModel {
           : _i1.DateTimeJsonExtension.fromJson(
               jsonSerialization['dataGatheringSince'],
             ),
-      workModeEnabled: _i1.BoolJsonExtension.fromJson(
-        jsonSerialization['workModeEnabled'],
+      chargingEnabled: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['chargingEnabled'],
+      ),
+      sellingEnabled: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['sellingEnabled'],
+      ),
+      pvOnlySelling: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['pvOnlySelling'],
+      ),
+      topUpRequested: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['topUpRequested'],
       ),
       alwaysChargePriceThreshold:
           (jsonSerialization['alwaysChargePriceThreshold'] as num).toDouble(),
@@ -60,6 +77,8 @@ abstract class AppConfig implements _i1.SerializableModel {
       batteryCost: (jsonSerialization['batteryCost'] as num?)?.toDouble(),
       batteryLifecycles: jsonSerialization['batteryLifecycles'] as int?,
       minSocPercentage: (jsonSerialization['minSocPercentage'] as num?)
+          ?.toDouble(),
+      maxDischargeRateKw: (jsonSerialization['maxDischargeRateKw'] as num?)
           ?.toDouble(),
     );
   }
@@ -73,7 +92,13 @@ abstract class AppConfig implements _i1.SerializableModel {
 
   DateTime? dataGatheringSince;
 
-  bool workModeEnabled;
+  bool chargingEnabled;
+
+  bool sellingEnabled;
+
+  bool pvOnlySelling;
+
+  bool topUpRequested;
 
   double alwaysChargePriceThreshold;
 
@@ -87,6 +112,8 @@ abstract class AppConfig implements _i1.SerializableModel {
 
   double? minSocPercentage;
 
+  double? maxDischargeRateKw;
+
   /// Returns a shallow copy of this [AppConfig]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -94,13 +121,17 @@ abstract class AppConfig implements _i1.SerializableModel {
     int? id,
     int? userInfoId,
     DateTime? dataGatheringSince,
-    bool? workModeEnabled,
+    bool? chargingEnabled,
+    bool? sellingEnabled,
+    bool? pvOnlySelling,
+    bool? topUpRequested,
     double? alwaysChargePriceThreshold,
     double? minSellPriceThreshold,
     double? batteryCapacityKwh,
     double? batteryCost,
     int? batteryLifecycles,
     double? minSocPercentage,
+    double? maxDischargeRateKw,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -110,7 +141,10 @@ abstract class AppConfig implements _i1.SerializableModel {
       'userInfoId': userInfoId,
       if (dataGatheringSince != null)
         'dataGatheringSince': dataGatheringSince?.toJson(),
-      'workModeEnabled': workModeEnabled,
+      'chargingEnabled': chargingEnabled,
+      'sellingEnabled': sellingEnabled,
+      'pvOnlySelling': pvOnlySelling,
+      'topUpRequested': topUpRequested,
       'alwaysChargePriceThreshold': alwaysChargePriceThreshold,
       if (minSellPriceThreshold != null)
         'minSellPriceThreshold': minSellPriceThreshold,
@@ -118,6 +152,7 @@ abstract class AppConfig implements _i1.SerializableModel {
       if (batteryCost != null) 'batteryCost': batteryCost,
       if (batteryLifecycles != null) 'batteryLifecycles': batteryLifecycles,
       if (minSocPercentage != null) 'minSocPercentage': minSocPercentage,
+      if (maxDischargeRateKw != null) 'maxDischargeRateKw': maxDischargeRateKw,
     };
   }
 
@@ -134,24 +169,32 @@ class _AppConfigImpl extends AppConfig {
     int? id,
     required int userInfoId,
     DateTime? dataGatheringSince,
-    required bool workModeEnabled,
+    required bool chargingEnabled,
+    required bool sellingEnabled,
+    required bool pvOnlySelling,
+    required bool topUpRequested,
     required double alwaysChargePriceThreshold,
     double? minSellPriceThreshold,
     double? batteryCapacityKwh,
     double? batteryCost,
     int? batteryLifecycles,
     double? minSocPercentage,
+    double? maxDischargeRateKw,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
          dataGatheringSince: dataGatheringSince,
-         workModeEnabled: workModeEnabled,
+         chargingEnabled: chargingEnabled,
+         sellingEnabled: sellingEnabled,
+         pvOnlySelling: pvOnlySelling,
+         topUpRequested: topUpRequested,
          alwaysChargePriceThreshold: alwaysChargePriceThreshold,
          minSellPriceThreshold: minSellPriceThreshold,
          batteryCapacityKwh: batteryCapacityKwh,
          batteryCost: batteryCost,
          batteryLifecycles: batteryLifecycles,
          minSocPercentage: minSocPercentage,
+         maxDischargeRateKw: maxDischargeRateKw,
        );
 
   /// Returns a shallow copy of this [AppConfig]
@@ -162,13 +205,17 @@ class _AppConfigImpl extends AppConfig {
     Object? id = _Undefined,
     int? userInfoId,
     Object? dataGatheringSince = _Undefined,
-    bool? workModeEnabled,
+    bool? chargingEnabled,
+    bool? sellingEnabled,
+    bool? pvOnlySelling,
+    bool? topUpRequested,
     double? alwaysChargePriceThreshold,
     Object? minSellPriceThreshold = _Undefined,
     Object? batteryCapacityKwh = _Undefined,
     Object? batteryCost = _Undefined,
     Object? batteryLifecycles = _Undefined,
     Object? minSocPercentage = _Undefined,
+    Object? maxDischargeRateKw = _Undefined,
   }) {
     return AppConfig(
       id: id is int? ? id : this.id,
@@ -176,7 +223,10 @@ class _AppConfigImpl extends AppConfig {
       dataGatheringSince: dataGatheringSince is DateTime?
           ? dataGatheringSince
           : this.dataGatheringSince,
-      workModeEnabled: workModeEnabled ?? this.workModeEnabled,
+      chargingEnabled: chargingEnabled ?? this.chargingEnabled,
+      sellingEnabled: sellingEnabled ?? this.sellingEnabled,
+      pvOnlySelling: pvOnlySelling ?? this.pvOnlySelling,
+      topUpRequested: topUpRequested ?? this.topUpRequested,
       alwaysChargePriceThreshold:
           alwaysChargePriceThreshold ?? this.alwaysChargePriceThreshold,
       minSellPriceThreshold: minSellPriceThreshold is double?
@@ -192,6 +242,9 @@ class _AppConfigImpl extends AppConfig {
       minSocPercentage: minSocPercentage is double?
           ? minSocPercentage
           : this.minSocPercentage,
+      maxDischargeRateKw: maxDischargeRateKw is double?
+          ? maxDischargeRateKw
+          : this.maxDischargeRateKw,
     );
   }
 }

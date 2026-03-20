@@ -1,30 +1,15 @@
+import 'dart:math';
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'usage_predictor.dart';
 
-enum InverterCommandMode {
-  charge,    // Force charge from grid
-  discharge, // Force discharge/sell to grid
-  selfUse,   // Use battery to cover load, avoid grid import
-  auto       // Let inverter decide based on load and PV
-}
-
-class OptimizationScheduleFrame {
-  final DateTime startTime;
-  final DateTime endTime;
-  final InverterCommandMode mode;
-  final String reason;
-  final double expectedLoadW;
-  final double expectedPvW;
-
-  OptimizationScheduleFrame({
-    required this.startTime,
-    required this.endTime,
-    required this.mode,
-    required this.reason,
-    this.expectedLoadW = 0,
-    this.expectedPvW = 0,
-  });
+// The three commands the EMS can issue to the inverter.
+// Everything else (PV priority, self-use, load balancing) is handled by the
+// inverter's own logic — the EMS only intervenes for grid charging and selling.
+enum EmsCommand {
+  chargeFromGrid, // Force charge from grid up to targetSocPercent
+  dischargeToGrid, // Sell to grid
+  neutral, // Hands-off — inverter manages itself
 }
 
 class BatteryOptimizer {
@@ -33,191 +18,313 @@ class BatteryOptimizer {
 
   BatteryOptimizer(this.session, {required this.userInfoId});
 
-  Future<List<OptimizationScheduleFrame>> calculateSchedule() async {
-    // 1. Fetch user-scoped Config
+  Future<List<OptimizationFrame>> calculateSchedule() async {
+    final now = DateTime.now().toUtc();
+    final generatedAt = now;
+
+    // 1. Load user config
     final config = await AppConfig.db.findFirstRow(session,
-      where: (t) => t.userInfoId.equals(userInfoId),
-    );
+        where: (t) => t.userInfoId.equals(userInfoId));
 
     if (config == null) {
-      session.log('AppConfig not found for user $userInfoId, aborting.', level: LogLevel.warning);
+      session.log('AppConfig not found for user $userInfoId, aborting.',
+          level: LogLevel.warning);
       return [];
     }
 
-    if (!config.workModeEnabled) {
-      session.log('Work mode disabled for user $userInfoId, skipping.');
-      return [];
-    }
+    // 2. Fetch current SoC from the most recent inverter reading
+    final latestReading = await InverterData.db.findFirstRow(session,
+        where: (t) => t.userInfoId.equals(userInfoId),
+        orderBy: (t) => t.timestamp,
+        orderDescending: true);
 
-    if (config.dataGatheringSince == null) {
-      session.log('dataGatheringSince is null for user $userInfoId, skipping.');
-      return [];
-    }
+    final currentSoc = latestReading?.batteryLevel ?? 50.0;
 
-    final daysSinceStart = DateTime.now().difference(config.dataGatheringSince!).inDays;
-    final isTrainingMode = daysSinceStart < 7;
-
-    if (isTrainingMode) {
-      session.log('Training Mode ($daysSinceStart days). Charging on free energy; discharge blocked.');
-    }
-
-    // 2. Fetch user-scoped data for the next 24 hours
-    final now = DateTime.now().toUtc();
-    final tomorrow = now.add(const Duration(hours: 24));
+    // 3. Fetch next 24h prices and PV forecast
+    // Use inclusive lower bound truncated to the current hour so we don't miss it
+    final hourStart = DateTime.utc(now.year, now.month, now.day, now.hour);
+    final horizon = hourStart.add(const Duration(hours: 24));
 
     final upcomingPrices = await EnergyPrice.db.find(session,
-      where: (t) => t.userInfoId.equals(userInfoId) & (t.timestamp > now) & (t.timestamp < tomorrow),
-      orderBy: (t) => t.timestamp,
-    );
+        where: (t) =>
+            t.userInfoId.equals(userInfoId) &
+            (t.timestamp >= hourStart) &
+            (t.timestamp < horizon),
+        orderBy: (t) => t.timestamp);
 
     final upcomingForecasts = await PvForecast.db.find(session,
-      where: (t) => t.userInfoId.equals(userInfoId) & (t.timestamp > now) & (t.timestamp < tomorrow),
-    );
+        where: (t) =>
+            t.userInfoId.equals(userInfoId) &
+            (t.timestamp >= hourStart) &
+            (t.timestamp < horizon));
 
-    // Build PV forecast lookup (hour -> total expected Watts)
-    final pvByHour = <int, double>{};
+    // Key forecasts by truncated hour datetime — avoids merging same clock-hour
+    // across different calendar days
+    final pvByHour = <DateTime, double>{};
     for (var f in upcomingForecasts) {
-      pvByHour.update(f.timestamp.hour, (v) => v + f.expectedYieldWatts, ifAbsent: () => f.expectedYieldWatts);
+      final key = DateTime.utc(f.timestamp.year, f.timestamp.month,
+          f.timestamp.day, f.timestamp.hour);
+      pvByHour.update(key, (v) => v + f.expectedYieldWatts,
+          ifAbsent: () => f.expectedYieldWatts);
     }
 
-    // 3. Fetch last 30 days of user-scoped history for the Usage Predictor
+    // 4. Fetch 30 days of history for the usage predictor
     final past30Days = now.subtract(const Duration(days: 30));
     final historicalData = await InverterData.db.find(session,
-      where: (t) => t.userInfoId.equals(userInfoId) & (t.timestamp > past30Days),
-    );
-
-    // 4. Compute rolling 7-day price percentile (P85) for discharge threshold
-    final past7Days = now.subtract(const Duration(days: 7));
-    final recentPrices = await EnergyPrice.db.find(session,
-      where: (t) => t.userInfoId.equals(userInfoId) & (t.timestamp > past7Days),
-    );
-
-    double peakThreshold;
-    if (recentPrices.length >= 24) {
-      final sortedHistorical = recentPrices.map((p) => p.buyPrice).toList()..sort();
-      final p85Index = (sortedHistorical.length * 0.85).floor().clamp(0, sortedHistorical.length - 1);
-      peakThreshold = sortedHistorical[p85Index];
-    } else {
-      // Fallback: use 80% of today's max
-      double maxPrice = -double.maxFinite;
-      for (var p in upcomingPrices) {
-        if (p.buyPrice > maxPrice) maxPrice = p.buyPrice;
-      }
-      peakThreshold = maxPrice * 0.8;
-    }
+        where: (t) =>
+            t.userInfoId.equals(userInfoId) & (t.timestamp > past30Days));
 
     // 5. Battery economics
-    final chargeThreshold = config.alwaysChargePriceThreshold;
-    final minSellThreshold = config.minSellPriceThreshold ?? 0.0;
-    final minSoc = config.minSocPercentage ?? 15.0;
     final batteryCapKwh = config.batteryCapacityKwh ?? 10.0;
+    final minSoc = config.minSocPercentage ?? 15.0;
     final batteryCost = config.batteryCost ?? 0.0;
     final lifecycles = config.batteryLifecycles ?? 6000;
+    final maxDischargeRateKw = config.maxDischargeRateKw ?? 5.0;
 
-    // Wear-and-tear cost per kWh discharged
-    // Formula: batteryCost / (lifecycles * batteryCapKwh)
+    // Wear cost per kWh discharged: batteryCost / (cycles × capacityKwh)
     final wearCostPerKwh = (lifecycles > 0 && batteryCapKwh > 0)
         ? batteryCost / (lifecycles * batteryCapKwh)
         : 0.0;
 
-    // Usable capacity in kWh (above the SoC floor)
-    final usableCapacityKwh = batteryCapKwh * (1.0 - minSoc / 100.0);
+    final minSellThreshold = config.minSellPriceThreshold; // null = no floor
+    final chargeThreshold = config.alwaysChargePriceThreshold; // max buy price to trigger charge
 
-    // 6. Greedy Spread: rank hours by sell profitability
-    // Build candidate list for each hour
-    final hourCandidates = <_HourCandidate>[];
+    // 6. Build per-hour candidate data
+    final candidates = <_HourCandidate>[];
     for (var price in upcomingPrices) {
-      final expectedLoad = await UsagePredictor.predictUsageForHour(session, price.timestamp, historicalData);
-      final expectedPv = pvByHour[price.timestamp.hour] ?? 0.0;
+      final hourKey = DateTime.utc(price.timestamp.year, price.timestamp.month,
+          price.timestamp.day, price.timestamp.hour);
+      final grossLoadW = await UsagePredictor.predictUsageForHour(
+          session, price.timestamp, historicalData);
+      final pvW = pvByHour[hourKey] ?? 0.0;
+      // Net load: demand that PV cannot cover, must come from battery or grid
+      final netLoadW = max(0.0, grossLoadW - pvW);
 
-      // Find cheapest upcoming charge price (for arbitrage spread)
-      double cheapestBuyAhead = double.maxFinite;
-      for (var p in upcomingPrices) {
-        if (p.timestamp.isAfter(price.timestamp) && p.buyPrice < cheapestBuyAhead) {
-          cheapestBuyAhead = p.buyPrice;
-        }
-      }
-
-      hourCandidates.add(_HourCandidate(
+      candidates.add(_HourCandidate(
         price: price,
-        expectedLoadW: expectedLoad,
-        expectedPvW: expectedPv,
-        cheapestRechargePrice: cheapestBuyAhead == double.maxFinite ? price.buyPrice : cheapestBuyAhead,
+        grossLoadW: grossLoadW,
+        pvW: pvW,
+        netLoadW: netLoadW,
       ));
     }
 
-    // Sort candidates by sell price descending for greedy allocation
-    final dischargeRanked = List<_HourCandidate>.from(hourCandidates)
+    // 6b. Fetch outage-reserve dates that fall within the 24h window
+    final outageReserves = await OutageReserve.db.find(session,
+        where: (t) =>
+            t.userInfoId.equals(userInfoId) &
+            (t.date >= hourStart) &
+            (t.date < horizon));
+
+    // Collect the calendar dates (day precision) flagged as outage days
+    final outageDates = outageReserves
+        .map((r) => DateTime.utc(r.date.year, r.date.month, r.date.day))
+        .toSet();
+
+    // 6c. Pre-outage smart charging
+    // If an outage day falls within the 24h window, cheaply pre-charge to 100%
+    // before it arrives, factoring in expected PV.
+    final preOutageChargeHours = <DateTime>{};
+    if (outageDates.isNotEmpty) {
+      final earliestOutage =
+          outageDates.reduce((a, b) => a.isBefore(b) ? a : b);
+
+      // Simulate the natural SoC trajectory (no commands) up to the outage to
+      // find how much additional grid charge is actually needed
+      double projectedSoc = currentSoc;
+      for (var c in candidates) {
+        final hd = DateTime.utc(c.price.timestamp.year,
+            c.price.timestamp.month, c.price.timestamp.day);
+        if (hd.isBefore(earliestOutage)) {
+          projectedSoc = (projectedSoc +
+                  c.pvW / 1000.0 / batteryCapKwh * 100.0 -
+                  c.netLoadW / 1000.0 / batteryCapKwh * 100.0)
+              .clamp(minSoc, 100.0);
+        }
+      }
+
+      final chargeNeededKwh =
+          max(0.0, (100.0 - projectedSoc) / 100.0 * batteryCapKwh);
+
+      if (chargeNeededKwh > 0) {
+        // Pick cheapest pre-outage hours to cover the deficit
+        final preOutageCandidates = candidates
+            .where((c) {
+              final hd = DateTime.utc(c.price.timestamp.year,
+                  c.price.timestamp.month, c.price.timestamp.day);
+              return hd.isBefore(earliestOutage);
+            })
+            .toList()
+          ..sort((a, b) => a.price.buyPrice.compareTo(b.price.buyPrice));
+
+        double remaining = chargeNeededKwh;
+        for (var c in preOutageCandidates) {
+          if (remaining <= 0) break;
+          preOutageChargeHours.add(c.price.timestamp);
+          remaining -= maxDischargeRateKw;
+        }
+      }
+    }
+
+    // 7. Greedy discharge selection
+    // Discharge budget: if pvOnlySelling, limit to expected PV yield (only sell
+    // what the sun generates, not grid-charged energy). Otherwise allow full
+    // usable capacity.
+    final totalPvKwh =
+        pvByHour.values.fold(0.0, (sum, w) => sum + w) / 1000.0; // W→kWh
+
+    final usableCapacityKwh = batteryCapKwh * (1.0 - minSoc / 100.0);
+    double dischargeBudgetKwh =
+        config.pvOnlySelling ? totalPvKwh : usableCapacityKwh;
+
+    // Find cheapest future recharge price for each hour (for arbitrage spread)
+    // When heavy PV is expected to recharge for free, recharge cost is 0
+    for (var c in candidates) {
+      double cheapestBuyAhead = double.maxFinite;
+      for (var other in candidates) {
+        if (other.price.timestamp.isAfter(c.price.timestamp) &&
+            other.price.buyPrice < cheapestBuyAhead) {
+          cheapestBuyAhead = other.price.buyPrice;
+        }
+      }
+      // If PV can fully recharge the battery from what we'd discharge, recharge
+      // is effectively free — use 0 as the future buy price
+      final pvRechargesForFree = totalPvKwh >= maxDischargeRateKw;
+      c.cheapestRechargePrice = pvRechargesForFree
+          ? 0.0
+          : (cheapestBuyAhead == double.maxFinite
+              ? c.price.buyPrice
+              : cheapestBuyAhead);
+    }
+
+    // Sort by sell price descending for greedy allocation
+    final dischargeRanked = List<_HourCandidate>.from(candidates)
       ..sort((a, b) => b.price.sellPrice.compareTo(a.price.sellPrice));
 
-    double remainingDischargeKwh = usableCapacityKwh;
     final dischargeHours = <DateTime>{};
+    for (var c in dischargeRanked) {
+      if (dischargeBudgetKwh <= 0) break;
+      if (!config.sellingEnabled) break;
 
-    for (var candidate in dischargeRanked) {
-      if (remainingDischargeKwh <= 0) break;
+      // Never discharge on outage-reserve days — keep battery full
+      final hourDate = DateTime.utc(c.price.timestamp.year,
+          c.price.timestamp.month, c.price.timestamp.day);
+      if (outageDates.contains(hourDate)) continue;
 
-      final sellPrice = candidate.price.sellPrice;
-      final arbitrageSpread = sellPrice - candidate.cheapestRechargePrice;
+      final sellPrice = c.price.sellPrice;
+      final spread = sellPrice - c.cheapestRechargePrice;
+      final meetsMinSell =
+          minSellThreshold == null || sellPrice >= minSellThreshold;
 
-      // Arbitrage check: only discharge if spread > wear cost
-      if (sellPrice >= minSellThreshold && arbitrageSpread > wearCostPerKwh) {
-        dischargeHours.add(candidate.price.timestamp);
-        remainingDischargeKwh -= 1.0; // ~1kWh per hour discharge rate
+      if (meetsMinSell && spread > wearCostPerKwh) {
+        dischargeHours.add(c.price.timestamp);
+        dischargeBudgetKwh -= maxDischargeRateKw;
       }
     }
 
-    // 7. PV-Aware Capacity Reservation
-    // If heavy PV is expected, allow more aggressive discharge to make room
-    double totalUpcomingPvKwh = 0;
-    for (var f in upcomingForecasts) {
-      totalUpcomingPvKwh += f.expectedYieldWatts * 0.5 / 1000.0; // 30-min periods to kWh
-    }
-
-    // If solar alone can fill the battery, we can afford to discharge deeper
-    if (totalUpcomingPvKwh >= batteryCapKwh * 0.5) {
-      remainingDischargeKwh += totalUpcomingPvKwh * 0.3; // Allow 30% of incoming PV as extra discharge headroom
-    }
-
-    // 8. Build final schedule
-    List<OptimizationScheduleFrame> schedule = [];
-
-    for (var candidate in hourCandidates) {
-      InverterCommandMode mode = InverterCommandMode.auto;
-      String reason = "Normal auto operation";
-
-      final price = candidate.price;
-      final expectedPv = candidate.expectedPvW;
-
-      // Rule A: Charge when prices are at or below threshold
-      if (price.buyPrice <= chargeThreshold) {
-        mode = InverterCommandMode.charge;
-        reason = "Price (${price.buyPrice}) ≤ threshold ($chargeThreshold). Charging.";
+    // 8. PV-headroom-aware charge target
+    // Look 6 hours ahead from each charge candidate; if heavy PV is coming,
+    // leave room so the battery can absorb it without clipping
+    double chargeTarget(DateTime hourTime) {
+      if (config.topUpRequested) return 100.0;
+      double pvNext6hKwh = 0.0;
+      for (var c in candidates) {
+        final diff = c.price.timestamp.difference(hourTime);
+        if (diff.inHours >= 0 && diff.inHours < 6) {
+          pvNext6hKwh += c.pvW / 1000.0; // W to kWh per hour slot
+        }
       }
-      // Rule B: Greedy discharge during the best-ranked sell hours
-      else if (dischargeHours.contains(price.timestamp)) {
-        if (isTrainingMode) {
-          mode = InverterCommandMode.auto;
-          reason = "Training Mode: discharge blocked until 7 days of data gathered.";
+      final headroom = (pvNext6hKwh / batteryCapKwh) * 100.0;
+      return min(100.0, 100.0 - headroom + minSoc).clamp(minSoc, 100.0);
+    }
+
+    // 9. Hour-by-hour SoC simulation + build final schedule
+    double estimatedSoc = currentSoc;
+    final List<OptimizationFrame> schedule = [];
+
+    for (var c in candidates) {
+      final price = c.price;
+      EmsCommand command = EmsCommand.neutral;
+      String reason = 'Normal auto operation.';
+      double? targetSoc;
+
+      final hourDate = DateTime.utc(
+          price.timestamp.year, price.timestamp.month, price.timestamp.day);
+      final isOutageDay = outageDates.contains(hourDate);
+
+      // Rule -1a: Pre-outage cheap charging — fill battery at cheapest hours
+      // before the outage day arrives (PV production already factored in)
+      if (preOutageChargeHours.contains(price.timestamp)) {
+        command = EmsCommand.chargeFromGrid;
+        targetSoc = 100.0;
+        reason =
+            'Pre-outage charge at ${price.buyPrice.toStringAsFixed(4)} — cheapest slot before reserve day.';
+      }
+      // Rule -1b: Outage day — block selling; top up at any price if SoC low
+      else if (isOutageDay) {
+        if (estimatedSoc < 95.0) {
+          command = EmsCommand.chargeFromGrid;
+          targetSoc = 100.0;
+          reason =
+              'Outage reserve day — SoC ${estimatedSoc.toStringAsFixed(0)}% < 95%, charging to 100%.';
         } else {
-          mode = InverterCommandMode.discharge;
-          reason = "Greedy Spread: sell@${price.sellPrice}, wear=${wearCostPerKwh.toStringAsFixed(3)}/kWh.";
+          // Battery is full (PV or pre-charging did the job) — stay neutral
+          reason = 'Outage reserve day — battery full, holding energy.';
         }
       }
-      // Rule C: Grid Import Avoidance — use battery instead of buying expensive grid
-      else if (price.buyPrice >= peakThreshold && expectedPv < candidate.expectedLoadW) {
-        if (!isTrainingMode) {
-          mode = InverterCommandMode.selfUse;
-          reason = "Grid avoidance: buy@${price.buyPrice} is expensive. Using battery for load.";
+      // Rule 0: Top-up override — charge to 100% regardless of price
+      else if (config.topUpRequested && config.chargingEnabled) {
+        command = EmsCommand.chargeFromGrid;
+        targetSoc = 100.0;
+        reason = 'Manual top-up requested — charging to 100%.';
+      }
+      // Rule A: Cheap/free grid charge
+      else if (config.chargingEnabled &&
+          price.buyPrice <= chargeThreshold &&
+          estimatedSoc < chargeTarget(price.timestamp) &&
+          !dischargeHours.contains(price.timestamp)) {
+        command = EmsCommand.chargeFromGrid;
+        targetSoc = chargeTarget(price.timestamp);
+        reason =
+            'Buy price (${price.buyPrice.toStringAsFixed(4)}) ≤ threshold ($chargeThreshold). Charging to ${targetSoc.toStringAsFixed(0)}% SoC.';
+      }
+      // Rule B: Greedy discharge to grid
+      else if (dischargeHours.contains(price.timestamp)) {
+        final socAfterDischarge =
+            estimatedSoc - (maxDischargeRateKw / batteryCapKwh) * 100.0;
+        if (socAfterDischarge >= minSoc) {
+          command = EmsCommand.dischargeToGrid;
+          reason =
+              'Sell at ${price.sellPrice.toStringAsFixed(4)}, spread=${( price.sellPrice - c.cheapestRechargePrice).toStringAsFixed(4)}, wear=${wearCostPerKwh.toStringAsFixed(4)}/kWh.';
         }
+        // Not enough SoC left — fall through to neutral
       }
 
-      schedule.add(OptimizationScheduleFrame(
-        startTime: price.timestamp,
-        endTime: price.timestamp.add(const Duration(hours: 1)),
-        mode: mode,
+      final netLoadKwh = c.netLoadW / 1000.0;
+      final pvChargeKwh = (c.pvW / 1000.0).clamp(0.0, batteryCapKwh);
+
+      // Advance SoC estimate for next hour
+      switch (command) {
+        case EmsCommand.chargeFromGrid:
+          estimatedSoc = min(targetSoc!, estimatedSoc + (maxDischargeRateKw / batteryCapKwh) * 100.0);
+        case EmsCommand.dischargeToGrid:
+          estimatedSoc = max(minSoc, estimatedSoc - (maxDischargeRateKw / batteryCapKwh) * 100.0);
+        case EmsCommand.neutral:
+          // In neutral the inverter uses PV first, then battery for net load
+          estimatedSoc = (estimatedSoc + pvChargeKwh / batteryCapKwh * 100.0 -
+                  netLoadKwh / batteryCapKwh * 100.0)
+              .clamp(minSoc, 100.0);
+      }
+
+      schedule.add(OptimizationFrame(
+        userInfoId: userInfoId,
+        generatedAt: generatedAt,
+        hour: price.timestamp,
+        command: command.name,
+        targetSocPercent: targetSoc,
         reason: reason,
-        expectedLoadW: candidate.expectedLoadW,
-        expectedPvW: expectedPv,
+        estimatedSocAtStart: estimatedSoc,
+        expectedNetLoadW: c.netLoadW,
+        expectedPvW: c.pvW,
       ));
     }
 
@@ -227,14 +334,15 @@ class BatteryOptimizer {
 
 class _HourCandidate {
   final EnergyPrice price;
-  final double expectedLoadW;
-  final double expectedPvW;
-  final double cheapestRechargePrice;
+  final double grossLoadW;
+  final double pvW;
+  final double netLoadW;
+  double cheapestRechargePrice = 0.0;
 
   _HourCandidate({
     required this.price,
-    required this.expectedLoadW,
-    required this.expectedPvW,
-    required this.cheapestRechargePrice,
+    required this.grossLoadW,
+    required this.pvW,
+    required this.netLoadW,
   });
 }

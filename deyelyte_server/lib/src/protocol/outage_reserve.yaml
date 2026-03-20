@@ -1,0 +1,10 @@
+class: OutageReserve
+table: outage_reserves
+fields:
+  userInfoId: int
+  date: DateTime
+  note: String?
+indexes:
+  outage_reserves_user_date_idx:
+    fields: userInfoId, date
+    unique: true
