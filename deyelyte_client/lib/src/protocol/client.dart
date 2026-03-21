@@ -15,8 +15,9 @@ import 'dart:async' as _i2;
 import 'package:deyelyte_client/src/protocol/app_config.dart' as _i3;
 import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i4;
 import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i5;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i6;
-import 'protocol.dart' as _i7;
+import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i6;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i7;
+import 'protocol.dart' as _i8;
 
 /// {@category Endpoint}
 class EndpointAppConfig extends _i1.EndpointRef {
@@ -67,7 +68,8 @@ class EndpointCredentials extends _i1.EndpointRef {
   String get name => 'credentials';
 
   /// Save Deye Cloud credentials. The password is stored as a SHA256 hash.
-  /// appId and appSecret are read from server config — not supplied by the user.
+  /// appId and appSecret are read from server config (passwords.yaml) — not
+  /// supplied by the user.
   /// Schedules InitUserCall on the first save to fetch the device SN.
   _i2.Future<void> saveDeye(
     String username,
@@ -253,12 +255,36 @@ class EndpointPrice extends _i1.EndpointRef {
   );
 }
 
+/// {@category Endpoint}
+class EndpointPriceTimeRanges extends _i1.EndpointRef {
+  EndpointPriceTimeRanges(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'priceTimeRanges';
+
+  /// Returns all time ranges for the authenticated user.
+  _i2.Future<List<_i6.PriceTimeRange>> getTimeRanges() =>
+      caller.callServerEndpoint<List<_i6.PriceTimeRange>>(
+        'priceTimeRanges',
+        'getTimeRanges',
+        {},
+      );
+
+  /// Replaces all time ranges for the authenticated user.
+  _i2.Future<void> saveTimeRanges(List<_i6.PriceTimeRange> ranges) =>
+      caller.callServerEndpoint<void>(
+        'priceTimeRanges',
+        'saveTimeRanges',
+        {'ranges': ranges},
+      );
+}
+
 class Modules {
   Modules(Client client) {
-    auth = _i6.Caller(client);
+    auth = _i7.Caller(client);
   }
 
-  late final _i6.Caller auth;
+  late final _i7.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -281,7 +307,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i7.Protocol(),
+         _i8.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -297,6 +323,7 @@ class Client extends _i1.ServerpodClientShared {
     forecast = EndpointForecast(this);
     optimizer = EndpointOptimizer(this);
     price = EndpointPrice(this);
+    priceTimeRanges = EndpointPriceTimeRanges(this);
     modules = Modules(this);
   }
 
@@ -314,6 +341,8 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointPrice price;
 
+  late final EndpointPriceTimeRanges priceTimeRanges;
+
   late final Modules modules;
 
   @override
@@ -325,6 +354,7 @@ class Client extends _i1.ServerpodClientShared {
     'forecast': forecast,
     'optimizer': optimizer,
     'price': price,
+    'priceTimeRanges': priceTimeRanges,
   };
 
   @override
