@@ -11,10 +11,17 @@ credentials:
   - removeSolcast:
   - removePstryk:
   - getStatus:
+device:
+  - getStatus:
 example:
   - hello:
 forecast:
   - updateForecast:
+history:
+  - getSummary:
+  - getEvents:
+license:
+  - validate:
 optimizer:
   - calculateAndStore:
   - getSchedule:
@@ -28,3 +35,12 @@ price:
 priceTimeRanges:
   - getTimeRanges:
   - saveTimeRanges:
+schedule:
+  - getCurrent:
+  - getForecast:
+  - getEvents:
+  - getSchedule:
+telemetry:
+  - ingest:
+  - getLatest:
+  - getHistory:

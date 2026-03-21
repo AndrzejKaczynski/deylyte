@@ -14,15 +14,20 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import '../endpoints/app_config_endpoint.dart' as _i2;
 import '../endpoints/baseline_endpoint.dart' as _i3;
 import '../endpoints/credentials_endpoint.dart' as _i4;
-import '../endpoints/example_endpoint.dart' as _i5;
-import '../endpoints/forecast_endpoint.dart' as _i6;
-import '../endpoints/optimizer_endpoint.dart' as _i7;
-import '../endpoints/price_endpoint.dart' as _i8;
-import '../endpoints/price_time_ranges_endpoint.dart' as _i9;
-import 'package:deyelyte_server/src/generated/app_config.dart' as _i10;
-import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i11;
-import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i12;
-import 'package:deyelyte_server/src/generated/future_calls.dart' as _i13;
+import '../endpoints/device_endpoint.dart' as _i5;
+import '../endpoints/example_endpoint.dart' as _i6;
+import '../endpoints/forecast_endpoint.dart' as _i7;
+import '../endpoints/history_endpoint.dart' as _i8;
+import '../endpoints/license_endpoint.dart' as _i9;
+import '../endpoints/optimizer_endpoint.dart' as _i10;
+import '../endpoints/price_endpoint.dart' as _i11;
+import '../endpoints/price_time_ranges_endpoint.dart' as _i12;
+import '../endpoints/schedule_endpoint.dart' as _i13;
+import '../endpoints/telemetry_endpoint.dart' as _i14;
+import 'package:deyelyte_server/src/generated/app_config.dart' as _i15;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i16;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i17;
+import 'package:deyelyte_server/src/generated/future_calls.dart' as _i18;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _i1.EndpointDispatch {
@@ -47,34 +52,64 @@ class Endpoints extends _i1.EndpointDispatch {
           'credentials',
           null,
         ),
-      'example': _i5.ExampleEndpoint()
+      'device': _i5.DeviceEndpoint()
+        ..initialize(
+          server,
+          'device',
+          null,
+        ),
+      'example': _i6.ExampleEndpoint()
         ..initialize(
           server,
           'example',
           null,
         ),
-      'forecast': _i6.ForecastEndpoint()
+      'forecast': _i7.ForecastEndpoint()
         ..initialize(
           server,
           'forecast',
           null,
         ),
-      'optimizer': _i7.OptimizerEndpoint()
+      'history': _i8.HistoryEndpoint()
+        ..initialize(
+          server,
+          'history',
+          null,
+        ),
+      'license': _i9.LicenseEndpoint()
+        ..initialize(
+          server,
+          'license',
+          null,
+        ),
+      'optimizer': _i10.OptimizerEndpoint()
         ..initialize(
           server,
           'optimizer',
           null,
         ),
-      'price': _i8.PriceEndpoint()
+      'price': _i11.PriceEndpoint()
         ..initialize(
           server,
           'price',
           null,
         ),
-      'priceTimeRanges': _i9.PriceTimeRangesEndpoint()
+      'priceTimeRanges': _i12.PriceTimeRangesEndpoint()
         ..initialize(
           server,
           'priceTimeRanges',
+          null,
+        ),
+      'schedule': _i13.ScheduleEndpoint()
+        ..initialize(
+          server,
+          'schedule',
+          null,
+        ),
+      'telemetry': _i14.TelemetryEndpoint()
+        ..initialize(
+          server,
+          'telemetry',
           null,
         ),
     };
@@ -97,7 +132,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'config': _i1.ParameterDescription(
               name: 'config',
-              type: _i1.getType<_i10.AppConfig>(),
+              type: _i1.getType<_i15.AppConfig>(),
               nullable: false,
             ),
           },
@@ -253,6 +288,23 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['device'] = _i1.EndpointConnector(
+      name: 'device',
+      endpoint: endpoints['device']!,
+      methodConnectors: {
+        'getStatus': _i1.MethodConnector(
+          name: 'getStatus',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['device'] as _i5.DeviceEndpoint).getStatus(
+                session,
+              ),
+        ),
+      },
+    );
     connectors['example'] = _i1.EndpointConnector(
       name: 'example',
       endpoint: endpoints['example']!,
@@ -270,7 +322,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['example'] as _i5.ExampleEndpoint).hello(
+              ) async => (endpoints['example'] as _i6.ExampleEndpoint).hello(
                 session,
                 params['name'],
               ),
@@ -288,8 +340,76 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['forecast'] as _i6.ForecastEndpoint)
+              ) async => (endpoints['forecast'] as _i7.ForecastEndpoint)
                   .updateForecast(session),
+        ),
+      },
+    );
+    connectors['history'] = _i1.EndpointConnector(
+      name: 'history',
+      endpoint: endpoints['history']!,
+      methodConnectors: {
+        'getSummary': _i1.MethodConnector(
+          name: 'getSummary',
+          params: {
+            'rangeDays': _i1.ParameterDescription(
+              name: 'rangeDays',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['history'] as _i8.HistoryEndpoint).getSummary(
+                    session,
+                    params['rangeDays'],
+                  ),
+        ),
+        'getEvents': _i1.MethodConnector(
+          name: 'getEvents',
+          params: {
+            'rangeDays': _i1.ParameterDescription(
+              name: 'rangeDays',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['history'] as _i8.HistoryEndpoint).getEvents(
+                    session,
+                    params['rangeDays'],
+                  ),
+        ),
+      },
+    );
+    connectors['license'] = _i1.EndpointConnector(
+      name: 'license',
+      endpoint: endpoints['license']!,
+      methodConnectors: {
+        'validate': _i1.MethodConnector(
+          name: 'validate',
+          params: {
+            'licenseKey': _i1.ParameterDescription(
+              name: 'licenseKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['license'] as _i9.LicenseEndpoint).validate(
+                session,
+                params['licenseKey'],
+              ),
         ),
       },
     );
@@ -304,7 +424,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .calculateAndStore(session),
         ),
         'getSchedule': _i1.MethodConnector(
@@ -314,7 +434,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .getSchedule(session),
         ),
         'requestTopUp': _i1.MethodConnector(
@@ -324,7 +444,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .requestTopUp(session),
         ),
         'cancelTopUp': _i1.MethodConnector(
@@ -334,7 +454,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .cancelTopUp(session),
         ),
         'addOutageReserve': _i1.MethodConnector(
@@ -355,7 +475,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .addOutageReserve(
                     session,
                     params['date'],
@@ -375,7 +495,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .removeOutageReserve(
                     session,
                     params['date'],
@@ -388,7 +508,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['optimizer'] as _i7.OptimizerEndpoint)
+              ) async => (endpoints['optimizer'] as _i10.OptimizerEndpoint)
                   .getOutageReserves(session),
         ),
       },
@@ -415,11 +535,12 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['price'] as _i8.PriceEndpoint).updatePrices(
-                session,
-                params['token'],
-                params['userInfoId'],
-              ),
+              ) async =>
+                  (endpoints['price'] as _i11.PriceEndpoint).updatePrices(
+                    session,
+                    params['token'],
+                    params['userInfoId'],
+                  ),
         ),
       },
     );
@@ -435,7 +556,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['priceTimeRanges'] as _i9.PriceTimeRangesEndpoint)
+                  (endpoints['priceTimeRanges'] as _i12.PriceTimeRangesEndpoint)
                       .getTimeRanges(session),
         ),
         'saveTimeRanges': _i1.MethodConnector(
@@ -443,7 +564,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'ranges': _i1.ParameterDescription(
               name: 'ranges',
-              type: _i1.getType<List<_i11.PriceTimeRange>>(),
+              type: _i1.getType<List<_i16.PriceTimeRange>>(),
               nullable: false,
             ),
           },
@@ -452,7 +573,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['priceTimeRanges'] as _i9.PriceTimeRangesEndpoint)
+                  (endpoints['priceTimeRanges'] as _i12.PriceTimeRangesEndpoint)
                       .saveTimeRanges(
                         session,
                         params['ranges'],
@@ -460,11 +581,162 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth'] = _i12.Endpoints()..initializeEndpoints(server);
+    connectors['schedule'] = _i1.EndpointConnector(
+      name: 'schedule',
+      endpoint: endpoints['schedule']!,
+      methodConnectors: {
+        'getCurrent': _i1.MethodConnector(
+          name: 'getCurrent',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['schedule'] as _i13.ScheduleEndpoint)
+                  .getCurrent(session),
+        ),
+        'getForecast': _i1.MethodConnector(
+          name: 'getForecast',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['schedule'] as _i13.ScheduleEndpoint)
+                  .getForecast(session),
+        ),
+        'getEvents': _i1.MethodConnector(
+          name: 'getEvents',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['schedule'] as _i13.ScheduleEndpoint)
+                  .getEvents(session),
+        ),
+        'getSchedule': _i1.MethodConnector(
+          name: 'getSchedule',
+          params: {
+            'licenseKey': _i1.ParameterDescription(
+              name: 'licenseKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['schedule'] as _i13.ScheduleEndpoint).getSchedule(
+                    session,
+                    params['licenseKey'],
+                  ),
+        ),
+      },
+    );
+    connectors['telemetry'] = _i1.EndpointConnector(
+      name: 'telemetry',
+      endpoint: endpoints['telemetry']!,
+      methodConnectors: {
+        'ingest': _i1.MethodConnector(
+          name: 'ingest',
+          params: {
+            'licenseKey': _i1.ParameterDescription(
+              name: 'licenseKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'deviceId': _i1.ParameterDescription(
+              name: 'deviceId',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'timestamp': _i1.ParameterDescription(
+              name: 'timestamp',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'batterySOC': _i1.ParameterDescription(
+              name: 'batterySOC',
+              type: _i1.getType<double>(),
+              nullable: false,
+            ),
+            'gridPowerW': _i1.ParameterDescription(
+              name: 'gridPowerW',
+              type: _i1.getType<double>(),
+              nullable: false,
+            ),
+            'pvPowerW': _i1.ParameterDescription(
+              name: 'pvPowerW',
+              type: _i1.getType<double>(),
+              nullable: false,
+            ),
+            'loadPowerW': _i1.ParameterDescription(
+              name: 'loadPowerW',
+              type: _i1.getType<double>(),
+              nullable: false,
+            ),
+            'batteryPowerW': _i1.ParameterDescription(
+              name: 'batteryPowerW',
+              type: _i1.getType<double>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['telemetry'] as _i14.TelemetryEndpoint).ingest(
+                    session,
+                    params['licenseKey'],
+                    params['deviceId'],
+                    params['timestamp'],
+                    params['batterySOC'],
+                    params['gridPowerW'],
+                    params['pvPowerW'],
+                    params['loadPowerW'],
+                    params['batteryPowerW'],
+                  ),
+        ),
+        'getLatest': _i1.MethodConnector(
+          name: 'getLatest',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['telemetry'] as _i14.TelemetryEndpoint)
+                  .getLatest(session),
+        ),
+        'getHistory': _i1.MethodConnector(
+          name: 'getHistory',
+          params: {
+            'hours': _i1.ParameterDescription(
+              name: 'hours',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['telemetry'] as _i14.TelemetryEndpoint).getHistory(
+                    session,
+                    params['hours'],
+                  ),
+        ),
+      },
+    );
+    modules['serverpod_auth'] = _i17.Endpoints()..initializeEndpoints(server);
   }
 
   @override
   _i1.FutureCallDispatch? get futureCalls {
-    return _i13.FutureCalls();
+    return _i18.FutureCalls();
   }
 }

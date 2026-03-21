@@ -1,0 +1,18 @@
+# HA add-on device record. One row per user (unique per userId).
+# deviceId is SHA256(dongle_serial) — raw serial never stored on server.
+class: Device
+table: devices
+fields:
+  userId: int                  # FK → serverpod_auth UserInfo.id
+  hashedSerial: String         # SHA256(dongle_serial) — unique device identity
+  licenseKey: String           # references license_keys.licenseKey
+  lastSeenAt: DateTime?        # updated on every telemetry POST
+  lastInverterOk: bool         # true if last telemetry had valid inverter state
+  createdAt: DateTime
+indexes:
+  devices_user_idx:
+    fields: userId
+    unique: true
+  devices_serial_idx:
+    fields: hashedSerial
+    unique: true

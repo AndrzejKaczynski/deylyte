@@ -1,0 +1,19 @@
+# License key issued to each subscriber. One row per active license.
+# For beta, keys are created manually via admin tooling.
+class: LicenseKey
+table: license_keys
+fields:
+  licenseKey: String           # UUID v4, the secret shared with the add-on
+  userId: int                  # FK → serverpod_auth UserInfo.id
+  tier: String                 # 'beta_free' | 'basic' | 'pro'
+  stripeSubscriptionId: String? # null until Stripe integration
+  isActive: bool
+  createdAt: DateTime
+  expiresAt: DateTime?         # null = never expires (beta)
+  lastSeenAt: DateTime?        # updated on each successful validation
+indexes:
+  license_keys_key_idx:
+    fields: licenseKey
+    unique: true
+  license_keys_user_idx:
+    fields: userId

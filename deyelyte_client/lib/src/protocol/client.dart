@@ -16,8 +16,9 @@ import 'package:deyelyte_client/src/protocol/app_config.dart' as _i3;
 import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i4;
 import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i5;
 import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i6;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i7;
-import 'protocol.dart' as _i8;
+import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i7;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i8;
+import 'protocol.dart' as _i9;
 
 /// {@category Endpoint}
 class EndpointAppConfig extends _i1.EndpointRef {
@@ -133,6 +134,29 @@ class EndpointCredentials extends _i1.EndpointRef {
       );
 }
 
+/// Returns HA add-on connection status for the authenticated user.
+/// Called by Flutter on every app launch and by the onboarding polling widget.
+/// {@category Endpoint}
+class EndpointDevice extends _i1.EndpointRef {
+  EndpointDevice(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'device';
+
+  /// Returns add-on connection status.
+  ///
+  /// Response fields:
+  ///   connected       — true when telemetry received within last 5 minutes
+  ///   lastSeenAt      — ISO8601 UTC of most recent telemetry, or null
+  ///   inverterReachable — true if last telemetry had valid inverter state
+  _i2.Future<Map<String, dynamic>> getStatus() =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'device',
+        'getStatus',
+        {},
+      );
+}
+
 /// {@category Endpoint}
 class EndpointExample extends _i1.EndpointRef {
   EndpointExample(_i1.EndpointCaller caller) : super(caller);
@@ -162,6 +186,65 @@ class EndpointForecast extends _i1.EndpointRef {
     'updateForecast',
     {},
   );
+}
+
+/// Returns historical energy summaries and events for the Flutter history screen.
+/// Stub implementation — returns zero/empty data until the baseline engine
+/// and telemetry aggregation are wired in a later phase.
+/// {@category Endpoint}
+class EndpointHistory extends _i1.EndpointRef {
+  EndpointHistory(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'history';
+
+  /// Returns aggregate summary metrics for the given date range.
+  ///
+  /// [rangeDays] — number of days to include (7, 30, or 90)
+  ///
+  /// Stub returns zero values. Real implementation will aggregate
+  /// DeviceTelemetry + EnergyPrice rows.
+  _i2.Future<Map<String, dynamic>> getSummary(int rangeDays) =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'history',
+        'getSummary',
+        {'rangeDays': rangeDays},
+      );
+
+  /// Returns a list of notable market/schedule events for the history screen.
+  ///
+  /// [rangeDays] — number of days to include (7, 30, or 90)
+  ///
+  /// Stub returns empty list.
+  _i2.Future<List<Map<String, dynamic>>> getEvents(int rangeDays) =>
+      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+        'history',
+        'getEvents',
+        {'rangeDays': rangeDays},
+      );
+}
+
+/// License key validation. Called during onboarding (user is authenticated
+/// but license not yet verified). Also called by the HA add-on on startup.
+/// {@category Endpoint}
+class EndpointLicense extends _i1.EndpointRef {
+  EndpointLicense(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'license';
+
+  /// Validates a license key and associates it with the authenticated user.
+  ///
+  /// Returns:
+  ///   valid  — bool
+  ///   tier   — String? ('beta_free' | 'basic' | 'pro') when valid
+  ///   reason — String? human-readable denial reason when invalid
+  _i2.Future<Map<String, dynamic>> validate(String licenseKey) =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'license',
+        'validate',
+        {'licenseKey': licenseKey},
+      );
 }
 
 /// {@category Endpoint}
@@ -279,12 +362,112 @@ class EndpointPriceTimeRanges extends _i1.EndpointRef {
       );
 }
 
+/// Serves optimization schedules to the Flutter app and the HA add-on.
+/// {@category Endpoint}
+class EndpointSchedule extends _i1.EndpointRef {
+  EndpointSchedule(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'schedule';
+
+  /// Returns the OptimizationFrame for the current hour, or null.
+  _i2.Future<_i4.OptimizationFrame?> getCurrent() =>
+      caller.callServerEndpoint<_i4.OptimizationFrame?>(
+        'schedule',
+        'getCurrent',
+        {},
+      );
+
+  /// Returns all upcoming OptimizationFrames (current hour onwards).
+  _i2.Future<List<_i4.OptimizationFrame>> getForecast() =>
+      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+        'schedule',
+        'getForecast',
+        {},
+      );
+
+  /// Returns schedule events as a list of maps for the Flutter schedule screen.
+  /// Stub: returns empty list until optimization engine is wired.
+  _i2.Future<List<Map<String, dynamic>>> getEvents() =>
+      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+        'schedule',
+        'getEvents',
+        {},
+      );
+
+  /// Returns upcoming OptimizationFrames for the user associated with
+  /// [licenseKey]. Returns an empty list on invalid license.
+  _i2.Future<List<_i4.OptimizationFrame>> getSchedule(String licenseKey) =>
+      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+        'schedule',
+        'getSchedule',
+        {'licenseKey': licenseKey},
+      );
+}
+
+/// Handles inverter telemetry from the HA add-on and serves telemetry
+/// history to the Flutter app.
+/// {@category Endpoint}
+class EndpointTelemetry extends _i1.EndpointRef {
+  EndpointTelemetry(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'telemetry';
+
+  /// Receives a single telemetry snapshot from the HA add-on.
+  /// Auth: the add-on provides its licenseKey as a plain parameter.
+  ///
+  /// On success:
+  ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk)
+  ///   - Inserts a DeviceTelemetry row
+  _i2.Future<void> ingest(
+    String licenseKey,
+    String deviceId,
+    DateTime timestamp,
+    double batterySOC,
+    double gridPowerW,
+    double pvPowerW,
+    double loadPowerW,
+    double batteryPowerW,
+  ) => caller.callServerEndpoint<void>(
+    'telemetry',
+    'ingest',
+    {
+      'licenseKey': licenseKey,
+      'deviceId': deviceId,
+      'timestamp': timestamp,
+      'batterySOC': batterySOC,
+      'gridPowerW': gridPowerW,
+      'pvPowerW': pvPowerW,
+      'loadPowerW': loadPowerW,
+      'batteryPowerW': batteryPowerW,
+    },
+  );
+
+  /// Returns the most recent telemetry snapshot for the authenticated user.
+  /// Returns null when no telemetry has been received yet.
+  _i2.Future<_i7.DeviceTelemetry?> getLatest() =>
+      caller.callServerEndpoint<_i7.DeviceTelemetry?>(
+        'telemetry',
+        'getLatest',
+        {},
+      );
+
+  /// Returns up to [hours] hours of telemetry history for the authenticated user.
+  _i2.Future<List<_i7.DeviceTelemetry>> getHistory(int hours) =>
+      caller.callServerEndpoint<List<_i7.DeviceTelemetry>>(
+        'telemetry',
+        'getHistory',
+        {'hours': hours},
+      );
+}
+
 class Modules {
   Modules(Client client) {
-    auth = _i7.Caller(client);
+    auth = _i8.Caller(client);
   }
 
-  late final _i7.Caller auth;
+  late final _i8.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -307,7 +490,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i8.Protocol(),
+         _i9.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -319,11 +502,16 @@ class Client extends _i1.ServerpodClientShared {
     appConfig = EndpointAppConfig(this);
     baseline = EndpointBaseline(this);
     credentials = EndpointCredentials(this);
+    device = EndpointDevice(this);
     example = EndpointExample(this);
     forecast = EndpointForecast(this);
+    history = EndpointHistory(this);
+    license = EndpointLicense(this);
     optimizer = EndpointOptimizer(this);
     price = EndpointPrice(this);
     priceTimeRanges = EndpointPriceTimeRanges(this);
+    schedule = EndpointSchedule(this);
+    telemetry = EndpointTelemetry(this);
     modules = Modules(this);
   }
 
@@ -333,15 +521,25 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointCredentials credentials;
 
+  late final EndpointDevice device;
+
   late final EndpointExample example;
 
   late final EndpointForecast forecast;
+
+  late final EndpointHistory history;
+
+  late final EndpointLicense license;
 
   late final EndpointOptimizer optimizer;
 
   late final EndpointPrice price;
 
   late final EndpointPriceTimeRanges priceTimeRanges;
+
+  late final EndpointSchedule schedule;
+
+  late final EndpointTelemetry telemetry;
 
   late final Modules modules;
 
@@ -350,11 +548,16 @@ class Client extends _i1.ServerpodClientShared {
     'appConfig': appConfig,
     'baseline': baseline,
     'credentials': credentials,
+    'device': device,
     'example': example,
     'forecast': forecast,
+    'history': history,
+    'license': license,
     'optimizer': optimizer,
     'price': price,
     'priceTimeRanges': priceTimeRanges,
+    'schedule': schedule,
+    'telemetry': telemetry,
   };
 
   @override

@@ -1,0 +1,18 @@
+# Raw inverter telemetry received from the HA add-on.
+# deviceId is SHA256(dongle_serial) for privacy — raw serial never stored.
+class: DeviceTelemetry
+table: device_telemetry
+fields:
+  deviceId: String             # SHA256 hex of dongle serial number
+  userId: int                  # resolved from license key at ingest time
+  timestamp: DateTime
+  batterySOC: double           # percent 0–100
+  gridPowerW: double           # W; positive = export to grid, negative = import
+  pvPowerW: double             # W total PV generation
+  loadPowerW: double           # W site load
+  batteryPowerW: double        # W; positive = charging, negative = discharging
+indexes:
+  device_telemetry_user_time_idx:
+    fields: userId, timestamp
+  device_telemetry_device_time_idx:
+    fields: deviceId, timestamp
