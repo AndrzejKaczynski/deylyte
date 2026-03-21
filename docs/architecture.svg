@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 660" width="900" height="660">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="660" fill="#0f172a"/>
+
+  <!-- Title -->
+  <text x="450" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="600" fill="#f1f5f9">EMS SaaS — System Architecture</text>
+  <text x="450" y="54" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">Flutter Web · HA Add-on (HACS) · AWS App Runner · Lambda · RDS · S3/CloudFront</text>
+
+  <!-- ===== LEFT: USER LOCAL NETWORK ===== -->
+  <!-- HA Add-on outer container -->
+  <rect x="30" y="76" width="310" height="220" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+  <text x="185" y="98" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#6ee7b7">Home Assistant Add-on</text>
+  <text x="185" y="114" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#34d399">On user's local network · distributed via HACS (GitHub)</text>
+
+  <!-- Deye inverter box -->
+  <rect x="48" y="128" width="118" height="76" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1"/>
+  <text x="107" y="152" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#a7f3d0">Deye inverter</text>
+  <text x="107" y="168" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">+ Solarman WiFi dongle</text>
+  <text x="107" y="183" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">TCP port 8899</text>
+
+  <!-- EMS Agent box -->
+  <rect x="182" y="128" width="140" height="76" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1"/>
+  <text x="252" y="150" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#a7f3d0">EMS agent</text>
+  <text x="252" y="166" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">Python · pysolarmanv5</text>
+  <text x="252" y="181" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">polls inverter locally</text>
+  <text x="252" y="196" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">executes schedules</text>
+
+  <!-- SolarmanV5 arrow -->
+  <line x1="166" y1="166" x2="182" y2="166" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-green)"/>
+  <text x="174" y="158" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" fill="#34d399">V5</text>
+
+  <!-- HA Sidebar panel note -->
+  <rect x="48" y="220" width="274" height="62" rx="6" fill="#022c22" stroke="#059669" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="185" y="240" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#6ee7b7">HA Sidebar Panel (Webpage)</text>
+  <text x="185" y="256" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">Loads Flutter Web app from CloudFront URL</text>
+  <text x="185" y="271" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">User sees full Flutter UI inside HA</text>
+
+  <!-- HACS label -->
+  <rect x="30" y="312" width="148" height="44" rx="8" fill="#1c1917" stroke="#78716c" stroke-width="1"/>
+  <text x="104" y="330" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#d6d3d1">HACS distribution</text>
+  <text x="104" y="346" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a8a29e">GitHub repo · user installs</text>
+
+  <!-- GDPR note -->
+  <rect x="30" y="370" width="148" height="56" rx="8" fill="#14532d" stroke="#4ade80" stroke-width="1"/>
+  <text x="104" y="390" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#86efac">No PII on AWS</text>
+  <text x="104" y="406" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">No inverter creds stored</text>
+  <text x="104" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">Minimal GDPR/RODO scope</text>
+
+  <!-- Stripe / license key -->
+  <rect x="192" y="312" width="148" height="44" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+  <text x="266" y="330" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#fde68a">Stripe billing</text>
+  <text x="266" y="346" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#fbbf24">License key activates add-on</text>
+
+  <!-- Beta users note -->
+  <rect x="192" y="370" width="148" height="56" rx="8" fill="#1e1b4b" stroke="#818cf8" stroke-width="1"/>
+  <text x="266" y="390" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#c7d2fe">Beta users</text>
+  <text x="266" y="406" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">Manual key via admin panel</text>
+  <text x="266" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">tier = beta_free</text>
+
+  <!-- ===== RIGHT: AWS BACKEND ===== -->
+  <rect x="560" y="76" width="310" height="440" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="715" y="98" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#a5b4fc">AWS Backend</text>
+  <text x="715" y="114" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#818cf8">Your SaaS platform</text>
+
+  <!-- App Runner -->
+  <rect x="578" y="126" width="274" height="56" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="715" y="148" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">AWS App Runner — API</text>
+  <text x="715" y="164" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">license validation · telemetry ingest · schedule delivery · auth</text>
+
+  <!-- Lambda -->
+  <rect x="578" y="196" width="274" height="56" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="715" y="218" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">AWS Lambda — Optimization engine</text>
+  <text x="715" y="234" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">EMS logic · charge/discharge scheduling · redeploy without add-on update</text>
+
+  <!-- RDS -->
+  <rect x="578" y="266" width="274" height="70" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="715" y="287" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">RDS PostgreSQL (t3.micro)</text>
+  <text x="715" y="303" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">users · license keys · Stripe state · schedules</text>
+  <text x="715" y="318" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">anonymized telemetry · hashed device IDs only</text>
+
+  <!-- S3 + CloudFront -->
+  <rect x="578" y="350" width="274" height="56" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="715" y="372" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">S3 + CloudFront</text>
+  <text x="715" y="388" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">Flutter Web static build · global CDN · HTTPS</text>
+
+  <!-- Stripe webhook -->
+  <rect x="578" y="420" width="274" height="44" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="715" y="440" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">Stripe webhooks</text>
+  <text x="715" y="456" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">subscription lifecycle · auto license key management</text>
+
+  <!-- Admin panel (planned) -->
+  <rect x="578" y="478" width="274" height="26" rx="6" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="715" y="495" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#818cf8">Admin panel (planned) — manage beta keys · fleet telemetry · Stripe ops</text>
+
+  <!-- ===== BOTTOM: FLUTTER APP ===== -->
+  <rect x="240" y="548" width="420" height="82" rx="12" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="450" y="572" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#7dd3fc">Flutter Web App</text>
+  <text x="450" y="589" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#38bdf8">Hosted on S3 + CloudFront · also a standalone PWA on mobile</text>
+  <text x="450" y="605" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#38bdf8">dashboard · energy charts · schedule editor · billing · account</text>
+  <text x="450" y="620" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#38bdf8">embedded in HA sidebar AND accessible directly via browser</text>
+
+  <!-- ===== ARROWS ===== -->
+
+  <!-- Agent → App Runner (telemetry) -->
+  <path d="M322 155 L560 155" fill="none" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="440" y="148" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#4ade80">anonymized telemetry only</text>
+
+  <!-- App Runner → Agent (schedules) -->
+  <path d="M560 178 L322 178" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="440" y="193" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#60a5fa">schedules / commands</text>
+
+  <!-- Stripe box → App Runner (license check) -->
+  <path d="M340 334 L420 334 L420 154 L560 154" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow-amber)"/>
+  <text x="390" y="327" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#fbbf24">license check</text>
+
+  <!-- CloudFront → Flutter app -->
+  <path d="M715 406 L715 530 L660 530 L660 548" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="740" y="490" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#60a5fa">serves</text>
+
+  <!-- Flutter → App Runner (API calls) -->
+  <path d="M660 548 L660 530 L715 530 L715 482" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-blue)"/>
+  <text x="760" y="516" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#38bdf8">JWT API calls</text>
+
+  <!-- HA sidebar → CloudFront (loads flutter) -->
+  <path d="M185 282 L185 530 L240 530 L240 589" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-blue)"/>
+  <text x="148" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#38bdf8" transform="rotate(-90, 148, 420)">loads from CloudFront</text>
+
+  <!-- Lambda ↔ App Runner internal -->
+  <line x1="715" y1="182" x2="715" y2="196" stroke="#818cf8" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- App Runner ↔ RDS -->
+  <line x1="715" y1="252" x2="715" y2="266" stroke="#818cf8" stroke-width="1" marker-end="url(#arrow)"/>
+</svg>
