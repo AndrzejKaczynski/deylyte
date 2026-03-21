@@ -1174,7 +1174,7 @@ class _PricingSourceCardState extends State<_PricingSourceCard> {
                       child: Text(
                         'Hour ${r.hourStart.toString().padLeft(2, '0')}–'
                         '${r.hourEnd.toString().padLeft(2, '0')}  '
-                        '${r.ratePln.toStringAsFixed(4)} PLN/kWh$sellLabel',
+                        '${r.distributionRatePln.toStringAsFixed(4)} PLN/kWh$sellLabel',
                         style: tt.bodySmall,
                       ),
                     ),
@@ -1292,7 +1292,7 @@ class _RangeEditorDialogState extends State<_RangeEditorDialog> {
               userInfoId: 0, // server overwrites
               hourStart: from,
               hourEnd: to,
-              ratePln: rate,
+              distributionRatePln: rate,
               sellRatePln: sellRate,
             ));
           },
