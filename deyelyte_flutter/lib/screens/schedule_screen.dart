@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme.dart';
 import '../components/components.dart';
+import '../providers/app_providers.dart';
+import '../providers/settings_provider.dart';
 
-class ScheduleScreen extends StatelessWidget {
+class ScheduleScreen extends ConsumerWidget {
   const ScheduleScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final planningOnly = ref.watch(settingsProvider.select((s) => s.planningOnly));
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -17,6 +21,10 @@ class ScheduleScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ScheduleHeader(),
+              if (planningOnly) ...[
+                const SizedBox(height: AppSpacing.sp3),
+                _PlanningModeBanner(),
+              ],
               const SizedBox(height: AppSpacing.sp4),
               AsymmetricGrid(
                 primaryFlex: 7,
@@ -31,7 +39,7 @@ class ScheduleScreen extends StatelessWidget {
                 ),
                 sidebar: Column(
                   children: [
-                    _StrategyAnalysisCard(),
+                    _StrategySummaryCard(),
                     const SizedBox(height: AppSpacing.sp4),
                     _UpcomingEventsCard(),
                   ],
@@ -60,10 +68,18 @@ class _ScheduleHeader extends StatelessWidget {
             children: [
               Text('Energy Schedule', style: tt.headlineMedium),
               const SizedBox(height: 4),
-              Text(
-                'Real-time optimization for Today, Oct 24',
-                style: tt.bodySmall,
-              ),
+              Builder(builder: (context) {
+                final now = DateTime.now();
+                final months = [
+                  'Jan','Feb','Mar','Apr','May','Jun',
+                  'Jul','Aug','Sep','Oct','Nov','Dec'
+                ];
+                return Text(
+                  'Real-time optimization for Today, '
+                  '${months[now.month - 1]} ${now.day}',
+                  style: tt.bodySmall,
+                );
+              }),
             ],
           ),
         ),
@@ -72,6 +88,34 @@ class _ScheduleHeader extends StatelessWidget {
           icon: Icons.trending_up_rounded,
         ),
       ],
+    );
+  }
+}
+
+// ── Planning Mode Banner ──────────────────────────────────────────────────────
+
+class _PlanningModeBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: AppRadius.radiusMd,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Row(children: [
+        const Icon(Icons.visibility_outlined,
+            size: 16, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Planning Mode — schedule is calculated but no commands are sent to the inverter.',
+            style: tt.bodySmall?.copyWith(color: AppColors.primary),
+          ),
+        ),
+      ]),
     );
   }
 }
@@ -371,62 +415,78 @@ class _TimelineEvent extends StatelessWidget {
   }
 }
 
-// ── Strategy Analysis Card ────────────────────────────────────────────────────
+// ── Strategy Summary Card ─────────────────────────────────────────────────────
 
-class _StrategyAnalysisCard extends StatelessWidget {
+class _StrategySummaryCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final settings = ref.watch(settingsProvider);
+    final config = ref.watch(appConfigProvider).valueOrNull;
+
+    final activeStrategy = switch (settings.priceSource) {
+      'pstryk' || 'rce' => settings.pvOnlySelling
+          ? 'Solar-first'
+          : 'Price-optimized',
+      'manual' || 'fixed' => 'Manual',
+      _ => 'Price-optimized',
+    };
+
+    final weatherInput = settings.solcast
+        ? 'Solcast forecast active'
+        : 'No weather data (Open-Meteo fallback)';
+
+    final since = config?.dataGatheringSince;
+    final String historicalBasis;
+    if (since == null) {
+      historicalBasis = 'Baseline collecting (0/7 days)';
+    } else {
+      final days = DateTime.now().toUtc().difference(since).inDays;
+      if (days < 7) {
+        historicalBasis = 'Baseline collecting ($days/7 days)';
+      } else {
+        historicalBasis = 'Based on $days days of data';
+      }
+    }
+
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           const Icon(Icons.psychology_rounded,
               size: 18, color: AppColors.primary),
           const SizedBox(width: 8),
-          Text('Smart Strategy', style: tt.titleMedium),
+          Text('Strategy Summary', style: tt.titleMedium),
         ]),
-        const SizedBox(height: 4),
-        Text('AI Kinetic · Learning User Behaviour',
-            style: tt.bodySmall?.copyWith(color: AppColors.secondary)),
         const SizedBox(height: 16),
-        const _StrategyRow(
-          label: 'Morning Peak',
-          detail: 'Charge at off-peak rates starts in 4h',
-          icon: Icons.battery_charging_full_rounded,
-          color: AppColors.secondary,
+        _StrategyRow(
+          label: 'Active strategy',
+          detail: activeStrategy,
+          icon: Icons.auto_graph_rounded,
+          color: AppColors.primary,
         ),
         const SizedBox(height: 12),
-        const _StrategyRow(
-          label: 'Weather',
-          detail: 'Sunny · PV forecast 12.4 kWh',
+        _StrategyRow(
+          label: 'Weather input',
+          detail: weatherInput,
           icon: Icons.wb_sunny_rounded,
           color: AppColors.tertiary,
         ),
         const SizedBox(height: 12),
-        const _StrategyRow(
-          label: 'Historical',
-          detail: 'Based on Monday usage patterns',
+        _StrategyRow(
+          label: 'Historical basis',
+          detail: historicalBasis,
           icon: Icons.history_rounded,
           color: AppColors.primary,
         ),
         const SizedBox(height: 16),
-        // Est profit meter
         Text('Est. Net Profit Today',
             style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         const HeroMetric(
-          value: '\$0.08–\$0.42',
+          value: '--',
           size: HeroMetricSize.small,
-          valueColor: AppColors.secondary,
+          valueColor: AppColors.onSurfaceVariant,
         ),
-        const SizedBox(height: 4),
-        Row(children: [
-          const Icon(Icons.trending_up_rounded,
-              size: 12, color: AppColors.secondary),
-          const SizedBox(width: 4),
-          Text('15% higher than yesterday',
-              style: tt.labelSmall?.copyWith(color: AppColors.secondary)),
-        ]),
       ]),
     );
   }

@@ -1,51 +1,132 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/theme.dart';
 import '../components/components.dart';
+import '../providers/app_providers.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      ref.invalidate(latestTelemetryProvider);
+      ref.invalidate(addonStatusProvider);
+      ref.invalidate(currentScheduleProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final addonAsync = ref.watch(addonStatusProvider);
+    final addonStatus = addonAsync.valueOrNull;
+    final connected = addonStatus?['connected'] == true;
+    final lastSeen = addonStatus?['lastSeenAt'] as String?;
+    final showOfflineBanner = !connected && lastSeen != null;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isDesktop ? AppSpacing.sp6 : AppSpacing.sp4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DashboardHeader(),
-              const SizedBox(height: AppSpacing.sp4),
-              // KPI stat strip
-              _KpiStrip(),
-              const SizedBox(height: AppSpacing.sp6),
-              // Main asymmetric grid
-              AsymmetricGrid(
-                primaryFlex: 7,
-                sidebarFlex: 3,
-                gap: AppSpacing.sp4,
-                primary: Column(
-                  children: [
-                    _PowerFlowCard(),
-                    const SizedBox(height: AppSpacing.sp4),
-                    _ConsumptionChartCard(),
-                  ],
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(latestTelemetryProvider);
+            ref.invalidate(addonStatusProvider);
+            ref.invalidate(currentScheduleProvider);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding:
+                EdgeInsets.all(isDesktop ? AppSpacing.sp6 : AppSpacing.sp4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DashboardHeader(),
+                if (showOfflineBanner) ...[
+                  const SizedBox(height: AppSpacing.sp3),
+                  _OfflineBanner(),
+                ],
+                const SizedBox(height: AppSpacing.sp4),
+                _KpiStrip(),
+                const SizedBox(height: AppSpacing.sp6),
+                AsymmetricGrid(
+                  primaryFlex: 7,
+                  sidebarFlex: 3,
+                  gap: AppSpacing.sp4,
+                  primary: Column(
+                    children: [
+                      _PowerFlowCard(),
+                      const SizedBox(height: AppSpacing.sp4),
+                      _ConsumptionChartCard(),
+                    ],
+                  ),
+                  sidebar: Column(
+                    children: [
+                      _EnergySourcesCard(),
+                      const SizedBox(height: AppSpacing.sp4),
+                      _EmsStatusCard(),
+                    ],
+                  ),
                 ),
-                sidebar: Column(
-                  children: [
-                    _EnergySourcesCard(),
-                    const SizedBox(height: AppSpacing.sp4),
-                    _ApplianceStatusCard(),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Offline Banner ─────────────────────────────────────────────────────────────
+
+class _OfflineBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.tertiary.withValues(alpha: 0.10),
+        borderRadius: AppRadius.radiusMd,
+        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.25)),
+      ),
+      child: Row(children: [
+        const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.tertiary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Add-on offline — inverter data may be stale',
+            style: tt.bodySmall?.copyWith(color: AppColors.tertiary),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => context.go('/settings'),
+          child: Text(
+            'Troubleshoot →',
+            style: tt.bodySmall?.copyWith(
+              color: AppColors.tertiary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }
@@ -98,39 +179,57 @@ class _DashboardHeader extends StatelessWidget {
 
 // ── KPI Strip ────────────────────────────────────────────────────────────────
 
-class _KpiStrip extends StatelessWidget {
+class _KpiStrip extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final telemetry = ref.watch(latestTelemetryProvider).valueOrNull;
+    final soc = telemetry?.batterySOC;
+    final pv = telemetry?.pvPowerW;
+    final grid = telemetry?.gridPowerW;
+
+    final socPct = soc != null ? '${soc.toStringAsFixed(0)}%' : '--';
+    final socSub = soc != null
+        ? (telemetry!.batteryPowerW < 0 ? '⚡ Charging' : '↓ Discharging')
+        : 'No data';
+    final pvKw = pv != null ? '${(pv / 1000).toStringAsFixed(1)} kW' : '--';
+    final gridStatus = grid == null
+        ? '--'
+        : (grid > 100
+            ? 'Exporting'
+            : (grid < -100 ? 'Importing' : 'Stable'));
+
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth > 600;
       final items = [
-        const _KpiItem(
+        _KpiItem(
           title: 'Battery SoC',
-          value: '84%',
-          subtitle: '⚡ Charging',
+          value: socPct,
+          subtitle: socSub,
           subtitleColor: AppColors.secondary,
           icon: Icons.battery_charging_full_rounded,
           iconColor: AppColors.secondary,
-          child: _BatterySocBar(soc: 0.84),
+          child: _BatterySocBar(soc: (soc ?? 0) / 100),
         ),
         const _KpiItem(
           title: 'Net Balance',
-          value: '12.40 PLN',
+          value: '--',
           subtitle: 'Today',
           icon: Icons.trending_up_rounded,
           iconColor: AppColors.secondary,
         ),
-        const _KpiItem(
+        _KpiItem(
           title: 'Grid Status',
-          value: 'Stable',
-          subtitle: 'Frequency: 50.02 Hz',
+          value: gridStatus,
+          subtitle: grid != null
+              ? '${(grid.abs() / 1000).toStringAsFixed(1)} kW'
+              : '--',
           icon: Icons.bolt_rounded,
           iconColor: AppColors.primary,
         ),
-        const _KpiItem(
+        _KpiItem(
           title: 'Solar Yield',
-          value: '4.2 kWh',
-          subtitle: 'Today so far',
+          value: pvKw,
+          subtitle: 'Now',
           icon: Icons.wb_sunny_rounded,
           iconColor: AppColors.tertiary,
         ),
@@ -682,88 +781,109 @@ class _SourceRow extends StatelessWidget {
 
 // ── Appliance Status Card ─────────────────────────────────────────────────────
 
-class _ApplianceStatusCard extends StatelessWidget {
+class _EmsStatusCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final scheduleAsync = ref.watch(currentScheduleProvider);
+    final configAsync = ref.watch(appConfigProvider);
+    final schedule = scheduleAsync.valueOrNull;
+    final config = configAsync.valueOrNull;
+    final planningOnly = config?.planningOnly ?? false;
+
+    final minSocPct = config?.minSocPercentage != null
+        ? '${((config!.minSocPercentage!) * 100).round()}%'
+        : '--';
+
+    final mode = schedule == null
+        ? 'Standby'
+        : switch (schedule.command.toLowerCase()) {
+            'charge' => 'Charging',
+            'discharge' => 'Discharging',
+            'idle' => 'Standby',
+            _ => 'Optimizing',
+          };
+
+    final modeColor = switch (mode) {
+      'Charging' => AppColors.secondary,
+      'Discharging' => AppColors.primary,
+      'Optimizing' => AppColors.primary,
+      _ => AppColors.onSurfaceVariant,
+    };
+
     return SurfaceCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Appliance Status', style: tt.titleMedium),
-          const SizedBox(height: 16),
-          const _ApplianceRow(
-            icon: Icons.local_laundry_service_rounded,
-            label: 'Dishwasher',
-            status: 'Active',
-            detail: '850W',
-            statusColor: AppColors.secondary,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SectionHeader(title: 'EMS Status'),
+        const SizedBox(height: 16),
+        // Mode chip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: modeColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(height: 12),
-          const _ApplianceRow(
-            icon: Icons.ev_station_rounded,
-            label: 'Tesla Wallbox',
-            status: 'Scheduled',
-            detail: '22:00',
-            statusColor: AppColors.tertiary,
-          ),
-          const SizedBox(height: 12),
-          const _ApplianceRow(
-            icon: Icons.heat_pump_rounded,
-            label: 'Heat Pump',
-            status: 'Idle',
-            detail: 'Eco Mode',
-            statusColor: AppColors.onSurfaceVariant,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            PulseIndicator(color: modeColor, size: 6),
+            const SizedBox(width: 6),
+            Text(
+              mode,
+              style: tt.labelMedium
+                  ?.copyWith(color: modeColor, fontWeight: FontWeight.w600),
+            ),
+          ]),
+        ),
+        if (planningOnly) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.2)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.visibility_outlined,
+                  size: 13, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Planning Mode — inverter not controlled',
+                  style: tt.labelSmall?.copyWith(color: AppColors.primary),
+                ),
+              ),
+            ]),
           ),
         ],
-      ),
+        const SizedBox(height: 16),
+        // Battery reserve
+        Row(children: [
+          const Icon(Icons.battery_alert_rounded,
+              size: 14, color: AppColors.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text('Battery reserve: $minSocPct', style: tt.bodySmall),
+        ]),
+        if (schedule == null) ...[
+          const SizedBox(height: 12),
+          Text(
+            'No schedule yet — EMS configuring',
+            style:
+                tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant),
+          ),
+        ],
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: () => context.go('/schedule'),
+          child: Text(
+            'View Schedule →',
+            style: tt.bodySmall?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-class _ApplianceRow extends StatelessWidget {
-  const _ApplianceRow({
-    required this.icon,
-    required this.label,
-    required this.status,
-    required this.detail,
-    required this.statusColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String status;
-  final String detail;
-  final Color statusColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    return Row(children: [
-      Container(
-        width: 36, height: 36,
-        decoration: BoxDecoration(
-          color: statusColor.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, size: 18, color: statusColor),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-            Text(
-              '$status • $detail',
-              style: tt.bodySmall?.copyWith(color: statusColor),
-            ),
-          ],
-        ),
-      ),
-      if (status == 'Active')
-        PulseIndicator(color: statusColor, size: 6),
-    ]);
-  }
-}

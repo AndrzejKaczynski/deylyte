@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../theme/theme.dart';
 import '../components/components.dart';
-import '../components/deye_credentials_dialog.dart';
 import '../providers/app_providers.dart';
 import '../providers/settings_provider.dart';
 
@@ -119,11 +118,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         chargingEnabled: settings.chargingEnabled,
                         sellingEnabled: settings.sellingEnabled,
                         pvOnlySelling: settings.pvOnlySelling,
+                        planningOnly: settings.planningOnly,
                         maxBuyPrice: settings.maxBuyPrice,
                         minSellPrice: settings.minSellPrice,
                         onChargingChanged: notifier.setChargingEnabled,
                         onSellingChanged: notifier.setSellingEnabled,
                         onPvOnlySellingChanged: notifier.setPvOnlySelling,
+                        onPlanningOnlyChanged: notifier.setPlanningOnly,
                         onMaxBuyPriceChanged: notifier.setMaxBuyPrice,
                         onMinSellPriceChanged: notifier.setMinSellPrice,
                       ),
@@ -171,11 +172,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sp4),
                   _ApiIntegrationsCard(
-                    deye: settings.deye,
                     solcast: settings.solcast,
                     pstryk: settings.pstryk,
                     cityName: settings.cityName,
-                    onDeyeChanged: _handleDeyeToggle,
                     onSolcastChanged: notifier.setSolcast,
                     onCityNameChanged: notifier.setCityName,
                   ),
@@ -196,7 +195,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// the controls are available.
   String? _emsLockInfo(AppConfig? config) {
     if (config == null || config.dataGatheringSince == null) {
-      return 'Connect your Deye inverter to enable EMS control. '
+      return 'Install the DeyLyte add-on in Home Assistant to enable EMS control. '
           'After connecting, a 7-day baseline collection period begins.';
     }
     final since = config.dataGatheringSince!;
@@ -205,41 +204,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final day = '${unlockDate.day.toString().padLeft(2, '0')}.'
           '${unlockDate.month.toString().padLeft(2, '0')}.'
           '${unlockDate.year}';
-      return 'Collecting baseline data — EMS control unlocks on $day. '
+      return 'Add-on connected. Collecting baseline data — EMS control unlocks on $day. '
           'Your inverter continues operating normally during this period.';
     }
     return null;
-  }
-
-  void _handleDeyeToggle(bool value) async {
-    final notifier = ref.read(settingsProvider.notifier);
-    if (value) {
-      await DeyeCredentialsDialog.show(
-        context,
-        onSave: (username, password) async {
-          await ref
-              .read(clientProvider)
-              .credentials
-              .saveDeye(username, password);
-          notifier.setDeye(true);
-          ref.invalidate(appConfigProvider);
-          ref.invalidate(integrationStatusProvider);
-        },
-      );
-    } else {
-      try {
-        await ref.read(clientProvider).credentials.removeDeye();
-        notifier.setDeye(false);
-        ref.invalidate(appConfigProvider);
-        ref.invalidate(integrationStatusProvider);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to disconnect Deye: $e')),
-          );
-        }
-      }
-    }
   }
 
   Future<void> _save() async {
@@ -269,6 +237,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         priceSource: s.priceSource,
         fixedBuyRatePln: s.fixedBuyRatePln,
         fixedSellRatePln: s.fixedSellRatePln,
+        planningOnly: s.planningOnly,
         pstrykEnabled: existing?.pstrykEnabled ?? false,
       );
       await ref.read(appConfigProvider.notifier).save(config);
@@ -317,11 +286,13 @@ class _EmsControlCard extends StatefulWidget {
     required this.chargingEnabled,
     required this.sellingEnabled,
     required this.pvOnlySelling,
+    required this.planningOnly,
     required this.maxBuyPrice,
     required this.minSellPrice,
     required this.onChargingChanged,
     required this.onSellingChanged,
     required this.onPvOnlySellingChanged,
+    required this.onPlanningOnlyChanged,
     required this.onMaxBuyPriceChanged,
     required this.onMinSellPriceChanged,
   });
@@ -329,11 +300,13 @@ class _EmsControlCard extends StatefulWidget {
   final bool chargingEnabled;
   final bool sellingEnabled;
   final bool pvOnlySelling;
+  final bool planningOnly;
   final double maxBuyPrice;
   final double? minSellPrice;
   final ValueChanged<bool> onChargingChanged;
   final ValueChanged<bool> onSellingChanged;
   final ValueChanged<bool> onPvOnlySellingChanged;
+  final ValueChanged<bool> onPlanningOnlyChanged;
   final ValueChanged<double> onMaxBuyPriceChanged;
   final ValueChanged<double?> onMinSellPriceChanged;
 
@@ -369,6 +342,53 @@ class _EmsControlCardState extends State<_EmsControlCard> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SectionHeader(title: 'EMS Control'),
         const SizedBox(height: 20),
+
+        // ── Planning Mode ─────────────────────────────────────────────────────
+        _ToggleSetting(
+          icon: Icons.visibility_outlined,
+          iconColor: AppColors.primary,
+          label: 'Planning Mode',
+          detail: widget.planningOnly
+              ? 'Optimizer runs and generates schedule — no commands sent to inverter.'
+              : 'Live mode: optimizer controls the inverter directly.',
+          value: widget.planningOnly,
+          onChanged: widget.onPlanningOnlyChanged,
+        ),
+        if (widget.planningOnly) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.06),
+              borderRadius: AppRadius.radiusMd,
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.info_outline_rounded,
+                  size: 14, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Charging and selling settings below are saved but ignored '
+                  'until you disable Planning Mode.',
+                  style: tt.bodySmall?.copyWith(color: AppColors.primary),
+                ),
+              ),
+            ]),
+          ),
+        ],
+
+        const SizedBox(height: 20),
+        const Divider(height: 1),
+        const SizedBox(height: 20),
+
+        // ── Charging / selling (dimmed in planning mode) ──────────────────────
+        IgnorePointer(
+          ignoring: widget.planningOnly,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: widget.planningOnly ? 0.4 : 1.0,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
         // ── Charging section ──────────────────────────────────────────────────
         _ToggleSetting(
@@ -497,6 +517,10 @@ class _EmsControlCardState extends State<_EmsControlCard> {
             ),
           ),
         ],
+        // close the IgnorePointer > AnimatedOpacity > Column wrapping charge/sell
+        ]),
+          ),
+        ),
       ]),
     );
   }
@@ -964,6 +988,7 @@ class _PriceSourcePicker extends StatelessWidget {
     ('pstryk', 'Pstryk'),
     ('rce', 'RCE'),
     ('fixed', 'Fixed'),
+    ('manual', 'Manual'),
   ];
 
   @override
@@ -1076,8 +1101,7 @@ class _PricingSourceCardState extends State<_PricingSourceCard> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final showRanges =
-        widget.priceSource == 'rce' || widget.priceSource == 'fixed';
+    final showRanges = widget.priceSource == 'rce' || widget.priceSource == 'fixed';
 
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1094,13 +1118,15 @@ class _PricingSourceCardState extends State<_PricingSourceCard> {
             'pstryk' => 'Hourly buy/sell prices from the Pstryk API.',
             'rce' =>
               'RCE wholesale market prices (PSE) plus per-range distribution charges.',
+            'manual' =>
+              'Manually entered fixed buy/sell rates. Identical to Fixed but without time ranges.',
             _ => 'Fixed buy/sell rates, optionally varied by time range.',
           },
           style: tt.bodySmall?.copyWith(color: AppColors.outline),
         ),
 
-        // ── Fixed: fallback rates ─────────────────────────────────────────
-        if (widget.priceSource == 'fixed') ...[
+        // ── Fixed / Manual: fallback rates ────────────────────────────────
+        if (widget.priceSource == 'fixed' || widget.priceSource == 'manual') ...[
           const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 16),
@@ -1365,44 +1391,49 @@ class _HourField extends StatelessWidget {
 
 // ── API Integrations ──────────────────────────────────────────────────────────
 
-class _ApiIntegrationsCard extends StatefulWidget {
+class _ApiIntegrationsCard extends ConsumerStatefulWidget {
   const _ApiIntegrationsCard({
-    required this.deye,
     required this.solcast,
     required this.pstryk,
     required this.cityName,
-    required this.onDeyeChanged,
     required this.onSolcastChanged,
     required this.onCityNameChanged,
   });
 
-  final bool deye;
   final bool solcast;
   final bool pstryk;
   final String? cityName;
-  final ValueChanged<bool> onDeyeChanged;
   final ValueChanged<bool> onSolcastChanged;
   final ValueChanged<String?> onCityNameChanged;
 
   @override
-  State<_ApiIntegrationsCard> createState() => _ApiIntegrationsCardState();
+  ConsumerState<_ApiIntegrationsCard> createState() =>
+      _ApiIntegrationsCardState();
 }
 
-class _ApiIntegrationsCardState extends State<_ApiIntegrationsCard> {
+class _ApiIntegrationsCardState extends ConsumerState<_ApiIntegrationsCard> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final addonAsync = ref.watch(addonStatusProvider);
+    final addonStatus = addonAsync.valueOrNull;
+    final connected = addonStatus?['connected'] == true;
+    final lastSeen = addonStatus?['lastSeenAt'] as String?;
+    final addonDetail = connected
+        ? 'Add-on connected'
+        : (lastSeen != null ? 'Add-on offline' : 'Not configured');
+    final addonColor = connected
+        ? AppColors.secondary
+        : (lastSeen != null ? AppColors.tertiary : AppColors.onSurfaceVariant);
+
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SectionHeader(title: 'API Integrations'),
         const SizedBox(height: 16),
-        _IntegrationRow(
-          icon: Icons.developer_board_rounded,
-          label: 'Deye Cloud Sync',
-          detail: widget.deye ? 'Polling every 15 min' : 'Not configured',
-          enabled: widget.deye,
-          onChanged: widget.onDeyeChanged,
-          color: AppColors.secondary,
+        _AddonStatusRow(
+          detail: addonDetail,
+          dotColor: addonColor,
+          lastSeen: lastSeen,
         ),
         const SizedBox(height: 12),
         _IntegrationRow(
@@ -1442,6 +1473,62 @@ class _ApiIntegrationsCardState extends State<_ApiIntegrationsCard> {
         _CityAutocomplete(
           initialValue: widget.cityName,
           onChanged: widget.onCityNameChanged,
+        ),
+      ]),
+    );
+  }
+}
+
+class _AddonStatusRow extends StatelessWidget {
+  const _AddonStatusRow({
+    required this.detail,
+    required this.dotColor,
+    required this.lastSeen,
+  });
+
+  final String detail;
+  final Color dotColor;
+  final String? lastSeen;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: AppRadius.radiusMd,
+      ),
+      child: Row(children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: dotColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(Icons.developer_board_rounded,
+              size: 18, color: dotColor),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Local Inverter (SolarmanV5)',
+                style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+            Text(detail, style: tt.bodySmall),
+            if (lastSeen != null)
+              Text('Last seen: $lastSeen',
+                  style: tt.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceVariant, fontSize: 11)),
+          ]),
+        ),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: dotColor,
+          ),
         ),
       ]),
     );

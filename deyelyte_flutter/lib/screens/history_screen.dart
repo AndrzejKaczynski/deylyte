@@ -119,15 +119,24 @@ class _HistoryHeader extends StatelessWidget {
 
 // ── KPI Row ───────────────────────────────────────────────────────────────────
 
-class _HistoryKpiRow extends StatelessWidget {
+class _HistoryKpiRow extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final rangeIdx = ref.watch(historyRangeProvider);
+    final days = rangeDays(rangeIdx);
+    final summary = ref.watch(historySummaryProvider(days)).valueOrNull ?? {};
+
+    final priceVelocity = summary['priceVelocity'] as double? ?? 0.0;
+    final netRevenue = summary['netRevenuePln'] as double? ?? 0.0;
+    final peakLoad = summary['peakLoadKw'] as double? ?? 0.0;
+    final greenMix = summary['greenMixPercent'] as double? ?? 0.0;
+
     final items = [
-      (label: 'Price Velocity', value: '\$0.14/kWh', sub: 'Avg. today', color: AppColors.primary, icon: Icons.speed_rounded),
-      (label: 'Net Revenue', value: '+\$42.80', sub: 'This week', color: AppColors.secondary, icon: Icons.trending_up_rounded),
-      (label: 'Peak Load', value: '12.4 kW', sub: 'Highest usage point', color: AppColors.tertiary, icon: Icons.flash_on_rounded),
-      (label: 'Green Mix', value: '88%', sub: 'Renewable source', color: AppColors.secondary, icon: Icons.eco_rounded),
+      (label: 'Price Velocity', value: '${priceVelocity.toStringAsFixed(2)} zł/kWh', sub: 'Avg. this period', color: AppColors.primary, icon: Icons.speed_rounded),
+      (label: 'Net Revenue', value: '${netRevenue >= 0 ? '+' : ''}${netRevenue.toStringAsFixed(2)} zł', sub: 'This period', color: AppColors.secondary, icon: Icons.trending_up_rounded),
+      (label: 'Peak Load', value: '${peakLoad.toStringAsFixed(1)} kW', sub: 'Highest usage point', color: AppColors.tertiary, icon: Icons.flash_on_rounded),
+      (label: 'Green Mix', value: '${greenMix.toStringAsFixed(0)}%', sub: 'Renewable source', color: AppColors.secondary, icon: Icons.eco_rounded),
     ];
 
     return LayoutBuilder(builder: (_, c) {
@@ -359,31 +368,41 @@ class _YieldVsExpenditureChart extends StatelessWidget {
 
 // ── Net Profit Card ───────────────────────────────────────────────────────────
 
-class _NetProfitCard extends StatelessWidget {
+class _NetProfitCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final rangeIdx = ref.watch(historyRangeProvider);
+    final days = rangeDays(rangeIdx);
+    final summary = ref.watch(historySummaryProvider(days)).valueOrNull ?? {};
+
+    final totalSavings = summary['totalSavingsPln'] as double? ?? 0.0;
+    final storageEff = summary['storageEfficiencyPercent'] as double? ?? 0.0;
+    final peakDemand = summary['peakDemandKw'] as double? ?? 0.0;
+    final netRevenue = summary['netRevenuePln'] as double? ?? 0.0;
+    final netStr = '${netRevenue >= 0 ? '+' : ''}${netRevenue.toStringAsFixed(2)}';
+
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Total Net Profit', style: tt.titleMedium),
         const SizedBox(height: 8),
-        const HeroMetric(
-          value: '+\$1,240',
-          unit: '.42',
-          valueColor: AppColors.secondary,
+        HeroMetric(
+          value: '$netStr zł',
+          valueColor: netRevenue >= 0 ? AppColors.secondary : AppColors.error,
           size: HeroMetricSize.small,
         ),
         const SizedBox(height: 20),
-        const _StatRow(label: 'Total Savings', value: '\$4,821.00',
+        _StatRow(label: 'Total Savings', value: '${totalSavings.toStringAsFixed(2)} zł',
             color: AppColors.secondary),
         const SizedBox(height: 12),
-        const _StatRow(label: 'Storage Efficiency', value: '94.2%',
+        _StatRow(label: 'Storage Efficiency', value: '${storageEff.toStringAsFixed(1)}%',
             color: AppColors.primary),
         const SizedBox(height: 12),
-        const _StatRow(label: 'Carbon Offset', value: '1.2 Tons',
-            color: AppColors.secondary),
+        // TODO: requires grid carbon intensity API integration (e.g. Electricity Maps API)
+        const _StatRow(label: 'Carbon Offset', value: '—',
+            color: AppColors.onSurfaceVariant),
         const SizedBox(height: 12),
-        const _StatRow(label: 'Peak Demand', value: '4.8 kW',
+        _StatRow(label: 'Peak Demand', value: '${peakDemand.toStringAsFixed(1)} kW',
             color: AppColors.tertiary),
       ]),
     );
@@ -410,40 +429,44 @@ class _StatRow extends StatelessWidget {
 
 // ── Recent Market Events ──────────────────────────────────────────────────────
 
-class _RecentEventsCard extends StatelessWidget {
+class _RecentEventsCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final rangeIdx = ref.watch(historyRangeProvider);
+    final days = rangeDays(rangeIdx);
+    final eventsAsync = ref.watch(historyEventsProvider(days));
+    final events = eventsAsync.valueOrNull ?? [];
+
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Recent Market Events', style: tt.titleMedium),
         const SizedBox(height: 16),
-        const _EventRow(
-          icon: Icons.upload_rounded,
-          title: 'Feed-in Export',
-          subtitle: 'Grid sale @ 0.14/kWh',
-          value: '+\$12.40',
-          time: 'Today, 14:20',
-          valueColor: AppColors.secondary,
-        ),
-        const SizedBox(height: 12),
-        const _EventRow(
-          icon: Icons.battery_charging_full_rounded,
-          title: 'Smart Charging',
-          subtitle: 'Battery fill @ 0.08/kWh',
-          value: '-\$4.12',
-          time: 'Today, 03:00',
-          valueColor: AppColors.error,
-        ),
-        const SizedBox(height: 12),
-        const _EventRow(
-          icon: Icons.bolt_rounded,
-          title: 'Peak Load Shaving',
-          subtitle: 'Battery discharge to offset AC',
-          value: 'Saved \$2.15',
-          time: 'Yesterday, 18:45',
-          valueColor: AppColors.secondary,
-        ),
+        if (events.isEmpty)
+          Text(
+            'No events yet.',
+            style: tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant),
+          )
+        else
+          ...events.take(5).map((e) {
+            final value = e['valuePln'] as double? ?? 0.0;
+            final positive = value >= 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _EventRow(
+                icon: positive
+                    ? Icons.upload_rounded
+                    : Icons.battery_charging_full_rounded,
+                title: e['title'] as String? ?? 'Event',
+                subtitle: e['subtitle'] as String? ?? '',
+                value:
+                    '${positive ? '+' : ''}${value.toStringAsFixed(2)} zł',
+                time: e['time'] as String? ?? '',
+                valueColor:
+                    positive ? AppColors.secondary : AppColors.error,
+              ),
+            );
+          }),
       ]),
     );
   }
