@@ -33,5 +33,12 @@ fields:
   # Fixed rate (used when priceSource = 'fixed')
   fixedBuyRatePln: double?
   fixedSellRatePln: double?
+  # When true: optimizer generates the full schedule but the add-on does NOT
+  # send any commands to the inverter. Defaults to true — the user must
+  # explicitly disable this to enable live inverter control.
+  # Charging/selling flags are preserved so preferences are not lost.
+  planningOnly: bool
   # Admin-controlled flag: whether this user may use the Pstryk integration
   pstrykEnabled: bool
+  # Display currency for the Flutter UI. Default: 'PLN'.
+  currency: String?

@@ -36,7 +36,9 @@ abstract class AppConfig implements _i1.SerializableModel {
     this.priceSource,
     this.fixedBuyRatePln,
     this.fixedSellRatePln,
+    required this.planningOnly,
     required this.pstrykEnabled,
+    this.currency,
   });
 
   factory AppConfig({
@@ -62,7 +64,9 @@ abstract class AppConfig implements _i1.SerializableModel {
     String? priceSource,
     double? fixedBuyRatePln,
     double? fixedSellRatePln,
+    required bool planningOnly,
     required bool pstrykEnabled,
+    String? currency,
   }) = _AppConfigImpl;
 
   factory AppConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -110,9 +114,13 @@ abstract class AppConfig implements _i1.SerializableModel {
           ?.toDouble(),
       fixedSellRatePln: (jsonSerialization['fixedSellRatePln'] as num?)
           ?.toDouble(),
+      planningOnly: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['planningOnly'],
+      ),
       pstrykEnabled: _i1.BoolJsonExtension.fromJson(
         jsonSerialization['pstrykEnabled'],
       ),
+      currency: jsonSerialization['currency'] as String?,
     );
   }
 
@@ -163,7 +171,11 @@ abstract class AppConfig implements _i1.SerializableModel {
 
   double? fixedSellRatePln;
 
+  bool planningOnly;
+
   bool pstrykEnabled;
+
+  String? currency;
 
   /// Returns a shallow copy of this [AppConfig]
   /// with some or all fields replaced by the given arguments.
@@ -191,7 +203,9 @@ abstract class AppConfig implements _i1.SerializableModel {
     String? priceSource,
     double? fixedBuyRatePln,
     double? fixedSellRatePln,
+    bool? planningOnly,
     bool? pstrykEnabled,
+    String? currency,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -221,7 +235,9 @@ abstract class AppConfig implements _i1.SerializableModel {
       if (priceSource != null) 'priceSource': priceSource,
       if (fixedBuyRatePln != null) 'fixedBuyRatePln': fixedBuyRatePln,
       if (fixedSellRatePln != null) 'fixedSellRatePln': fixedSellRatePln,
+      'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
+      if (currency != null) 'currency': currency,
     };
   }
 
@@ -257,7 +273,9 @@ class _AppConfigImpl extends AppConfig {
     String? priceSource,
     double? fixedBuyRatePln,
     double? fixedSellRatePln,
+    required bool planningOnly,
     required bool pstrykEnabled,
+    String? currency,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
@@ -281,7 +299,9 @@ class _AppConfigImpl extends AppConfig {
          priceSource: priceSource,
          fixedBuyRatePln: fixedBuyRatePln,
          fixedSellRatePln: fixedSellRatePln,
+         planningOnly: planningOnly,
          pstrykEnabled: pstrykEnabled,
+         currency: currency,
        );
 
   /// Returns a shallow copy of this [AppConfig]
@@ -311,7 +331,9 @@ class _AppConfigImpl extends AppConfig {
     Object? priceSource = _Undefined,
     Object? fixedBuyRatePln = _Undefined,
     Object? fixedSellRatePln = _Undefined,
+    bool? planningOnly,
     bool? pstrykEnabled,
+    Object? currency = _Undefined,
   }) {
     return AppConfig(
       id: id is int? ? id : this.id,
@@ -357,7 +379,9 @@ class _AppConfigImpl extends AppConfig {
       fixedSellRatePln: fixedSellRatePln is double?
           ? fixedSellRatePln
           : this.fixedSellRatePln,
+      planningOnly: planningOnly ?? this.planningOnly,
       pstrykEnabled: pstrykEnabled ?? this.pstrykEnabled,
+      currency: currency is String? ? currency : this.currency,
     );
   }
 }
