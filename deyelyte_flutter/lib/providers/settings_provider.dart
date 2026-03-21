@@ -19,6 +19,10 @@ class SettingsState {
     this.solcast = false,
     this.pstryk = false,
     this.cityName,
+    this.priceSource = 'pstryk',
+    this.fixedBuyRatePln,
+    this.fixedSellRatePln,
+    this.priceTimeRanges = const [],
   });
 
   final double minSoc;
@@ -42,18 +46,29 @@ class SettingsState {
   // server-side in IntegrationCredentials table, keyed by userInfoId.
 
   /// Whether the Deye inverter integration is enabled.
-  /// Credentials: deyeUsername, deyePasswordHash, deyeAppId.
   final bool deye;
 
   /// Whether the Solcast PV forecast integration is enabled.
-  /// Credentials: solcastApiKey, solcastSiteId.
   final bool solcast;
 
   /// Whether the Pstryk energy price integration is enabled.
-  /// Credentials: pstrykToken.
   final bool pstryk;
 
   final String? cityName;
+
+  // ── Pricing ────────────────────────────────────────────────────────────────
+
+  /// Active price source: 'pstryk' | 'rce' | 'fixed'.
+  final String priceSource;
+
+  /// Fixed buy rate (PLN/kWh). Used when priceSource = 'fixed' as fallback.
+  final double? fixedBuyRatePln;
+
+  /// Fixed sell rate (PLN/kWh). Used when priceSource = 'fixed' as fallback.
+  final double? fixedSellRatePln;
+
+  /// User-defined price time ranges (for RCE distribution or fixed per-hour rates).
+  final List<PriceTimeRange> priceTimeRanges;
 
   SettingsState copyWith({
     double? minSoc,
@@ -72,6 +87,10 @@ class SettingsState {
     bool? solcast,
     bool? pstryk,
     Object? cityName = _sentinel,
+    String? priceSource,
+    Object? fixedBuyRatePln = _sentinel,
+    Object? fixedSellRatePln = _sentinel,
+    List<PriceTimeRange>? priceTimeRanges,
   }) =>
       SettingsState(
         minSoc: minSoc ?? this.minSoc,
@@ -83,17 +102,28 @@ class SettingsState {
             ? this.minSellPrice
             : minSellPrice as double?,
         batteryCapacityKwh: batteryCapacityKwh ?? this.batteryCapacityKwh,
-        batteryCost: batteryCost == _sentinel
-            ? this.batteryCost
-            : batteryCost as double?,
+        batteryCost:
+            batteryCost == _sentinel ? this.batteryCost : batteryCost as double?,
         batteryLifecycles: batteryLifecycles ?? this.batteryLifecycles,
         maxDischargeRateKw: maxDischargeRateKw ?? this.maxDischargeRateKw,
-        maxChargeRateKw: maxChargeRateKw == _sentinel ? this.maxChargeRateKw : maxChargeRateKw as double?,
-        gridConnectionKw: gridConnectionKw == _sentinel ? this.gridConnectionKw : gridConnectionKw as double?,
+        maxChargeRateKw: maxChargeRateKw == _sentinel
+            ? this.maxChargeRateKw
+            : maxChargeRateKw as double?,
+        gridConnectionKw: gridConnectionKw == _sentinel
+            ? this.gridConnectionKw
+            : gridConnectionKw as double?,
         deye: deye ?? this.deye,
         solcast: solcast ?? this.solcast,
         pstryk: pstryk ?? this.pstryk,
         cityName: cityName == _sentinel ? this.cityName : cityName as String?,
+        priceSource: priceSource ?? this.priceSource,
+        fixedBuyRatePln: fixedBuyRatePln == _sentinel
+            ? this.fixedBuyRatePln
+            : fixedBuyRatePln as double?,
+        fixedSellRatePln: fixedSellRatePln == _sentinel
+            ? this.fixedSellRatePln
+            : fixedSellRatePln as double?,
+        priceTimeRanges: priceTimeRanges ?? this.priceTimeRanges,
       );
 }
 
@@ -109,8 +139,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setSellingEnabled(bool v) => state = state.copyWith(sellingEnabled: v);
   void setPvOnlySelling(bool v) => state = state.copyWith(pvOnlySelling: v);
   void setMaxBuyPrice(double v) => state = state.copyWith(maxBuyPrice: v);
-  void setMinSellPrice(double? v) =>
-      state = state.copyWith(minSellPrice: v);
+  void setMinSellPrice(double? v) => state = state.copyWith(minSellPrice: v);
   void setBatteryCapacityKwh(double v) =>
       state = state.copyWith(batteryCapacityKwh: v);
   void setBatteryCost(double? v) => state = state.copyWith(batteryCost: v);
@@ -125,13 +154,21 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setDeye(bool v) => state = state.copyWith(deye: v);
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);
+  void setCityName(String? v) => state = state.copyWith(cityName: v);
+  void setPriceSource(String v) => state = state.copyWith(priceSource: v);
+  void setFixedBuyRatePln(double? v) =>
+      state = state.copyWith(fixedBuyRatePln: v);
+  void setFixedSellRatePln(double? v) =>
+      state = state.copyWith(fixedSellRatePln: v);
+  void setPriceTimeRanges(List<PriceTimeRange> v) =>
+      state = state.copyWith(priceTimeRanges: v);
 
-  void loadIntegrationStatus(Map<String, bool> status) => state = state.copyWith(
+  void loadIntegrationStatus(Map<String, bool> status) =>
+      state = state.copyWith(
         deye: status['deye'] ?? state.deye,
         solcast: status['solcast'] ?? state.solcast,
         pstryk: status['pstryk'] ?? state.pstryk,
       );
-  void setCityName(String? v) => state = state.copyWith(cityName: v);
 
   void loadFrom(AppConfig c) => state = SettingsState(
         chargingEnabled: c.chargingEnabled,
@@ -147,6 +184,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
         maxChargeRateKw: c.maxChargeRateKw,
         gridConnectionKw: c.gridConnectionKw,
         cityName: c.cityName,
+        priceSource: c.priceSource ?? 'pstryk',
+        fixedBuyRatePln: c.fixedBuyRatePln,
+        fixedSellRatePln: c.fixedSellRatePln,
+        priceTimeRanges: state.priceTimeRanges,
+        pstryk: c.pstrykEnabled,
       );
 }
 

@@ -36,3 +36,8 @@ final appConfigProvider =
 final integrationStatusProvider = FutureProvider<Map<String, bool>>((ref) async {
   return ref.read(clientProvider).credentials.getStatus();
 });
+
+/// Loads the user's price time ranges from the server.
+final priceTimeRangesProvider = FutureProvider<List<PriceTimeRange>>((ref) async {
+  return ref.read(clientProvider).priceTimeRanges.getTimeRanges();
+});

@@ -25,3 +25,6 @@ optimizer:
   - getOutageReserves:
 price:
   - updatePrices:
+priceTimeRanges:
+  - getTimeRanges:
+  - saveTimeRanges:

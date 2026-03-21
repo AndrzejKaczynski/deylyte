@@ -27,3 +27,11 @@ fields:
   cityName: String?
   latitude: double?
   longitude: double?
+  # Pricing
+  # Pricing source: 'pstryk' | 'rce' | 'fixed' (default 'pstryk' if null)
+  priceSource: String?
+  # Fixed rate (used when priceSource = 'fixed')
+  fixedBuyRatePln: double?
+  fixedSellRatePln: double?
+  # Admin-controlled flag: whether this user may use the Pstryk integration
+  pstrykEnabled: bool

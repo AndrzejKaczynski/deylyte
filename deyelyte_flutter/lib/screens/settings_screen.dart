@@ -20,6 +20,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _configLoaded = false;
   bool _statusLoaded = false;
+  bool _rangesLoaded = false; // ignore: unused_field
   bool _saving = false;
 
   @override
@@ -47,6 +48,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ref.read(settingsProvider.notifier).loadIntegrationStatus(status);
       } else if (next is AsyncData) {
         _statusLoaded = true;
+      }
+    });
+
+    // Populate price time ranges from server once on first load.
+    ref.listen<AsyncValue<List<PriceTimeRange>>>(priceTimeRangesProvider,
+        (_, next) {
+      if (_rangesLoaded) return;
+      final ranges = next.valueOrNull;
+      if (ranges != null) {
+        _rangesLoaded = true;
+        ref.read(settingsProvider.notifier).setPriceTimeRanges(ranges);
+      } else if (next is AsyncData) {
+        _rangesLoaded = true;
       }
     });
 
@@ -145,6 +159,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     minSoc: settings.minSoc,
                   ),
                   const SizedBox(height: AppSpacing.sp4),
+                  _PricingSourceCard(
+                    priceSource: settings.priceSource,
+                    fixedBuyRate: settings.fixedBuyRatePln,
+                    fixedSellRate: settings.fixedSellRatePln,
+                    priceTimeRanges: settings.priceTimeRanges,
+                    onSourceChanged: notifier.setPriceSource,
+                    onFixedBuyChanged: notifier.setFixedBuyRatePln,
+                    onFixedSellChanged: notifier.setFixedSellRatePln,
+                    onRangesChanged: notifier.setPriceTimeRanges,
+                  ),
+                  const SizedBox(height: AppSpacing.sp4),
                   _ApiIntegrationsCard(
                     deye: settings.deye,
                     solcast: settings.solcast,
@@ -152,7 +177,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     cityName: settings.cityName,
                     onDeyeChanged: _handleDeyeToggle,
                     onSolcastChanged: notifier.setSolcast,
-                    onPstrykChanged: notifier.setPstryk,
                     onCityNameChanged: notifier.setCityName,
                   ),
                   const SizedBox(height: AppSpacing.sp4),
@@ -242,8 +266,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         cityName: s.cityName,
         latitude: existing?.latitude,
         longitude: existing?.longitude,
+        priceSource: s.priceSource,
+        fixedBuyRatePln: s.fixedBuyRatePln,
+        fixedSellRatePln: s.fixedSellRatePln,
+        pstrykEnabled: existing?.pstrykEnabled ?? false,
       );
       await ref.read(appConfigProvider.notifier).save(config);
+      await ref
+          .read(clientProvider)
+          .priceTimeRanges
+          .saveTimeRanges(s.priceTimeRanges);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Settings saved')),
@@ -917,6 +949,420 @@ class _StatusRow extends StatelessWidget {
   }
 }
 
+// ── Price Source Picker ────────────────────────────────────────────────────────
+
+class _PriceSourcePicker extends StatelessWidget {
+  const _PriceSourcePicker({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  static const _options = [
+    ('pstryk', 'Pstryk'),
+    ('rce', 'RCE'),
+    ('fixed', 'Fixed'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: _options.map((opt) {
+          final (value, label) = opt;
+          final isSelected = selected == value;
+          return GestureDetector(
+            onTap: () => onChanged(value),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeInOut,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Text(
+                label,
+                style: tt.bodySmall?.copyWith(
+                  color: isSelected
+                      ? AppColors.surface
+                      : AppColors.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Pricing Source ─────────────────────────────────────────────────────────────
+
+class _PricingSourceCard extends StatefulWidget {
+  const _PricingSourceCard({
+    required this.priceSource,
+    required this.fixedBuyRate,
+    required this.fixedSellRate,
+    required this.priceTimeRanges,
+    required this.onSourceChanged,
+    required this.onFixedBuyChanged,
+    required this.onFixedSellChanged,
+    required this.onRangesChanged,
+  });
+
+  final String priceSource;
+  final double? fixedBuyRate;
+  final double? fixedSellRate;
+  final List<PriceTimeRange> priceTimeRanges;
+  final ValueChanged<String> onSourceChanged;
+  final ValueChanged<double?> onFixedBuyChanged;
+  final ValueChanged<double?> onFixedSellChanged;
+  final ValueChanged<List<PriceTimeRange>> onRangesChanged;
+
+  @override
+  State<_PricingSourceCard> createState() => _PricingSourceCardState();
+}
+
+class _PricingSourceCardState extends State<_PricingSourceCard> {
+  late final TextEditingController _fixedBuyCtrl;
+  late final TextEditingController _fixedSellCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _fixedBuyCtrl = TextEditingController(
+        text: widget.fixedBuyRate?.toStringAsFixed(4) ?? '');
+    _fixedSellCtrl = TextEditingController(
+        text: widget.fixedSellRate?.toStringAsFixed(4) ?? '');
+  }
+
+  @override
+  void dispose() {
+    _fixedBuyCtrl.dispose();
+    _fixedSellCtrl.dispose();
+    super.dispose();
+  }
+
+  void _addRange() async {
+    final result = await showDialog<PriceTimeRange>(
+      context: context,
+      builder: (_) => _RangeEditorDialog(
+        showSellRate: widget.priceSource == 'fixed',
+      ),
+    );
+    if (result != null) {
+      widget.onRangesChanged([...widget.priceTimeRanges, result]);
+    }
+  }
+
+  void _deleteRange(int index) {
+    final updated = List<PriceTimeRange>.from(widget.priceTimeRanges)
+      ..removeAt(index);
+    widget.onRangesChanged(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final showRanges =
+        widget.priceSource == 'rce' || widget.priceSource == 'fixed';
+
+    return SurfaceCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SectionHeader(title: 'Pricing Source'),
+        const SizedBox(height: 16),
+        // Source selector
+        _PriceSourcePicker(
+          selected: widget.priceSource,
+          onChanged: widget.onSourceChanged,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          switch (widget.priceSource) {
+            'pstryk' => 'Hourly buy/sell prices from the Pstryk API.',
+            'rce' =>
+              'RCE wholesale market prices (PSE) plus per-range distribution charges.',
+            _ => 'Fixed buy/sell rates, optionally varied by time range.',
+          },
+          style: tt.bodySmall?.copyWith(color: AppColors.outline),
+        ),
+
+        // ── Fixed: fallback rates ─────────────────────────────────────────
+        if (widget.priceSource == 'fixed') ...[
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 16),
+          Text('Fallback rates (used when no range covers the hour)',
+              style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          _PriceField(
+            label: 'Buy rate',
+            controller: _fixedBuyCtrl,
+            suffix: 'PLN/kWh',
+            hint: '0.0000',
+            detail: 'Default buy price when no time range covers that hour.',
+            onChanged: (v) => widget.onFixedBuyChanged(v),
+          ),
+          const SizedBox(height: 12),
+          _PriceField(
+            label: 'Sell rate',
+            controller: _fixedSellCtrl,
+            suffix: 'PLN/kWh',
+            hint: '0.0000',
+            detail: 'Default sell price when no time range covers that hour.',
+            onChanged: (v) => widget.onFixedSellChanged(v),
+          ),
+        ],
+
+        // ── RCE / Fixed: time ranges ──────────────────────────────────────
+        if (showRanges) ...[
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 16),
+          Text(
+            widget.priceSource == 'rce'
+                ? 'Distribution charge ranges'
+                : 'Per-hour rate ranges',
+            style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.priceSource == 'rce'
+                ? 'Each range adds a distribution charge on top of the RCE price for those hours.'
+                : 'Each range sets buy (and optionally sell) rates for those hours.',
+            style: tt.bodySmall?.copyWith(color: AppColors.outline),
+          ),
+          const SizedBox(height: 8),
+          if (widget.priceTimeRanges.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'No ranges defined.',
+                style: tt.bodySmall?.copyWith(color: AppColors.outline),
+              ),
+            )
+          else
+            ...widget.priceTimeRanges.asMap().entries.map((entry) {
+              final i = entry.key;
+              final r = entry.value;
+              final sellLabel = r.sellRatePln != null
+                  ? ' / sell ${r.sellRatePln!.toStringAsFixed(4)}'
+                  : '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: AppRadius.radiusMd,
+                  ),
+                  child: Row(children: [
+                    Expanded(
+                      child: Text(
+                        'Hour ${r.hourStart.toString().padLeft(2, '0')}–'
+                        '${r.hourEnd.toString().padLeft(2, '0')}  '
+                        '${r.ratePln.toStringAsFixed(4)} PLN/kWh$sellLabel',
+                        style: tt.bodySmall,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _deleteRange(i),
+                      child: const Icon(Icons.close_rounded,
+                          size: 16, color: AppColors.outline),
+                    ),
+                  ]),
+                ),
+              );
+            }),
+          const SizedBox(height: 4),
+          TextButton.icon(
+            onPressed: _addRange,
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: const Text('Add range'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+}
+
+// ── Range Editor Dialog ────────────────────────────────────────────────────────
+
+class _RangeEditorDialog extends StatefulWidget {
+  const _RangeEditorDialog({required this.showSellRate});
+  final bool showSellRate;
+
+  @override
+  State<_RangeEditorDialog> createState() => _RangeEditorDialogState();
+}
+
+class _RangeEditorDialogState extends State<_RangeEditorDialog> {
+  final _fromCtrl = TextEditingController();
+  final _toCtrl = TextEditingController();
+  final _rateCtrl = TextEditingController();
+  final _sellCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _fromCtrl.dispose();
+    _toCtrl.dispose();
+    _rateCtrl.dispose();
+    _sellCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text('Add time range'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Row(children: [
+          Expanded(
+            child: _HourField(
+              label: 'From hour',
+              controller: _fromCtrl,
+              onChanged: (_) {},
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _HourField(
+              label: 'To hour',
+              controller: _toCtrl,
+              onChanged: (_) {},
+            ),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        _PriceField(
+          label: 'Rate',
+          controller: _rateCtrl,
+          suffix: 'PLN/kWh',
+          hint: '0.0000',
+          detail: widget.showSellRate
+              ? 'Buy rate for this window.'
+              : 'Distribution charge for this window.',
+          onChanged: (_) {},
+        ),
+        if (widget.showSellRate) ...[
+          const SizedBox(height: 12),
+          _PriceField(
+            label: 'Sell rate (optional)',
+            controller: _sellCtrl,
+            suffix: 'PLN/kWh',
+            hint: '0.0000',
+            optional: true,
+            detail: 'Sell rate for this window.',
+            onChanged: (_) {},
+          ),
+        ],
+      ]),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final from = int.tryParse(_fromCtrl.text);
+            final to = int.tryParse(_toCtrl.text);
+            final rate = double.tryParse(_rateCtrl.text);
+            if (from == null || to == null || rate == null) return;
+            final sellRate = double.tryParse(_sellCtrl.text);
+            Navigator.of(context).pop(PriceTimeRange(
+              userInfoId: 0, // server overwrites
+              hourStart: from,
+              hourEnd: to,
+              ratePln: rate,
+              sellRatePln: sellRate,
+            ));
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+          ),
+          child: const Text('Add'),
+        ),
+      ],
+    );
+  }
+}
+
+/// A small integer text field for entering an hour (0–23).
+class _HourField extends StatelessWidget {
+  const _HourField({
+    required this.label,
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label,
+          style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
+      const SizedBox(height: 4),
+      TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        style: const TextStyle(color: AppColors.onSurface),
+        decoration: InputDecoration(
+          hintText: '0–23',
+          hintStyle:
+              const TextStyle(color: AppColors.onSurfaceVariant, fontSize: 13),
+          filled: true,
+          fillColor: AppColors.surfaceContainerHigh,
+          border: OutlineInputBorder(
+            borderRadius: AppRadius.radiusMd,
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: AppRadius.radiusMd,
+            borderSide:
+                const BorderSide(color: AppColors.outlineVariant, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: AppRadius.radiusMd,
+            borderSide:
+                const BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+        onChanged: (v) {
+          final parsed = int.tryParse(v);
+          onChanged(parsed != null && parsed >= 0 && parsed <= 23
+              ? parsed
+              : null);
+        },
+      ),
+    ]);
+  }
+}
+
 // ── API Integrations ──────────────────────────────────────────────────────────
 
 class _ApiIntegrationsCard extends StatefulWidget {
@@ -927,7 +1373,6 @@ class _ApiIntegrationsCard extends StatefulWidget {
     required this.cityName,
     required this.onDeyeChanged,
     required this.onSolcastChanged,
-    required this.onPstrykChanged,
     required this.onCityNameChanged,
   });
 
@@ -937,7 +1382,6 @@ class _ApiIntegrationsCard extends StatefulWidget {
   final String? cityName;
   final ValueChanged<bool> onDeyeChanged;
   final ValueChanged<bool> onSolcastChanged;
-  final ValueChanged<bool> onPstrykChanged;
   final ValueChanged<String?> onCityNameChanged;
 
   @override
@@ -973,9 +1417,9 @@ class _ApiIntegrationsCardState extends State<_ApiIntegrationsCard> {
         _IntegrationRow(
           icon: Icons.price_change_rounded,
           label: 'Pstryk Pricing Hub',
-          detail: widget.pstryk ? 'Prices loading hourly' : 'Not configured',
+          detail: widget.pstryk ? 'Prices loading hourly' : 'Managed by admin',
           enabled: widget.pstryk,
-          onChanged: widget.onPstrykChanged,
+          onChanged: null,
           color: AppColors.primary,
         ),
         const SizedBox(height: 16),
@@ -1017,7 +1461,7 @@ class _IntegrationRow extends StatelessWidget {
   final String label;
   final String detail;
   final bool enabled;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
   final Color color;
 
   @override

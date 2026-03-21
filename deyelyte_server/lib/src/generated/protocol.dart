@@ -20,9 +20,11 @@ import 'integration_credentials.dart' as _i7;
 import 'inverter_data.dart' as _i8;
 import 'optimization_frame.dart' as _i9;
 import 'outage_reserve.dart' as _i10;
-import 'pv_forecast.dart' as _i11;
-import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i12;
-import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i13;
+import 'price_time_range.dart' as _i11;
+import 'pv_forecast.dart' as _i12;
+import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i13;
+import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i14;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i15;
 export 'app_config.dart';
 export 'energy_price.dart';
 export 'example.dart';
@@ -30,6 +32,7 @@ export 'integration_credentials.dart';
 export 'inverter_data.dart';
 export 'optimization_frame.dart';
 export 'outage_reserve.dart';
+export 'price_time_range.dart';
 export 'pv_forecast.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
@@ -161,6 +164,30 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: true,
           dartType: 'double?',
         ),
+        _i2.ColumnDefinition(
+          name: 'priceSource',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fixedBuyRatePln',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'fixedSellRatePln',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'pstrykEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
       ],
       foreignKeys: [],
       indexes: [
@@ -239,6 +266,23 @@ class Protocol extends _i1.SerializationManagerServer {
           isUnique: true,
           isPrimary: true,
         ),
+        _i2.IndexDefinition(
+          indexName: 'energy_price_user_timestamp_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userInfoId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'timestamp',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
       ],
       managed: true,
     ),
@@ -270,18 +314,6 @@ class Protocol extends _i1.SerializationManagerServer {
         ),
         _i2.ColumnDefinition(
           name: 'deyePasswordHash',
-          columnType: _i2.ColumnType.text,
-          isNullable: true,
-          dartType: 'String?',
-        ),
-        _i2.ColumnDefinition(
-          name: 'deyeAppId',
-          columnType: _i2.ColumnType.text,
-          isNullable: true,
-          dartType: 'String?',
-        ),
-        _i2.ColumnDefinition(
-          name: 'deyeAppSecret',
           columnType: _i2.ColumnType.text,
           isNullable: true,
           dartType: 'String?',
@@ -393,6 +425,23 @@ class Protocol extends _i1.SerializationManagerServer {
           type: 'btree',
           isUnique: true,
           isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'inverter_data_user_timestamp_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userInfoId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'timestamp',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
         ),
       ],
       managed: true,
@@ -568,6 +617,81 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'price_time_range',
+      dartName: 'PriceTimeRange',
+      schema: 'public',
+      module: 'deyelyte',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'price_time_range_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userInfoId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'hourStart',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'hourEnd',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'ratePln',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: false,
+          dartType: 'double',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sellRatePln',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'price_time_range_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'price_time_range_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userInfoId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'pv_forecast',
       dartName: 'PvForecast',
       schema: 'public',
@@ -613,6 +737,23 @@ class Protocol extends _i1.SerializationManagerServer {
           type: 'btree',
           isUnique: true,
           isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'pv_forecast_user_timestamp_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userInfoId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'timestamp',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
         ),
       ],
       managed: true,
@@ -669,8 +810,11 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i10.OutageReserve) {
       return _i10.OutageReserve.fromJson(data) as T;
     }
-    if (t == _i11.PvForecast) {
-      return _i11.PvForecast.fromJson(data) as T;
+    if (t == _i11.PriceTimeRange) {
+      return _i11.PriceTimeRange.fromJson(data) as T;
+    }
+    if (t == _i12.PvForecast) {
+      return _i12.PvForecast.fromJson(data) as T;
     }
     if (t == _i1.getType<_i4.AppConfig?>()) {
       return (data != null ? _i4.AppConfig.fromJson(data) : null) as T;
@@ -694,8 +838,11 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i10.OutageReserve?>()) {
       return (data != null ? _i10.OutageReserve.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i11.PvForecast?>()) {
-      return (data != null ? _i11.PvForecast.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.PriceTimeRange?>()) {
+      return (data != null ? _i11.PriceTimeRange.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i12.PvForecast?>()) {
+      return (data != null ? _i12.PvForecast.fromJson(data) : null) as T;
     }
     if (t == Map<String, bool>) {
       return (data as Map).map(
@@ -703,15 +850,21 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == List<_i12.OptimizationFrame>) {
+    if (t == List<_i13.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i12.OptimizationFrame>(e))
+              .map((e) => deserialize<_i13.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i13.OutageReserve>) {
+    if (t == List<_i14.OutageReserve>) {
       return (data as List)
-              .map((e) => deserialize<_i13.OutageReserve>(e))
+              .map((e) => deserialize<_i14.OutageReserve>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i15.PriceTimeRange>) {
+      return (data as List)
+              .map((e) => deserialize<_i15.PriceTimeRange>(e))
               .toList()
           as T;
     }
@@ -733,7 +886,8 @@ class Protocol extends _i1.SerializationManagerServer {
       _i8.InverterData => 'InverterData',
       _i9.OptimizationFrame => 'OptimizationFrame',
       _i10.OutageReserve => 'OutageReserve',
-      _i11.PvForecast => 'PvForecast',
+      _i11.PriceTimeRange => 'PriceTimeRange',
+      _i12.PvForecast => 'PvForecast',
       _ => null,
     };
   }
@@ -762,7 +916,9 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'OptimizationFrame';
       case _i10.OutageReserve():
         return 'OutageReserve';
-      case _i11.PvForecast():
+      case _i11.PriceTimeRange():
+        return 'PriceTimeRange';
+      case _i12.PvForecast():
         return 'PvForecast';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -803,8 +959,11 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'OutageReserve') {
       return deserialize<_i10.OutageReserve>(data['data']);
     }
+    if (dataClassName == 'PriceTimeRange') {
+      return deserialize<_i11.PriceTimeRange>(data['data']);
+    }
     if (dataClassName == 'PvForecast') {
-      return deserialize<_i11.PvForecast>(data['data']);
+      return deserialize<_i12.PvForecast>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -844,8 +1003,10 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i9.OptimizationFrame.t;
       case _i10.OutageReserve:
         return _i10.OutageReserve.t;
-      case _i11.PvForecast:
-        return _i11.PvForecast.t;
+      case _i11.PriceTimeRange:
+        return _i11.PriceTimeRange.t;
+      case _i12.PvForecast:
+        return _i12.PvForecast.t;
     }
     return null;
   }

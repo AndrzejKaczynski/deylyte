@@ -34,6 +34,10 @@ abstract class AppConfig
     this.cityName,
     this.latitude,
     this.longitude,
+    this.priceSource,
+    this.fixedBuyRatePln,
+    this.fixedSellRatePln,
+    required this.pstrykEnabled,
   });
 
   factory AppConfig({
@@ -56,6 +60,10 @@ abstract class AppConfig
     String? cityName,
     double? latitude,
     double? longitude,
+    String? priceSource,
+    double? fixedBuyRatePln,
+    double? fixedSellRatePln,
+    required bool pstrykEnabled,
   }) = _AppConfigImpl;
 
   factory AppConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -98,6 +106,14 @@ abstract class AppConfig
       cityName: jsonSerialization['cityName'] as String?,
       latitude: (jsonSerialization['latitude'] as num?)?.toDouble(),
       longitude: (jsonSerialization['longitude'] as num?)?.toDouble(),
+      priceSource: jsonSerialization['priceSource'] as String?,
+      fixedBuyRatePln: (jsonSerialization['fixedBuyRatePln'] as num?)
+          ?.toDouble(),
+      fixedSellRatePln: (jsonSerialization['fixedSellRatePln'] as num?)
+          ?.toDouble(),
+      pstrykEnabled: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['pstrykEnabled'],
+      ),
     );
   }
 
@@ -144,6 +160,14 @@ abstract class AppConfig
 
   double? longitude;
 
+  String? priceSource;
+
+  double? fixedBuyRatePln;
+
+  double? fixedSellRatePln;
+
+  bool pstrykEnabled;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -170,6 +194,10 @@ abstract class AppConfig
     String? cityName,
     double? latitude,
     double? longitude,
+    String? priceSource,
+    double? fixedBuyRatePln,
+    double? fixedSellRatePln,
+    bool? pstrykEnabled,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -196,6 +224,10 @@ abstract class AppConfig
       if (cityName != null) 'cityName': cityName,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
+      if (priceSource != null) 'priceSource': priceSource,
+      if (fixedBuyRatePln != null) 'fixedBuyRatePln': fixedBuyRatePln,
+      if (fixedSellRatePln != null) 'fixedSellRatePln': fixedSellRatePln,
+      'pstrykEnabled': pstrykEnabled,
     };
   }
 
@@ -224,6 +256,10 @@ abstract class AppConfig
       if (cityName != null) 'cityName': cityName,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
+      if (priceSource != null) 'priceSource': priceSource,
+      if (fixedBuyRatePln != null) 'fixedBuyRatePln': fixedBuyRatePln,
+      if (fixedSellRatePln != null) 'fixedSellRatePln': fixedSellRatePln,
+      'pstrykEnabled': pstrykEnabled,
     };
   }
 
@@ -280,6 +316,10 @@ class _AppConfigImpl extends AppConfig {
     String? cityName,
     double? latitude,
     double? longitude,
+    String? priceSource,
+    double? fixedBuyRatePln,
+    double? fixedSellRatePln,
+    required bool pstrykEnabled,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
@@ -300,6 +340,10 @@ class _AppConfigImpl extends AppConfig {
          cityName: cityName,
          latitude: latitude,
          longitude: longitude,
+         priceSource: priceSource,
+         fixedBuyRatePln: fixedBuyRatePln,
+         fixedSellRatePln: fixedSellRatePln,
+         pstrykEnabled: pstrykEnabled,
        );
 
   /// Returns a shallow copy of this [AppConfig]
@@ -326,6 +370,10 @@ class _AppConfigImpl extends AppConfig {
     Object? cityName = _Undefined,
     Object? latitude = _Undefined,
     Object? longitude = _Undefined,
+    Object? priceSource = _Undefined,
+    Object? fixedBuyRatePln = _Undefined,
+    Object? fixedSellRatePln = _Undefined,
+    bool? pstrykEnabled,
   }) {
     return AppConfig(
       id: id is int? ? id : this.id,
@@ -364,6 +412,14 @@ class _AppConfigImpl extends AppConfig {
       cityName: cityName is String? ? cityName : this.cityName,
       latitude: latitude is double? ? latitude : this.latitude,
       longitude: longitude is double? ? longitude : this.longitude,
+      priceSource: priceSource is String? ? priceSource : this.priceSource,
+      fixedBuyRatePln: fixedBuyRatePln is double?
+          ? fixedBuyRatePln
+          : this.fixedBuyRatePln,
+      fixedSellRatePln: fixedSellRatePln is double?
+          ? fixedSellRatePln
+          : this.fixedSellRatePln,
+      pstrykEnabled: pstrykEnabled ?? this.pstrykEnabled,
     );
   }
 }
@@ -468,6 +524,28 @@ class AppConfigUpdateTable extends _i1.UpdateTable<AppConfigTable> {
     table.longitude,
     value,
   );
+
+  _i1.ColumnValue<String, String> priceSource(String? value) => _i1.ColumnValue(
+    table.priceSource,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> fixedBuyRatePln(double? value) =>
+      _i1.ColumnValue(
+        table.fixedBuyRatePln,
+        value,
+      );
+
+  _i1.ColumnValue<double, double> fixedSellRatePln(double? value) =>
+      _i1.ColumnValue(
+        table.fixedSellRatePln,
+        value,
+      );
+
+  _i1.ColumnValue<bool, bool> pstrykEnabled(bool value) => _i1.ColumnValue(
+    table.pstrykEnabled,
+    value,
+  );
 }
 
 class AppConfigTable extends _i1.Table<int?> {
@@ -545,6 +623,22 @@ class AppConfigTable extends _i1.Table<int?> {
       'longitude',
       this,
     );
+    priceSource = _i1.ColumnString(
+      'priceSource',
+      this,
+    );
+    fixedBuyRatePln = _i1.ColumnDouble(
+      'fixedBuyRatePln',
+      this,
+    );
+    fixedSellRatePln = _i1.ColumnDouble(
+      'fixedSellRatePln',
+      this,
+    );
+    pstrykEnabled = _i1.ColumnBool(
+      'pstrykEnabled',
+      this,
+    );
   }
 
   late final AppConfigUpdateTable updateTable;
@@ -585,6 +679,14 @@ class AppConfigTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDouble longitude;
 
+  late final _i1.ColumnString priceSource;
+
+  late final _i1.ColumnDouble fixedBuyRatePln;
+
+  late final _i1.ColumnDouble fixedSellRatePln;
+
+  late final _i1.ColumnBool pstrykEnabled;
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -606,6 +708,10 @@ class AppConfigTable extends _i1.Table<int?> {
     cityName,
     latitude,
     longitude,
+    priceSource,
+    fixedBuyRatePln,
+    fixedSellRatePln,
+    pstrykEnabled,
   ];
 }
 
