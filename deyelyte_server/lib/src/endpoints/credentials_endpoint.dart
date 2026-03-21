@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
+import '../generated/future_calls.dart';
 import '../generated/protocol.dart';
 
 class CredentialsEndpoint extends Endpoint {
@@ -22,9 +23,6 @@ class CredentialsEndpoint extends Endpoint {
     final isFirstSave = existing?.deyeUsername == null;
     final passwordHash = sha256.convert(utf8.encode(password)).toString();
 
-    final appId = session.passwords['deyeAppId'] ?? '';
-    final appSecret = session.passwords['deyeAppSecret'] ?? '';
-
     await _upsert(
       session,
       userInfoId,
@@ -32,19 +30,16 @@ class CredentialsEndpoint extends Endpoint {
       (c) => c.copyWith(
         deyeUsername: username,
         deyePasswordHash: passwordHash,
-        deyeAppId: appId,
-        deyeAppSecret: appSecret,
       ),
     );
 
     if (isFirstSave) {
       // InitUserCall will find all users with deyeUsername set but no deviceSn
       // and complete their initialisation.
-      await session.serverpod.futureCallWithDelay(
-        'InitUserCall',
-        null,
-        const Duration(seconds: 5),
-      );
+      await session.serverpod.futureCalls
+          .callWithDelay(const Duration(seconds: 5))
+          .initUserCall
+          .invoke(null);
       session.log('InitUserCall scheduled (first Deye save for userInfoId $userInfoId)');
     }
   }
@@ -82,8 +77,6 @@ class CredentialsEndpoint extends Endpoint {
     await _upsert(session, userInfoId, existing, (c) => c.copyWith(
       deyeUsername: null,
       deyePasswordHash: null,
-      deyeAppId: null,
-      deyeAppSecret: null,
       deyeDeviceSn: null,
     ));
 

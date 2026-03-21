@@ -18,9 +18,11 @@ import '../endpoints/example_endpoint.dart' as _i5;
 import '../endpoints/forecast_endpoint.dart' as _i6;
 import '../endpoints/optimizer_endpoint.dart' as _i7;
 import '../endpoints/price_endpoint.dart' as _i8;
-import 'package:deyelyte_server/src/generated/app_config.dart' as _i9;
-import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i10;
-import 'package:deyelyte_server/src/generated/future_calls.dart' as _i11;
+import '../endpoints/price_time_ranges_endpoint.dart' as _i9;
+import 'package:deyelyte_server/src/generated/app_config.dart' as _i10;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i11;
+import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i12;
+import 'package:deyelyte_server/src/generated/future_calls.dart' as _i13;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
 class Endpoints extends _i1.EndpointDispatch {
@@ -69,6 +71,12 @@ class Endpoints extends _i1.EndpointDispatch {
           'price',
           null,
         ),
+      'priceTimeRanges': _i9.PriceTimeRangesEndpoint()
+        ..initialize(
+          server,
+          'priceTimeRanges',
+          null,
+        ),
     };
     connectors['appConfig'] = _i1.EndpointConnector(
       name: 'appConfig',
@@ -89,7 +97,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'config': _i1.ParameterDescription(
               name: 'config',
-              type: _i1.getType<_i9.AppConfig>(),
+              type: _i1.getType<_i10.AppConfig>(),
               nullable: false,
             ),
           },
@@ -147,16 +155,6 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String>(),
               nullable: false,
             ),
-            'appId': _i1.ParameterDescription(
-              name: 'appId',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'appSecret': _i1.ParameterDescription(
-              name: 'appSecret',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
           },
           call:
               (
@@ -167,8 +165,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     params['username'],
                     params['password'],
-                    params['appId'],
-                    params['appSecret'],
                   ),
         ),
         'saveSolcast': _i1.MethodConnector(
@@ -427,11 +423,48 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth'] = _i10.Endpoints()..initializeEndpoints(server);
+    connectors['priceTimeRanges'] = _i1.EndpointConnector(
+      name: 'priceTimeRanges',
+      endpoint: endpoints['priceTimeRanges']!,
+      methodConnectors: {
+        'getTimeRanges': _i1.MethodConnector(
+          name: 'getTimeRanges',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['priceTimeRanges'] as _i9.PriceTimeRangesEndpoint)
+                      .getTimeRanges(session),
+        ),
+        'saveTimeRanges': _i1.MethodConnector(
+          name: 'saveTimeRanges',
+          params: {
+            'ranges': _i1.ParameterDescription(
+              name: 'ranges',
+              type: _i1.getType<List<_i11.PriceTimeRange>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['priceTimeRanges'] as _i9.PriceTimeRangesEndpoint)
+                      .saveTimeRanges(
+                        session,
+                        params['ranges'],
+                      ),
+        ),
+      },
+    );
+    modules['serverpod_auth'] = _i12.Endpoints()..initializeEndpoints(server);
   }
 
   @override
   _i1.FutureCallDispatch? get futureCalls {
-    return _i11.FutureCalls();
+    return _i13.FutureCalls();
   }
 }

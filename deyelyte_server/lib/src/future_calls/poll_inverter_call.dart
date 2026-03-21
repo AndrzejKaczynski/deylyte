@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import '../generated/future_calls.dart';
 import '../generated/protocol.dart';
 import '../integrations/deye/deye_client.dart';
 
@@ -20,11 +21,10 @@ class PollInverterCall extends FutureCall {
       await _pollUser(session, creds);
     }
 
-    await session.serverpod.futureCallWithDelay(
-      'PollInverterCall',
-      null,
-      const Duration(minutes: 15),
-    );
+    await session.serverpod.futureCalls
+        .callWithDelay(const Duration(minutes: 15))
+        .pollInverterCall
+        .invoke(null);
   }
 
   Future<void> _pollUser(Session session, IntegrationCredentials creds) async {
@@ -32,8 +32,8 @@ class PollInverterCall extends FutureCall {
       final client = DeyeCloudClient(
         username: creds.deyeUsername!,
         password: creds.deyePasswordHash!,
-        appId: creds.deyeAppId ?? '',
-        appSecret: creds.deyeAppSecret ?? '',
+        appId: session.passwords['deyeAppId'] ?? '',
+        appSecret: session.passwords['deyeAppSecret'] ?? '',
         deviceSn: creds.deyeDeviceSn!,
       );
       await client.authenticateWithHash(session);

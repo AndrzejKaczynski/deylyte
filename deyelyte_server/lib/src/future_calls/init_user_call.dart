@@ -41,8 +41,8 @@ class InitUserCall extends FutureCall {
       final client = DeyeCloudClient(
         username: creds.deyeUsername!,
         password: creds.deyePasswordHash!,
-        appId: creds.deyeAppId ?? '',
-        appSecret: creds.deyeAppSecret ?? '',
+        appId: session.passwords['deyeAppId'] ?? '',
+        appSecret: session.passwords['deyeAppSecret'] ?? '',
         deviceSn: '', // not yet known — fetching below
       );
 
