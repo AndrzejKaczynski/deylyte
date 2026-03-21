@@ -1,3 +1,10 @@
+admin:
+  - checkAccess:
+  - listLicenseKeys:
+  - createLicenseKey:
+  - setLicenseKeyActive:
+  - listUsers:
+  - listDevices:
 appConfig:
   - getConfig:
   - saveConfig:

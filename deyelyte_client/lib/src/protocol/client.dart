@@ -20,6 +20,78 @@ import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i7;
 import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i8;
 import 'protocol.dart' as _i9;
 
+/// All methods require the caller to be an authenticated admin.
+/// Admin rows are created exclusively via direct SQL — no endpoint can
+/// grant or revoke admin status.
+/// {@category Endpoint}
+class EndpointAdmin extends _i1.EndpointRef {
+  EndpointAdmin(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'admin';
+
+  /// Returns true if the authenticated user is an admin. Used by the Flutter
+  /// router to decide whether to show the /admin section.
+  _i2.Future<bool> checkAccess() => caller.callServerEndpoint<bool>(
+    'admin',
+    'checkAccess',
+    {},
+  );
+
+  /// Returns all license keys, newest first, with basic user info.
+  _i2.Future<List<Map<String, dynamic>>> listLicenseKeys() =>
+      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+        'admin',
+        'listLicenseKeys',
+        {},
+      );
+
+  /// Creates a new license key for [userId] with the given [tier].
+  /// Returns the generated key string.
+  _i2.Future<String> createLicenseKey({
+    required int userId,
+    required String tier,
+    DateTime? expiresAt,
+  }) => caller.callServerEndpoint<String>(
+    'admin',
+    'createLicenseKey',
+    {
+      'userId': userId,
+      'tier': tier,
+      'expiresAt': expiresAt,
+    },
+  );
+
+  /// Activates or deactivates a license key by its DB id.
+  _i2.Future<void> setLicenseKeyActive({
+    required int id,
+    required bool active,
+  }) => caller.callServerEndpoint<void>(
+    'admin',
+    'setLicenseKeyActive',
+    {
+      'id': id,
+      'active': active,
+    },
+  );
+
+  /// Returns all users with their app config and device status.
+  _i2.Future<List<Map<String, dynamic>>> listUsers() =>
+      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+        'admin',
+        'listUsers',
+        {},
+      );
+
+  /// Returns all registered devices with connection status.
+  _i2.Future<List<Map<String, dynamic>>> listDevices() =>
+      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+        'admin',
+        'listDevices',
+        {},
+      );
+}
+
 /// {@category Endpoint}
 class EndpointAppConfig extends _i1.EndpointRef {
   EndpointAppConfig(_i1.EndpointCaller caller) : super(caller);
@@ -410,7 +482,8 @@ class EndpointSchedule extends _i1.EndpointRef {
   /// unreachable for more than [offlineGraceMinutes] (default 15), the add-on
   /// applies [offlineFallback] instead of the cached schedule — stopping all
   /// active charging/discharging commands to protect against expensive
-  /// runaway behaviour.
+  /// runaway behaviour. Default grace period is 120 minutes (2 missed hourly
+  /// fetches) to avoid false positives from brief server restarts.
   ///
   /// [offlineFallback] keys:
   ///   - `chargingEnabled` (bool)  — whether to charge when offline
@@ -520,6 +593,7 @@ class Client extends _i1.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    admin = EndpointAdmin(this);
     appConfig = EndpointAppConfig(this);
     baseline = EndpointBaseline(this);
     credentials = EndpointCredentials(this);
@@ -535,6 +609,8 @@ class Client extends _i1.ServerpodClientShared {
     telemetry = EndpointTelemetry(this);
     modules = Modules(this);
   }
+
+  late final EndpointAdmin admin;
 
   late final EndpointAppConfig appConfig;
 
@@ -566,6 +642,7 @@ class Client extends _i1.ServerpodClientShared {
 
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'admin': admin,
     'appConfig': appConfig,
     'baseline': baseline,
     'credentials': credentials,

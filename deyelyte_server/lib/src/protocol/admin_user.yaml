@@ -1,0 +1,10 @@
+# Marks a UserInfo account as an admin.
+# Rows are inserted directly via SQL — no API endpoint can create or modify them.
+class: AdminUser
+table: admin_users
+fields:
+  userInfoId: int   # FK → UserInfo.id
+indexes:
+  admin_users_user_idx:
+    fields: userInfoId
+    unique: true

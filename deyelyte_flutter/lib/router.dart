@@ -11,6 +11,11 @@ import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/onboarding/onboarding_license_screen.dart';
 import 'screens/onboarding/onboarding_setup_screen.dart';
+import 'screens/admin/admin_shell.dart';
+import 'screens/admin/admin_licenses_screen.dart';
+import 'screens/admin/admin_users_screen.dart';
+import 'screens/admin/admin_devices_screen.dart';
+import 'providers/admin_provider.dart';
 import 'providers/app_providers.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -34,8 +39,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // BYPASS_ONBOARDING skips onboarding checks entirely (dev mode)
       if (Env.bypassOnboarding) return null;
 
-      // Already in onboarding — don't redirect
+      // Already in onboarding or admin — don't redirect
       if (loc.startsWith('/onboarding')) return null;
+      if (loc.startsWith('/admin')) return null;
 
       // Check license key
       const storage = FlutterSecureStorage();
@@ -68,6 +74,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/setup',
         builder: (_, __) => const OnboardingSetupScreen(),
+      ),
+      // ── Admin section (role checked on entry) ──────────────────────────
+      ShellRoute(
+        builder: (context, state, child) => AdminShell(child: child),
+        redirect: (context, state) async {
+          final isAdmin = await ref.read(isAdminProvider.future);
+          if (!isAdmin) return '/';
+          return null;
+        },
+        routes: [
+          GoRoute(
+            path: '/admin/licenses',
+            builder: (_, __) => const AdminLicensesScreen(),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            builder: (_, __) => const AdminUsersScreen(),
+          ),
+          GoRoute(
+            path: '/admin/devices',
+            builder: (_, __) => const AdminDevicesScreen(),
+          ),
+        ],
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
