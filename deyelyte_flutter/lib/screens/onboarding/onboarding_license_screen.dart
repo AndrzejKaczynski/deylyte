@@ -212,7 +212,7 @@ class _MobileLayout extends StatelessWidget {
           children: [
             _MobileLogo(),
             const SizedBox(height: 32),
-            const _StepIndicator(currentStep: 1),
+            const _StepIndicator(currentStep: 2),
             const SizedBox(height: 32),
             _LicenseForm(
               formKey: formKey,
@@ -294,7 +294,7 @@ class _HeroPanel extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _StepIndicator(currentStep: 1),
+                    const _StepIndicator(currentStep: 2),
                     const SizedBox(height: 40),
                     Text(
                       'Activate\nyour license.',

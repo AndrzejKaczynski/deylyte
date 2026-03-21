@@ -218,12 +218,11 @@ class EndpointDevice extends _i1.EndpointRef {
   ///   connected       — true when telemetry received within last 5 minutes
   ///   lastSeenAt      — ISO8601 UTC of most recent telemetry, or null
   ///   inverterReachable — true if last telemetry had valid inverter state
-  _i2.Future<Map<String, dynamic>> getStatus() =>
-      caller.callServerEndpoint<Map<String, dynamic>>(
-        'device',
-        'getStatus',
-        {},
-      );
+  _i2.Future<String> getStatus() => caller.callServerEndpoint<String>(
+    'device',
+    'getStatus',
+    {},
+  );
 }
 
 /// {@category Endpoint}
@@ -273,8 +272,8 @@ class EndpointHistory extends _i1.EndpointRef {
   ///
   /// Stub returns zero values. Real implementation will aggregate
   /// DeviceTelemetry + EnergyPrice rows.
-  _i2.Future<Map<String, dynamic>> getSummary(int rangeDays) =>
-      caller.callServerEndpoint<Map<String, dynamic>>(
+  _i2.Future<String> getSummary(int rangeDays) =>
+      caller.callServerEndpoint<String>(
         'history',
         'getSummary',
         {'rangeDays': rangeDays},
@@ -285,8 +284,8 @@ class EndpointHistory extends _i1.EndpointRef {
   /// [rangeDays] — number of days to include (7, 30, or 90)
   ///
   /// Stub returns empty list.
-  _i2.Future<List<Map<String, dynamic>>> getEvents(int rangeDays) =>
-      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+  _i2.Future<String> getEvents(int rangeDays) =>
+      caller.callServerEndpoint<String>(
         'history',
         'getEvents',
         {'rangeDays': rangeDays},
@@ -308,8 +307,8 @@ class EndpointLicense extends _i1.EndpointRef {
   ///   valid  — bool
   ///   tier   — String? ('beta_free' | 'basic' | 'pro') when valid
   ///   reason — String? human-readable denial reason when invalid
-  _i2.Future<Map<String, dynamic>> validate(String licenseKey) =>
-      caller.callServerEndpoint<Map<String, dynamic>>(
+  _i2.Future<String> validate(String licenseKey) =>
+      caller.callServerEndpoint<String>(
         'license',
         'validate',
         {'licenseKey': licenseKey},
@@ -457,12 +456,11 @@ class EndpointSchedule extends _i1.EndpointRef {
 
   /// Returns schedule events as a list of maps for the Flutter schedule screen.
   /// Stub: returns empty list until optimization engine is wired.
-  _i2.Future<List<Map<String, dynamic>>> getEvents() =>
-      caller.callServerEndpoint<List<Map<String, dynamic>>>(
-        'schedule',
-        'getEvents',
-        {},
-      );
+  _i2.Future<String> getEvents() => caller.callServerEndpoint<String>(
+    'schedule',
+    'getEvents',
+    {},
+  );
 
   /// Returns upcoming OptimizationFrames for the user associated with
   /// [licenseKey]. Returns an empty list on invalid license.
@@ -488,8 +486,8 @@ class EndpointSchedule extends _i1.EndpointRef {
   ///   - `maxBuyPricePln`  (double) — max buy price to honour offline
   ///   - `priceSource`     (String) — pricing mode used for this fallback
   ///   - `offlineGraceMinutes` (int) — grace period before fallback activates
-  _i2.Future<Map<String, dynamic>> getScheduleWithFallback(String licenseKey) =>
-      caller.callServerEndpoint<Map<String, dynamic>>(
+  _i2.Future<String> getScheduleWithFallback(String licenseKey) =>
+      caller.callServerEndpoint<String>(
         'schedule',
         'getScheduleWithFallback',
         {'licenseKey': licenseKey},
@@ -511,7 +509,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
   /// On success:
   ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk)
   ///   - Inserts a DeviceTelemetry row
-  _i2.Future<void> ingest(
+  /// Returns JSON: `{}` in planning mode, `{"commands": {...}}` in live mode.
+  _i2.Future<String> ingest(
     String licenseKey,
     String deviceId,
     DateTime timestamp,
@@ -520,7 +519,7 @@ class EndpointTelemetry extends _i1.EndpointRef {
     double pvPowerW,
     double loadPowerW,
     double batteryPowerW,
-  ) => caller.callServerEndpoint<void>(
+  ) => caller.callServerEndpoint<String>(
     'telemetry',
     'ingest',
     {

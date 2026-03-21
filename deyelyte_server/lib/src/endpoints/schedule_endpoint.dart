@@ -44,7 +44,7 @@ class ScheduleEndpoint extends Endpoint {
 
   /// Returns schedule events as a list of maps for the Flutter schedule screen.
   /// Stub: returns empty list until optimization engine is wired.
-  Future<List<Map<String, dynamic>>> getEvents(Session session) async => [];
+  Future<String> getEvents(Session session) async => jsonEncode([]);
 
   // ── Add-on facing (license key auth, no user session) ────────────────────
 
@@ -86,7 +86,7 @@ class ScheduleEndpoint extends Endpoint {
   ///   - `maxBuyPricePln`  (double) — max buy price to honour offline
   ///   - `priceSource`     (String) — pricing mode used for this fallback
   ///   - `offlineGraceMinutes` (int) — grace period before fallback activates
-  Future<Map<String, dynamic>> getScheduleWithFallback(
+  Future<String> getScheduleWithFallback(
     Session session,
     String licenseKey,
   ) async {
@@ -95,7 +95,7 @@ class ScheduleEndpoint extends Endpoint {
       where: (t) => t.licenseKey.equals(licenseKey) & t.isActive.equals(true),
     );
     if (license == null) {
-      return {'frames': [], 'offlineFallback': _safeDefaults()};
+      return jsonEncode({'frames': [], 'offlineFallback': _safeDefaults()});
     }
 
     final now = DateTime.now().toUtc();
@@ -129,13 +129,13 @@ class ScheduleEndpoint extends Endpoint {
             'offlineGraceMinutes': 120,
           };
 
-    return {
+    return jsonEncode({
       'frames': frames.map((f) => f.toJson()).toList(),
       'offlineFallback': fallback,
       // Stable per-device offset (0–59 min) so all add-ons don't hit the
       // server simultaneously at the top of every hour.
       'fetchOffsetMinutes': _fetchOffset(licenseKey),
-    };
+    });
   }
 
   /// Derives a stable 0–59 minute fetch offset from the license key so

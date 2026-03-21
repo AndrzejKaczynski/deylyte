@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
@@ -14,7 +16,7 @@ class LicenseEndpoint extends Endpoint {
   ///   valid  — bool
   ///   tier   — String? ('beta_free' | 'basic' | 'pro') when valid
   ///   reason — String? human-readable denial reason when invalid
-  Future<Map<String, dynamic>> validate(
+  Future<String> validate(
     Session session,
     String licenseKey,
   ) async {
@@ -24,14 +26,14 @@ class LicenseEndpoint extends Endpoint {
     );
 
     if (row == null) {
-      return {'valid': false, 'reason': 'Key not found'};
+      return jsonEncode({'valid': false, 'reason': 'Key not found'});
     }
     if (!row.isActive) {
-      return {'valid': false, 'reason': 'Key deactivated'};
+      return jsonEncode({'valid': false, 'reason': 'Key deactivated'});
     }
     final now = DateTime.now().toUtc();
     if (row.expiresAt != null && row.expiresAt!.isBefore(now)) {
-      return {'valid': false, 'reason': 'Key expired'};
+      return jsonEncode({'valid': false, 'reason': 'Key expired'});
     }
 
     // Associate with the authenticated user if not already claimed.
@@ -45,6 +47,6 @@ class LicenseEndpoint extends Endpoint {
     // Update lastSeenAt (fire and forget — don't block the response).
     LicenseKey.db.updateRow(session, row.copyWith(lastSeenAt: now));
 
-    return {'valid': true, 'tier': row.tier};
+    return jsonEncode({'valid': true, 'tier': row.tier});
   }
 }

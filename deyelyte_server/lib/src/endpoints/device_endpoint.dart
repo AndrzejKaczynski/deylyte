@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
@@ -14,7 +16,7 @@ class DeviceEndpoint extends Endpoint {
   ///   connected       — true when telemetry received within last 5 minutes
   ///   lastSeenAt      — ISO8601 UTC of most recent telemetry, or null
   ///   inverterReachable — true if last telemetry had valid inverter state
-  Future<Map<String, dynamic>> getStatus(Session session) async {
+  Future<String> getStatus(Session session) async {
     final userInfoId = _uid(session);
 
     final device = await Device.db.findFirstRow(
@@ -23,11 +25,11 @@ class DeviceEndpoint extends Endpoint {
     );
 
     if (device == null) {
-      return {
+      return jsonEncode({
         'connected': false,
         'lastSeenAt': null,
         'inverterReachable': false,
-      };
+      });
     }
 
     final now = DateTime.now().toUtc();
@@ -35,11 +37,11 @@ class DeviceEndpoint extends Endpoint {
     final connected =
         lastSeen != null && now.difference(lastSeen).inMinutes < 5;
 
-    return {
+    return jsonEncode({
       'connected': connected,
       'lastSeenAt': lastSeen?.toIso8601String(),
       'inverterReachable': device.lastInverterOk,
-    };
+    });
   }
 
   int _uid(Session session) =>

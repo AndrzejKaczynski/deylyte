@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:deyelyte_client/deyelyte_client.dart';
 
 import '../repositories/schedule_repository.dart';
@@ -14,6 +16,8 @@ class ServerpodScheduleRepository implements ScheduleRepository {
       _client.schedule.getForecast();
 
   @override
-  Future<List<Map<String, dynamic>>> getEvents() =>
-      _client.schedule.getEvents();
+  Future<List<Map<String, dynamic>>> getEvents() async {
+    final json = await _client.schedule.getEvents();
+    return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
+  }
 }

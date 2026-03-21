@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
@@ -13,7 +15,8 @@ class TelemetryEndpoint extends Endpoint {
   /// On success:
   ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk)
   ///   - Inserts a DeviceTelemetry row
-  Future<void> ingest(
+  /// Returns JSON: `{}` in planning mode, `{"commands": {...}}` in live mode.
+  Future<String> ingest(
     Session session,
     String licenseKey,
     String deviceId,
@@ -28,7 +31,7 @@ class TelemetryEndpoint extends Endpoint {
       session,
       where: (t) => t.licenseKey.equals(licenseKey) & t.isActive.equals(true),
     );
-    if (license == null) return; // silently reject invalid keys
+    if (license == null) return jsonEncode({}); // silently reject invalid keys
 
     // Upsert Device row.
     final existing = await Device.db.findFirstRow(
@@ -68,6 +71,28 @@ class TelemetryEndpoint extends Endpoint {
         batteryPowerW: batteryPowerW,
       ),
     );
+
+    // Look up the user's app config to check planning mode.
+    final config = await AppConfig.db.findFirstRow(
+      session,
+      where: (t) => t.userInfoId.equals(license.userId),
+    );
+
+    // Planning mode (or no config yet) → return empty response.
+    // Add-on receives no commands and does nothing.
+    if (config == null || config.planningOnly) {
+      return jsonEncode({});
+    }
+
+    // Live mode → return current commands derived from config.
+    // The optimizer will eventually populate a schedule table; for now we
+    // derive simple on/off commands directly from the user's settings.
+    return jsonEncode({
+      'commands': {
+        'chargeFromGrid': config.chargingEnabled,
+        'sellToGrid': config.sellingEnabled,
+      },
+    });
   }
 
   // ── Flutter facing (requires login) ──────────────────────────────────────

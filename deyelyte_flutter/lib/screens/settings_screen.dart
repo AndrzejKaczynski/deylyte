@@ -68,7 +68,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final notifier = ref.read(settingsProvider.notifier);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     final config = configAsync.valueOrNull;
-    final lockInfo = _emsLockInfo(config);
+    final addonStatus = ref.watch(addonStatusProvider).valueOrNull;
+    final addonEverConnected = addonStatus?['lastSeenAt'] != null;
+    final lockInfo = _emsLockInfo(config, addonEverConnected: addonEverConnected);
 
     if (configAsync.isLoading && !_configLoaded) {
       return const Scaffold(
@@ -201,8 +203,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   /// Returns a human-readable reason why EMS control is locked, or null if
   /// the controls are available.
-  String? _emsLockInfo(AppConfig? config) {
+  String? _emsLockInfo(AppConfig? config, {bool addonEverConnected = false}) {
     if (config == null || config.dataGatheringSince == null) {
+      if (addonEverConnected) return null; // add-on connected, baseline not started yet — no banner
       return 'Install the DeyLyte add-on in Home Assistant to enable EMS control. '
           'After connecting, a 7-day baseline collection period begins.';
     }

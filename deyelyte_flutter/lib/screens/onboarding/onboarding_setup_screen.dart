@@ -173,7 +173,7 @@ class _HeroPanel extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _StepIndicator(currentStep: 2),
+                    const _StepIndicator(currentStep: 3),
                     const SizedBox(height: 40),
                     Text(
                       'Install the\nadd-on.',
@@ -242,7 +242,7 @@ class _SetupContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const _StepIndicator(currentStep: 2),
+          const _StepIndicator(currentStep: 3),
           const SizedBox(height: 32),
         ] else ...[
           Row(
@@ -259,7 +259,7 @@ class _SetupContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const _StepIndicator(currentStep: 2),
+          const _StepIndicator(currentStep: 3),
           const SizedBox(height: 32),
         ],
         Text(
@@ -576,7 +576,9 @@ class _ConnectionStatusWidgetState
       final repo = ref.read(deviceRepositoryProvider);
       final status = await repo.getStatus();
       if (!mounted) return;
-      if (status['connected'] == true) {
+      // Advance if currently connected OR if device has ever connected (lastSeenAt != null)
+      final everConnected = status['lastSeenAt'] != null;
+      if (status['connected'] == true || everConnected) {
         _timer?.cancel();
         setState(() => _state = _ConnState.connected);
         await Future.delayed(const Duration(seconds: 2));

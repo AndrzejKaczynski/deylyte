@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 /// Returns historical energy summaries and events for the Flutter history screen.
@@ -13,11 +15,11 @@ class HistoryEndpoint extends Endpoint {
   ///
   /// Stub returns zero values. Real implementation will aggregate
   /// DeviceTelemetry + EnergyPrice rows.
-  Future<Map<String, dynamic>> getSummary(
+  Future<String> getSummary(
     Session session,
     int rangeDays,
   ) async {
-    return {
+    return jsonEncode({
       'priceVelocity': 0.0,       // PLN/kWh average over period
       'netRevenuePln': 0.0,       // total net revenue (sell - buy cost)
       'peakLoadKw': 0.0,          // maximum instantaneous load
@@ -26,7 +28,7 @@ class HistoryEndpoint extends Endpoint {
       'storageEfficiencyPercent': 0.0,
       'peakDemandKw': 0.0,
       // Carbon offset intentionally omitted — requires grid carbon intensity API
-    };
+    });
   }
 
   /// Returns a list of notable market/schedule events for the history screen.
@@ -34,10 +36,10 @@ class HistoryEndpoint extends Endpoint {
   /// [rangeDays] — number of days to include (7, 30, or 90)
   ///
   /// Stub returns empty list.
-  Future<List<Map<String, dynamic>>> getEvents(
+  Future<String> getEvents(
     Session session,
     int rangeDays,
   ) async {
-    return [];
+    return jsonEncode([]);
   }
 }

@@ -192,11 +192,12 @@ class _KpiStrip extends ConsumerWidget {
         ? (telemetry!.batteryPowerW < 0 ? '⚡ Charging' : '↓ Discharging')
         : 'No data';
     final pvKw = pv != null ? '${(pv / 1000).toStringAsFixed(1)} kW' : '--';
+    // Deye register 625: positive = importing from grid, negative = exporting to grid
     final gridStatus = grid == null
         ? '--'
         : (grid > 100
-            ? 'Exporting'
-            : (grid < -100 ? 'Importing' : 'Stable'));
+            ? 'Importing'
+            : (grid < -100 ? 'Exporting' : 'Stable'));
 
     return LayoutBuilder(builder: (context, constraints) {
       final wide = constraints.maxWidth > 600;
