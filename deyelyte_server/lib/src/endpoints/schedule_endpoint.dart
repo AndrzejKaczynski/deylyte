@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
@@ -130,7 +132,23 @@ class ScheduleEndpoint extends Endpoint {
     return {
       'frames': frames.map((f) => f.toJson()).toList(),
       'offlineFallback': fallback,
+      // Stable per-device offset (0–59 min) so all add-ons don't hit the
+      // server simultaneously at the top of every hour.
+      'fetchOffsetMinutes': _fetchOffset(licenseKey),
     };
+  }
+
+  /// Derives a stable 0–59 minute fetch offset from the license key so
+  /// requests are spread evenly across the hour (deterministic jitter).
+  /// The same key always gets the same offset — no state needed.
+  int _fetchOffset(String licenseKey) {
+    // Simple djb2-style hash over the UTF-8 bytes, then mod 60.
+    final bytes = utf8.encode(licenseKey);
+    var hash = 5381;
+    for (final b in bytes) {
+      hash = ((hash << 5) + hash + b) & 0x7fffffff;
+    }
+    return hash % 60;
   }
 
   /// Conservative safe defaults used when no config exists yet.
