@@ -40,9 +40,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // BYPASS_ONBOARDING skips onboarding checks entirely (dev mode)
       if (Env.bypassOnboarding) return null;
 
-      // Already in onboarding or admin — don't redirect
+      // Already in onboarding — don't redirect
       if (loc.startsWith('/onboarding')) return null;
-      if (loc.startsWith('/admin')) return null;
+
+      // Admin section — check role once (result is cached by isAdminProvider)
+      if (loc.startsWith('/admin')) {
+        final isAdmin = await ref.read(isAdminProvider.future);
+        return isAdmin ? null : '/';
+      }
 
       // Check license key
       const storage = FlutterSecureStorage();
@@ -76,14 +81,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding/setup',
         builder: (_, __) => const OnboardingSetupScreen(),
       ),
-      // ── Admin section (role checked on entry) ──────────────────────────
+      // ── Admin section (role gated in top-level redirect above) ────────
       ShellRoute(
         builder: (context, state, child) => AdminShell(child: child),
-        redirect: (context, state) async {
-          final isAdmin = await ref.read(isAdminProvider.future);
-          if (!isAdmin) return '/';
-          return null;
-        },
         routes: [
           GoRoute(
             path: '/admin',

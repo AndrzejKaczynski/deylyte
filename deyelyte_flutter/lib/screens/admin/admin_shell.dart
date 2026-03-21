@@ -21,6 +21,7 @@ class AdminShell extends StatelessWidget {
         SizedBox(
           width: 200,
           child: SurfaceCard(
+            height: double.infinity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

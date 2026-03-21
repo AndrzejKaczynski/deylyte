@@ -22,8 +22,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.sp6),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const SectionHeader(title: 'Overview'),
-          const Spacer(),
+          const Expanded(child: SectionHeader(title: 'Overview')),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh all',

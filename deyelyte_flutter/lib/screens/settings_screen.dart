@@ -120,6 +120,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         pvOnlySelling: settings.pvOnlySelling,
                         planningOnly: settings.planningOnly,
                         hasBaseline: settings.hasBaseline,
+                        priceSourceReady: settings.isPriceSourceReady,
+                        priceSource: settings.priceSource,
                         maxBuyPrice: settings.maxBuyPrice,
                         minSellPrice: settings.minSellPrice,
                         onChargingChanged: notifier.setChargingEnabled,
@@ -294,6 +296,8 @@ class _EmsControlCard extends StatefulWidget {
     required this.pvOnlySelling,
     required this.planningOnly,
     required this.hasBaseline,
+    required this.priceSourceReady,
+    required this.priceSource,
     required this.maxBuyPrice,
     required this.minSellPrice,
     required this.onChargingChanged,
@@ -310,6 +314,8 @@ class _EmsControlCard extends StatefulWidget {
   final bool pvOnlySelling;
   final bool planningOnly;
   final bool hasBaseline;
+  final bool priceSourceReady;
+  final String priceSource;
   final double maxBuyPrice;
   final double? minSellPrice;
   final ValueChanged<bool> onChargingChanged;
@@ -413,7 +419,43 @@ class _EmsControlCardState extends State<_EmsControlCard> {
             opacity: widget.planningOnly ? 0.4 : 1.0,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
+        // ── Price source not ready warning ────────────────────────────────────
+        if (!widget.priceSourceReady) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.tertiary.withValues(alpha: 0.08),
+              borderRadius: AppRadius.radiusMd,
+              border: Border.all(
+                  color: AppColors.tertiary.withValues(alpha: 0.3)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.warning_amber_rounded,
+                  size: 14, color: AppColors.tertiary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.priceSource == 'pstryk'
+                      ? 'Connect your Pstryk account in the integrations section below to enable grid charging and selling.'
+                      : 'Enter fixed buy and sell rates in the Pricing Source card to enable grid charging and selling.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.tertiary),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 16),
+        ],
+
         // ── Charging section ──────────────────────────────────────────────────
+        IgnorePointer(
+          ignoring: !widget.priceSourceReady,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: widget.priceSourceReady ? 1.0 : 0.4,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _ToggleSetting(
           icon: Icons.bolt_rounded,
           iconColor: AppColors.primary,
@@ -540,11 +582,13 @@ class _EmsControlCardState extends State<_EmsControlCard> {
             ),
           ),
         ],
-        // close the IgnorePointer > AnimatedOpacity > Column wrapping charge/sell
-        ]),
-          ),
-        ),
-      ]),
+            ]),    // inner Column children (charge + sell)
+          ),       // AnimatedOpacity
+        ),         // IgnorePointer (priceSourceReady gate)
+      ]),          // outer Column children (planning mode + charge/sell)
+      ),           // outer AnimatedOpacity
+      ),           // outer IgnorePointer (planningOnly gate)
+      ]),          // SurfaceCard Column children
     );
   }
 }

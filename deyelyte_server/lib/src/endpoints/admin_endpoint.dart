@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:serverpod/serverpod.dart';
@@ -22,8 +23,8 @@ class AdminEndpoint extends Endpoint {
 
   // ── License keys ───────────────────────────────────────────────────────────
 
-  /// Returns all license keys, newest first, with basic user info.
-  Future<List<Map<String, dynamic>>> listLicenseKeys(Session session) async {
+  /// Returns all license keys, newest first, with basic user info (JSON string).
+  Future<String> listLicenseKeys(Session session) async {
     await _requireAdmin(session);
 
     final keys = await LicenseKey.db.find(
@@ -51,7 +52,7 @@ class AdminEndpoint extends Endpoint {
         'userName': user?.userName,
       });
     }
-    return result;
+    return jsonEncode(result);
   }
 
   /// Creates a new license key for [userId] with the given [tier].
@@ -94,8 +95,8 @@ class AdminEndpoint extends Endpoint {
 
   // ── Users ──────────────────────────────────────────────────────────────────
 
-  /// Returns all users with their app config and device status.
-  Future<List<Map<String, dynamic>>> listUsers(Session session) async {
+  /// Returns all users with their app config and device status (JSON string).
+  Future<String> listUsers(Session session) async {
     await _requireAdmin(session);
 
     final users = await UserInfo.db.find(
@@ -127,7 +128,7 @@ class AdminEndpoint extends Endpoint {
         'id': u.id,
         'email': u.email,
         'userName': u.userName,
-        'created': u.created?.toIso8601String(),
+        'created': u.created.toIso8601String(),
         'planningOnly': config?.planningOnly,
         'dataGatheringSince': config?.dataGatheringSince?.toIso8601String(),
         'priceSource': config?.priceSource,
@@ -136,13 +137,13 @@ class AdminEndpoint extends Endpoint {
         'inverterReachable': device?.lastInverterOk,
       });
     }
-    return result;
+    return jsonEncode(result);
   }
 
   // ── Devices ────────────────────────────────────────────────────────────────
 
-  /// Returns all registered devices with connection status.
-  Future<List<Map<String, dynamic>>> listDevices(Session session) async {
+  /// Returns all registered devices with connection status (JSON string).
+  Future<String> listDevices(Session session) async {
     await _requireAdmin(session);
 
     final devices = await Device.db.find(
@@ -172,7 +173,7 @@ class AdminEndpoint extends Endpoint {
         'createdAt': d.createdAt.toIso8601String(),
       });
     }
-    return result;
+    return jsonEncode(result);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

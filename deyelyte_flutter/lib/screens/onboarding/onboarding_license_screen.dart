@@ -76,8 +76,7 @@ class _OnboardingLicenseScreenState
         if (mounted) context.go('/onboarding/setup');
       } else {
         setState(() {
-          _errorMessage =
-              result['reason'] as String? ?? 'Invalid license key.';
+          _errorMessage = result['reason'] as String? ?? 'Invalid license key.';
           _isLoading = false;
         });
         _shakeController.forward(from: 0);
@@ -118,7 +117,7 @@ class _OnboardingLicenseScreenState
                   shakeAnimation: _shakeAnimation,
                   onSubmit: _submit,
                 ),
-          Positioned(
+          const Positioned(
             top: 16,
             right: 16,
             child: SafeArea(
@@ -213,7 +212,7 @@ class _MobileLayout extends StatelessWidget {
           children: [
             _MobileLogo(),
             const SizedBox(height: 32),
-            _StepIndicator(currentStep: 1),
+            const _StepIndicator(currentStep: 1),
             const SizedBox(height: 32),
             _LicenseForm(
               formKey: formKey,
@@ -272,8 +271,7 @@ class _HeroPanel extends StatelessWidget {
             child: CustomPaint(painter: EnergyGridPainter()),
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 72, vertical: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 72, vertical: 64),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,28 +282,23 @@ class _HeroPanel extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(
                       'DeyLyte',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.5,
+                              ),
                     ),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _StepIndicator(currentStep: 1),
+                    const _StepIndicator(currentStep: 1),
                     const SizedBox(height: 40),
                     Text(
                       'Activate\nyour license.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .displaySmall
-                          ?.copyWith(
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
                             fontSize: 48,
                             height: 1.1,
                             color: AppColors.onSurface,
@@ -365,8 +358,7 @@ class _LicenseForm extends StatelessWidget {
     return AnimatedBuilder(
       animation: shakeAnimation,
       builder: (context, child) {
-        final offset =
-            math.sin(shakeAnimation.value * math.pi * 4) * 8.0;
+        final offset = math.sin(shakeAnimation.value * math.pi * 4) * 8.0;
         return Transform.translate(
           offset: Offset(offset, 0),
           child: child,
@@ -498,9 +490,8 @@ class _StepIndicator extends StatelessWidget {
                     ? AppColors.primary
                     : AppColors.surfaceContainerHigh,
                 border: Border.all(
-                  color: isActive
-                      ? AppColors.primary
-                      : AppColors.outlineVariant,
+                  color:
+                      isActive ? AppColors.primary : AppColors.outlineVariant,
                   width: 1.5,
                 ),
               ),
@@ -527,8 +518,7 @@ class _StepIndicator extends StatelessWidget {
                     color: isActive
                         ? AppColors.primary
                         : AppColors.onSurfaceVariant,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
             ),
           ],

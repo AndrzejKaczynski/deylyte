@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_providers.dart';
@@ -13,15 +15,18 @@ final isAdminProvider = FutureProvider<bool>((ref) async {
 
 final adminLicenseKeysProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  return ref.read(clientProvider).admin.listLicenseKeys();
+  final json = await ref.read(clientProvider).admin.listLicenseKeys();
+  return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
 });
 
 final adminUsersProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  return ref.read(clientProvider).admin.listUsers();
+  final json = await ref.read(clientProvider).admin.listUsers();
+  return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
 });
 
 final adminDevicesProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  return ref.read(clientProvider).admin.listDevices();
+  final json = await ref.read(clientProvider).admin.listDevices();
+  return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
 });

@@ -21,8 +21,7 @@ class OnboardingSetupScreen extends ConsumerStatefulWidget {
       _OnboardingSetupScreenState();
 }
 
-class _OnboardingSetupScreenState
-    extends ConsumerState<OnboardingSetupScreen> {
+class _OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
   String? _licenseKey;
 
   @override
@@ -49,7 +48,7 @@ class _OnboardingSetupScreenState
           isDesktop
               ? _DesktopLayout(licenseKey: _licenseKey)
               : _MobileLayout(licenseKey: _licenseKey),
-          Positioned(
+          const Positioned(
             top: 16,
             right: 16,
             child: SafeArea(
@@ -79,8 +78,7 @@ class _DesktopLayout extends StatelessWidget {
           child: Container(
             color: AppColors.surfaceContainerLowest,
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 64, vertical: 48),
+              padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 48),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: _SetupContent(licenseKey: licenseKey, isDesktop: true),
@@ -152,8 +150,7 @@ class _HeroPanel extends StatelessWidget {
             child: CustomPaint(painter: EnergyGridPainter()),
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 72, vertical: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 72, vertical: 64),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,28 +161,23 @@ class _HeroPanel extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(
                       'DeyLyte',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.5,
+                              ),
                     ),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _StepIndicator(currentStep: 2),
+                    const _StepIndicator(currentStep: 2),
                     const SizedBox(height: 40),
                     Text(
                       'Install the\nadd-on.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .displaySmall
-                          ?.copyWith(
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
                             fontSize: 48,
                             height: 1.1,
                             color: AppColors.onSurface,
@@ -250,7 +242,7 @@ class _SetupContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          _StepIndicator(currentStep: 2),
+          const _StepIndicator(currentStep: 2),
           const SizedBox(height: 32),
         ] else ...[
           Row(
@@ -267,7 +259,7 @@ class _SetupContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          _StepIndicator(currentStep: 2),
+          const _StepIndicator(currentStep: 2),
           const SizedBox(height: 32),
         ],
         Text(
@@ -329,7 +321,7 @@ class _SetupSteps extends StatelessWidget {
             ),
           ),
         ),
-        _Step(
+        const _Step(
           number: 2,
           title: 'Add DeyLyte as a custom HACS repository',
           body: _CopyChip(
@@ -633,8 +625,7 @@ class _ConnectionStatusWidgetState
 
   String get _title => switch (_state) {
         _ConnState.waiting => 'Waiting for add-on to connect...',
-        _ConnState.connected =>
-          'Add-on connected! Loading your dashboard...',
+        _ConnState.connected => 'Add-on connected! Loading your dashboard...',
         _ConnState.error => 'Something went wrong',
       };
 
@@ -727,8 +718,7 @@ class _StepIndicator extends StatelessWidget {
                     color: isActive
                         ? AppColors.primary
                         : AppColors.onSurfaceVariant,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
             ),
           ],

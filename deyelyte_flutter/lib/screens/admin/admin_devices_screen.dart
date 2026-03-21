@@ -19,8 +19,7 @@ class AdminDevicesScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.sp6),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const SectionHeader(title: 'Devices'),
-          const Spacer(),
+          const Expanded(child: SectionHeader(title: 'Devices')),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh',

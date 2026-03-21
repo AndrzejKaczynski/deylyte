@@ -19,8 +19,7 @@ class AdminUsersScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.sp6),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const SectionHeader(title: 'Users'),
-          const Spacer(),
+          const Expanded(child: SectionHeader(title: 'Users')),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh',
@@ -44,72 +43,158 @@ class AdminUsersScreen extends ConsumerWidget {
   }
 }
 
-class _UsersTable extends StatelessWidget {
+class _UsersTable extends ConsumerWidget {
   const _UsersTable({required this.users});
   final List<Map<String, dynamic>> users;
 
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
+  static const _flex = [0.5, 2.0, 1.5, 1.2, 1.0, 1.0, 1.0];
 
-    return SingleChildScrollView(
-      child: Table(
-        columnWidths: const {
-          0: FlexColumnWidth(0.5),  // ID
-          1: FlexColumnWidth(2),    // email
-          2: FlexColumnWidth(1.5),  // joined
-          3: FlexColumnWidth(1.2),  // baseline
-          4: FlexColumnWidth(1),    // price source
-          5: FlexColumnWidth(1),    // mode
-          6: FlexColumnWidth(1),    // device
-        },
-        children: [
-          TableRow(
-            decoration: BoxDecoration(
-              border: Border(
-                  bottom: BorderSide(
-                      color: AppColors.outline.withValues(alpha: 0.3))),
-            ),
-            children: [
-              _header('ID', tt),
-              _header('Email', tt),
-              _header('Joined', tt),
-              _header('Gathering since', tt),
-              _header('Price source', tt),
-              _header('Mode', tt),
-              _header('Device', tt),
-            ],
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
+    final keys = ref.watch(adminLicenseKeysProvider).valueOrNull ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(children: [
+            for (final h in ['ID', 'Email', 'Joined', 'Gathering since',
+                             'Price source', 'Mode', 'Device'])
+              Expanded(
+                flex: (_flex[['ID', 'Email', 'Joined', 'Gathering since',
+                              'Price source', 'Mode', 'Device'].indexOf(h)] * 10)
+                    .round(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(h,
+                      style: tt.labelSmall?.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+          ]),
+        ),
+        Divider(height: 1, color: AppColors.outline.withValues(alpha: 0.3)),
+        // Data rows
+        Expanded(
+          child: ListView.separated(
+            itemCount: users.length,
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: AppColors.outline.withValues(alpha: 0.15)),
+            itemBuilder: (_, i) {
+              final u = users[i];
+              final userKeys = keys
+                  .where((k) => k['userId'] == u['id'])
+                  .toList();
+              return InkWell(
+                onTap: () => _showLicenseDialog(context, u, userKeys, tt),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(children: [
+                    _cell(Text('#${u['id']}', style: tt.bodySmall), _flex[0]),
+                    _cell(Text(u['email'] ?? '—', style: tt.bodySmall), _flex[1]),
+                    _cell(Text(_fmt(u['created']), style: tt.bodySmall), _flex[2]),
+                    _cell(Text(_fmt(u['dataGatheringSince']), style: tt.bodySmall), _flex[3]),
+                    _cell(Text(u['priceSource'] ?? '—', style: tt.bodySmall), _flex[4]),
+                    _cell(_ModeChip(planningOnly: u['planningOnly'] as bool?), _flex[5]),
+                    _cell(_DeviceStatus(
+                      connected: u['deviceConnected'] as bool? ?? false,
+                      lastSeen: u['deviceLastSeen'] as String?,
+                      inverterOk: u['inverterReachable'] as bool? ?? false,
+                    ), _flex[6]),
+                  ]),
+                ),
+              );
+            },
           ),
-          for (final u in users)
-            TableRow(children: [
-              _cell(Text('#${u['id']}', style: tt.bodySmall)),
-              _cell(Text(u['email'] ?? '—', style: tt.bodySmall)),
-              _cell(Text(_fmt(u['created']), style: tt.bodySmall)),
-              _cell(Text(_fmt(u['dataGatheringSince']), style: tt.bodySmall)),
-              _cell(Text(u['priceSource'] ?? '—', style: tt.bodySmall)),
-              _cell(_ModeChip(planningOnly: u['planningOnly'] as bool?)),
-              _cell(_DeviceStatus(
-                connected: u['deviceConnected'] as bool? ?? false,
-                lastSeen: u['deviceLastSeen'] as String?,
-                inverterOk: u['inverterReachable'] as bool? ?? false,
-              )),
-            ]),
+        ),
+      ],
+    );
+  }
+
+  void _showLicenseDialog(BuildContext context, Map<String, dynamic> user,
+      List<Map<String, dynamic>> userKeys, TextTheme tt) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(user['email'] ?? 'User #${user['id']}'),
+        content: SizedBox(
+          width: 480,
+          child: userKeys.isEmpty
+              ? const Text('No license keys assigned to this user.')
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('License keys:', style: tt.labelMedium),
+                    const SizedBox(height: 12),
+                    for (final k in userKeys) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: (k['isActive'] as bool? ?? false)
+                                ? AppColors.secondary.withValues(alpha: 0.3)
+                                : AppColors.outline.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SelectableText(
+                              k['licenseKey'] as String,
+                              style: tt.bodyMedium?.copyWith(
+                                fontFamily: 'monospace',
+                                fontWeight: FontWeight.w700,
+                                color: (k['isActive'] as bool? ?? false)
+                                    ? AppColors.secondary
+                                    : AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${k['tier']} · '
+                              '${(k['isActive'] as bool? ?? false) ? 'Active' : 'Inactive'} · '
+                              'Created ${_fmt(k['createdAt'])}',
+                              style: tt.labelSmall?.copyWith(
+                                  color: AppColors.onSurfaceVariant),
+                            ),
+                            if (k['lastSeenAt'] != null)
+                              Text(
+                                'Last seen ${_fmt(k['lastSeenAt'])}',
+                                style: tt.labelSmall?.copyWith(
+                                    color: AppColors.onSurfaceVariant),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ],
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _header(String label, TextTheme tt) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Text(label,
-            style: tt.labelSmall?.copyWith(
-                color: AppColors.onSurfaceVariant,
-                fontWeight: FontWeight.w600)),
-      );
-
-  Widget _cell(Widget child) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        child: child,
+  Widget _cell(Widget child, double flex) => Expanded(
+        flex: (flex * 10).round(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: child,
+        ),
       );
 
   String _fmt(dynamic iso) {

@@ -38,13 +38,12 @@ class EndpointAdmin extends _i1.EndpointRef {
     {},
   );
 
-  /// Returns all license keys, newest first, with basic user info.
-  _i2.Future<List<Map<String, dynamic>>> listLicenseKeys() =>
-      caller.callServerEndpoint<List<Map<String, dynamic>>>(
-        'admin',
-        'listLicenseKeys',
-        {},
-      );
+  /// Returns all license keys, newest first, with basic user info (JSON string).
+  _i2.Future<String> listLicenseKeys() => caller.callServerEndpoint<String>(
+    'admin',
+    'listLicenseKeys',
+    {},
+  );
 
   /// Creates a new license key for [userId] with the given [tier].
   /// Returns the generated key string.
@@ -75,21 +74,19 @@ class EndpointAdmin extends _i1.EndpointRef {
     },
   );
 
-  /// Returns all users with their app config and device status.
-  _i2.Future<List<Map<String, dynamic>>> listUsers() =>
-      caller.callServerEndpoint<List<Map<String, dynamic>>>(
-        'admin',
-        'listUsers',
-        {},
-      );
+  /// Returns all users with their app config and device status (JSON string).
+  _i2.Future<String> listUsers() => caller.callServerEndpoint<String>(
+    'admin',
+    'listUsers',
+    {},
+  );
 
-  /// Returns all registered devices with connection status.
-  _i2.Future<List<Map<String, dynamic>>> listDevices() =>
-      caller.callServerEndpoint<List<Map<String, dynamic>>>(
-        'admin',
-        'listDevices',
-        {},
-      );
+  /// Returns all registered devices with connection status (JSON string).
+  _i2.Future<String> listDevices() => caller.callServerEndpoint<String>(
+    'admin',
+    'listDevices',
+    {},
+  );
 }
 
 /// {@category Endpoint}

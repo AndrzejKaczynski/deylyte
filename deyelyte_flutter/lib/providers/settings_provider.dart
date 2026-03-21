@@ -90,6 +90,22 @@ class SettingsState {
   /// Whether a baseline has been captured (i.e. user has gone live at least once).
   bool get hasBaseline => baselineChargingEnabled != null;
 
+  /// Whether the selected price source is fully configured and ready to use.
+  /// Charging and selling should be disabled when this is false.
+  bool get isPriceSourceReady {
+    switch (priceSource) {
+      case 'pstryk':
+        return pstryk; // requires active integration
+      case 'rce':
+        return true; // public feed, always available
+      case 'fixed':
+      case 'manual':
+        return fixedBuyRatePln != null && fixedSellRatePln != null;
+      default:
+        return false;
+    }
+  }
+
   SettingsState copyWith({
     double? minSoc,
     bool? chargingEnabled,

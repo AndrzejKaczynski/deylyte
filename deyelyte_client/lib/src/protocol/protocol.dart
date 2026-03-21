@@ -157,10 +157,10 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i14.PvForecast?>()) {
       return (data != null ? _i14.PvForecast.fromJson(data) : null) as T;
     }
-    if (t == List<Map<String, dynamic>>) {
-      return (data as List)
-              .map((e) => deserialize<Map<String, dynamic>>(e))
-              .toList()
+    if (t == Map<String, bool>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<bool>(v)),
+          )
           as T;
     }
     if (t == Map<String, dynamic>) {
@@ -169,10 +169,10 @@ class Protocol extends _i1.SerializationManager {
           )
           as T;
     }
-    if (t == Map<String, bool>) {
-      return (data as Map).map(
-            (k, v) => MapEntry(deserialize<String>(k), deserialize<bool>(v)),
-          )
+    if (t == List<Map<String, dynamic>>) {
+      return (data as List)
+              .map((e) => deserialize<Map<String, dynamic>>(e))
+              .toList()
           as T;
     }
     if (t == List<_i15.OptimizationFrame>) {
