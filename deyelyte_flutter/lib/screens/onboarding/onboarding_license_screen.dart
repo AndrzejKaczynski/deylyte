@@ -366,24 +366,6 @@ class _LicenseForm extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isDesktop) ...[
-              Row(
-                children: [
-                  const _BoltIcon(size: 22),
-                  const SizedBox(width: 8),
-                  Text(
-                    'DeyLyte',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _StepIndicator(currentStep: 1),
-              const SizedBox(height: 32),
-            ],
             Text(
               'Enter your license key',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
