@@ -18,9 +18,15 @@ CREATE TABLE "app_config" (
     "batteryLifecycles" bigint,
     "minSocPercentage" double precision,
     "maxDischargeRateKw" double precision,
+    "maxChargeRateKw" double precision,
+    "gridConnectionKw" double precision,
     "cityName" text,
     "latitude" double precision,
-    "longitude" double precision
+    "longitude" double precision,
+    "priceSource" text,
+    "fixedBuyRatePln" double precision,
+    "fixedSellRatePln" double precision,
+    "pstrykEnabled" boolean NOT NULL
 );
 
 --
@@ -35,6 +41,9 @@ CREATE TABLE "energy_price" (
     "currency" text NOT NULL
 );
 
+-- Indexes
+CREATE UNIQUE INDEX "energy_price_user_timestamp_idx" ON "energy_price" USING btree ("userInfoId", "timestamp");
+
 --
 -- Class IntegrationCredentials as table integration_credentials
 --
@@ -43,7 +52,7 @@ CREATE TABLE "integration_credentials" (
     "userInfoId" bigint NOT NULL,
     "deyeUsername" text,
     "deyePasswordHash" text,
-    "deyeAppId" text,
+    "deyeDeviceSn" text,
     "solcastApiKey" text,
     "solcastSiteId" text,
     "pstrykToken" text
@@ -61,6 +70,9 @@ CREATE TABLE "inverter_data" (
     "gridPower" double precision NOT NULL,
     "loadPower" double precision NOT NULL
 );
+
+-- Indexes
+CREATE UNIQUE INDEX "inverter_data_user_timestamp_idx" ON "inverter_data" USING btree ("userInfoId", "timestamp");
 
 --
 -- Class OptimizationFrame as table optimization_frames
@@ -95,6 +107,21 @@ CREATE TABLE "outage_reserves" (
 CREATE UNIQUE INDEX "outage_reserves_user_date_idx" ON "outage_reserves" USING btree ("userInfoId", "date");
 
 --
+-- Class PriceTimeRange as table price_time_range
+--
+CREATE TABLE "price_time_range" (
+    "id" bigserial PRIMARY KEY,
+    "userInfoId" bigint NOT NULL,
+    "hourStart" bigint NOT NULL,
+    "hourEnd" bigint NOT NULL,
+    "ratePln" double precision NOT NULL,
+    "sellRatePln" double precision
+);
+
+-- Indexes
+CREATE INDEX "price_time_range_user_idx" ON "price_time_range" USING btree ("userInfoId");
+
+--
 -- Class PvForecast as table pv_forecast
 --
 CREATE TABLE "pv_forecast" (
@@ -103,6 +130,9 @@ CREATE TABLE "pv_forecast" (
     "timestamp" timestamp without time zone NOT NULL,
     "expectedYieldWatts" double precision NOT NULL
 );
+
+-- Indexes
+CREATE UNIQUE INDEX "pv_forecast_user_timestamp_idx" ON "pv_forecast" USING btree ("userInfoId", "timestamp");
 
 --
 -- Class CloudStorageEntry as table serverpod_cloud_storage
@@ -459,9 +489,9 @@ ALTER TABLE ONLY "serverpod_query_log"
 -- MIGRATION VERSION FOR deyelyte
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('deyelyte', '20260320140337962', now())
+    VALUES ('deyelyte', '20260321120851062', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260320140337962', "timestamp" = now();
+    DO UPDATE SET "version" = '20260321120851062', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod
