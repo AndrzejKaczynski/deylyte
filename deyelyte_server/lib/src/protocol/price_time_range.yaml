@@ -6,8 +6,8 @@ fields:
   userInfoId: int
   hourStart: int        # start hour 0-23, inclusive
   hourEnd: int          # end hour 0-23, exclusive; if hourEnd <= hourStart window wraps midnight
-  ratePln: double       # PLN/kWh — distribution charge (RCE) or buy rate (fixed)
-  sellRatePln: double?  # PLN/kWh — sell rate, only used in 'fixed' mode (null for RCE)
+  distributionRatePln: double  # PLN/kWh — variable distribution charge (RCE mode) or total buy rate (fixed mode)
+  sellRatePln: double?         # PLN/kWh — total sell rate, only used in 'fixed' mode (null = not applicable)
 indexes:
   price_time_range_user_idx:
     fields: userInfoId

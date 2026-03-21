@@ -19,7 +19,7 @@ abstract class PriceTimeRange
     required this.userInfoId,
     required this.hourStart,
     required this.hourEnd,
-    required this.ratePln,
+    required this.distributionRatePln,
     this.sellRatePln,
   });
 
@@ -28,7 +28,7 @@ abstract class PriceTimeRange
     required int userInfoId,
     required int hourStart,
     required int hourEnd,
-    required double ratePln,
+    required double distributionRatePln,
     double? sellRatePln,
   }) = _PriceTimeRangeImpl;
 
@@ -38,7 +38,8 @@ abstract class PriceTimeRange
       userInfoId: jsonSerialization['userInfoId'] as int,
       hourStart: jsonSerialization['hourStart'] as int,
       hourEnd: jsonSerialization['hourEnd'] as int,
-      ratePln: (jsonSerialization['ratePln'] as num).toDouble(),
+      distributionRatePln: (jsonSerialization['distributionRatePln'] as num)
+          .toDouble(),
       sellRatePln: (jsonSerialization['sellRatePln'] as num?)?.toDouble(),
     );
   }
@@ -56,7 +57,7 @@ abstract class PriceTimeRange
 
   int hourEnd;
 
-  double ratePln;
+  double distributionRatePln;
 
   double? sellRatePln;
 
@@ -71,7 +72,7 @@ abstract class PriceTimeRange
     int? userInfoId,
     int? hourStart,
     int? hourEnd,
-    double? ratePln,
+    double? distributionRatePln,
     double? sellRatePln,
   });
   @override
@@ -82,7 +83,7 @@ abstract class PriceTimeRange
       'userInfoId': userInfoId,
       'hourStart': hourStart,
       'hourEnd': hourEnd,
-      'ratePln': ratePln,
+      'distributionRatePln': distributionRatePln,
       if (sellRatePln != null) 'sellRatePln': sellRatePln,
     };
   }
@@ -95,7 +96,7 @@ abstract class PriceTimeRange
       'userInfoId': userInfoId,
       'hourStart': hourStart,
       'hourEnd': hourEnd,
-      'ratePln': ratePln,
+      'distributionRatePln': distributionRatePln,
       if (sellRatePln != null) 'sellRatePln': sellRatePln,
     };
   }
@@ -138,14 +139,14 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
     required int userInfoId,
     required int hourStart,
     required int hourEnd,
-    required double ratePln,
+    required double distributionRatePln,
     double? sellRatePln,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
          hourStart: hourStart,
          hourEnd: hourEnd,
-         ratePln: ratePln,
+         distributionRatePln: distributionRatePln,
          sellRatePln: sellRatePln,
        );
 
@@ -158,7 +159,7 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
     int? userInfoId,
     int? hourStart,
     int? hourEnd,
-    double? ratePln,
+    double? distributionRatePln,
     Object? sellRatePln = _Undefined,
   }) {
     return PriceTimeRange(
@@ -166,7 +167,7 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
       userInfoId: userInfoId ?? this.userInfoId,
       hourStart: hourStart ?? this.hourStart,
       hourEnd: hourEnd ?? this.hourEnd,
-      ratePln: ratePln ?? this.ratePln,
+      distributionRatePln: distributionRatePln ?? this.distributionRatePln,
       sellRatePln: sellRatePln is double? ? sellRatePln : this.sellRatePln,
     );
   }
@@ -190,10 +191,11 @@ class PriceTimeRangeUpdateTable extends _i1.UpdateTable<PriceTimeRangeTable> {
     value,
   );
 
-  _i1.ColumnValue<double, double> ratePln(double value) => _i1.ColumnValue(
-    table.ratePln,
-    value,
-  );
+  _i1.ColumnValue<double, double> distributionRatePln(double value) =>
+      _i1.ColumnValue(
+        table.distributionRatePln,
+        value,
+      );
 
   _i1.ColumnValue<double, double> sellRatePln(double? value) => _i1.ColumnValue(
     table.sellRatePln,
@@ -217,8 +219,8 @@ class PriceTimeRangeTable extends _i1.Table<int?> {
       'hourEnd',
       this,
     );
-    ratePln = _i1.ColumnDouble(
-      'ratePln',
+    distributionRatePln = _i1.ColumnDouble(
+      'distributionRatePln',
       this,
     );
     sellRatePln = _i1.ColumnDouble(
@@ -235,7 +237,7 @@ class PriceTimeRangeTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt hourEnd;
 
-  late final _i1.ColumnDouble ratePln;
+  late final _i1.ColumnDouble distributionRatePln;
 
   late final _i1.ColumnDouble sellRatePln;
 
@@ -245,7 +247,7 @@ class PriceTimeRangeTable extends _i1.Table<int?> {
     userInfoId,
     hourStart,
     hourEnd,
-    ratePln,
+    distributionRatePln,
     sellRatePln,
   ];
 }

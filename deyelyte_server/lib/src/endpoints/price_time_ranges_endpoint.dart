@@ -26,7 +26,7 @@ class PriceTimeRangesEndpoint extends Endpoint {
                 userInfoId: userInfoId,
                 hourStart: r.hourStart,
                 hourEnd: r.hourEnd,
-                ratePln: r.ratePln,
+                distributionRatePln: r.distributionRatePln,
                 sellRatePln: r.sellRatePln,
               ))
           .toList();

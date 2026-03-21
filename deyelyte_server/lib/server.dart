@@ -3,6 +3,7 @@ import 'package:mailer/smtp_server.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart' as auth;
 
+import 'src/config/app_values.dart';
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
 
@@ -13,6 +14,8 @@ void run(List<String> args) async {
     Endpoints(),
     authenticationHandler: auth.authenticationHandler,
   );
+
+  await AppValues.load(runMode: pod.runMode);
 
   // Read SMTP credentials from passwords.yaml — available after the
   // Serverpod() constructor, before pod.start().

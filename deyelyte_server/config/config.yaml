@@ -1,0 +1,15 @@
+# Non-secret application configuration values.
+# Unlike passwords.yaml, this file is safe to keep under version control.
+# Values here are updated by the app operator (not by users).
+# Loaded at startup via AppValues (lib/src/config/app_values.dart).
+
+shared:
+  # Polish VAT rate applied to electricity purchases (fraction, not percent).
+  # Standard rate is 23%; reduced rates may apply during energy crises.
+  vatRate: 0.23
+
+  # Static per-kWh surcharges set annually by URE (Polish energy regulator).
+  # Covers: OZE fee + kogeneracja fee + jakościowa fee.
+  # 2025 combined value: ~0.0328 PLN/kWh — update each year when URE publishes new rates.
+  # Source: https://www.ure.gov.pl
+  rceSurchargesPln: 0.0328

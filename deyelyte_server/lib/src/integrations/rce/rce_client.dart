@@ -30,7 +30,7 @@ class RceClient {
       final covers = end <= start
           ? hour >= start || hour < end
           : hour >= start && hour < end;
-      if (covers) return range.ratePln;
+      if (covers) return range.distributionRatePln;
     }
     return 0.0;
   }

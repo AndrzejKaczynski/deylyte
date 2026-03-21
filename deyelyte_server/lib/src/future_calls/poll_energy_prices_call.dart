@@ -113,7 +113,7 @@ class PollEnergyPricesCall extends FutureCall {
         }
       }
 
-      final buyRate = match?.ratePln ?? fallbackBuy;
+      final buyRate = match?.distributionRatePln ?? fallbackBuy;
       final sellRate = match?.sellRatePln ?? fallbackSell;
       if (buyRate == null) continue;
 
