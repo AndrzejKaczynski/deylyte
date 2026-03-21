@@ -7,6 +7,7 @@ class SettingsState {
     this.chargingEnabled = false,
     this.sellingEnabled = false,
     this.pvOnlySelling = true,
+    this.planningOnly = true,
     this.maxBuyPrice = 0.0,
     this.minSellPrice,
     this.batteryCapacityKwh = 10.0,
@@ -15,7 +16,6 @@ class SettingsState {
     this.maxDischargeRateKw = 5.0,
     this.maxChargeRateKw,
     this.gridConnectionKw,
-    this.deye = false,
     this.solcast = false,
     this.pstryk = false,
     this.cityName,
@@ -32,6 +32,11 @@ class SettingsState {
   // Only sell PV-generated energy (default). Set to false to enable grid arbitrage.
   final bool pvOnlySelling;
 
+  /// When true the optimizer still generates the full schedule but the add-on
+  /// skips sending any commands to the inverter. Useful for reviewing the plan
+  /// before enabling live control.
+  final bool planningOnly;
+
   final double maxBuyPrice;
   final double? minSellPrice;
 
@@ -44,9 +49,6 @@ class SettingsState {
 
   // Integration enabled flags. Credentials (API keys, tokens) are stored
   // server-side in IntegrationCredentials table, keyed by userInfoId.
-
-  /// Whether the Deye inverter integration is enabled.
-  final bool deye;
 
   /// Whether the Solcast PV forecast integration is enabled.
   final bool solcast;
@@ -75,6 +77,7 @@ class SettingsState {
     bool? chargingEnabled,
     bool? sellingEnabled,
     bool? pvOnlySelling,
+    bool? planningOnly,
     double? maxBuyPrice,
     Object? minSellPrice = _sentinel,
     double? batteryCapacityKwh,
@@ -83,7 +86,6 @@ class SettingsState {
     double? maxDischargeRateKw,
     Object? maxChargeRateKw = _sentinel,
     Object? gridConnectionKw = _sentinel,
-    bool? deye,
     bool? solcast,
     bool? pstryk,
     Object? cityName = _sentinel,
@@ -97,6 +99,7 @@ class SettingsState {
         chargingEnabled: chargingEnabled ?? this.chargingEnabled,
         sellingEnabled: sellingEnabled ?? this.sellingEnabled,
         pvOnlySelling: pvOnlySelling ?? this.pvOnlySelling,
+        planningOnly: planningOnly ?? this.planningOnly,
         maxBuyPrice: maxBuyPrice ?? this.maxBuyPrice,
         minSellPrice: minSellPrice == _sentinel
             ? this.minSellPrice
@@ -112,7 +115,6 @@ class SettingsState {
         gridConnectionKw: gridConnectionKw == _sentinel
             ? this.gridConnectionKw
             : gridConnectionKw as double?,
-        deye: deye ?? this.deye,
         solcast: solcast ?? this.solcast,
         pstryk: pstryk ?? this.pstryk,
         cityName: cityName == _sentinel ? this.cityName : cityName as String?,
@@ -151,7 +153,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       state = state.copyWith(maxChargeRateKw: v);
   void setGridConnectionKw(double? v) =>
       state = state.copyWith(gridConnectionKw: v);
-  void setDeye(bool v) => state = state.copyWith(deye: v);
+  void setPlanningOnly(bool v) => state = state.copyWith(planningOnly: v);
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);
   void setCityName(String? v) => state = state.copyWith(cityName: v);
@@ -165,7 +167,6 @@ class SettingsNotifier extends Notifier<SettingsState> {
 
   void loadIntegrationStatus(Map<String, bool> status) =>
       state = state.copyWith(
-        deye: status['deye'] ?? state.deye,
         solcast: status['solcast'] ?? state.solcast,
         pstryk: status['pstryk'] ?? state.pstryk,
       );
@@ -174,6 +175,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
         chargingEnabled: c.chargingEnabled,
         sellingEnabled: c.sellingEnabled,
         pvOnlySelling: c.pvOnlySelling,
+        planningOnly: c.planningOnly,
         maxBuyPrice: c.alwaysChargePriceThreshold,
         minSellPrice: c.minSellPriceThreshold,
         batteryCapacityKwh: c.batteryCapacityKwh ?? 10.0,

@@ -1,12 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_shell.dart';
 import 'auth_screen.dart';
+import 'config/app_config.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/schedule_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/onboarding/onboarding_license_screen.dart';
+import 'screens/onboarding/onboarding_setup_screen.dart';
 import 'providers/app_providers.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -15,17 +19,55 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     refreshListenable: sessionManager,
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final loggedIn = sessionManager.isSignedIn;
-      final onAuth = state.matchedLocation == '/auth';
-      if (!loggedIn && !onAuth) return '/auth';
-      if (loggedIn && onAuth) return '/';
+      final loc = state.matchedLocation;
+
+      // Not signed in — go to auth
+      if (!loggedIn) {
+        return loc == '/auth' ? null : '/auth';
+      }
+
+      // Already signed in, sitting on auth — push to app
+      if (loc == '/auth') return '/';
+
+      // BYPASS_ONBOARDING skips onboarding checks entirely (dev mode)
+      if (Env.bypassOnboarding) return null;
+
+      // Already in onboarding — don't redirect
+      if (loc.startsWith('/onboarding')) return null;
+
+      // Check license key
+      const storage = FlutterSecureStorage();
+      final hasLicense =
+          (await storage.read(key: 'license_key'))?.isNotEmpty ?? false;
+      if (!hasLicense) return '/onboarding/license';
+
+      // Check device connection (has ever connected)
+      try {
+        final repo = ref.read(deviceRepositoryProvider);
+        final status = await repo.getStatus();
+        final everConnected = status['lastSeenAt'] != null ||
+            status['connected'] == true;
+        if (!everConnected) return '/onboarding/setup';
+      } catch (_) {
+        // If server unreachable, let the user through rather than blocking forever
+      }
+
       return null;
     },
     routes: [
       GoRoute(
         path: '/auth',
         builder: (_, __) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/license',
+        builder: (_, __) => const OnboardingLicenseScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/setup',
+        builder: (_, __) => const OnboardingSetupScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
