@@ -4,3 +4,7 @@ fields:
   userInfoId: int
   timestamp: DateTime
   expectedYieldWatts: double
+indexes:
+  pv_forecast_user_timestamp_idx:
+    fields: userInfoId, timestamp
+    unique: true

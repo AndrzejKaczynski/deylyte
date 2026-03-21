@@ -7,3 +7,7 @@ fields:
   batteryLevel: double
   gridPower: double
   loadPower: double
+indexes:
+  inverter_data_user_timestamp_idx:
+    fields: userInfoId, timestamp
+    unique: true

@@ -1,0 +1,13 @@
+# A user-defined price time range used for RCE distribution charges or fixed rate pricing.
+# Multiple ranges per user are allowed; together they define hour-by-hour effective prices.
+class: PriceTimeRange
+table: price_time_range
+fields:
+  userInfoId: int
+  hourStart: int        # start hour 0-23, inclusive
+  hourEnd: int          # end hour 0-23, exclusive; if hourEnd <= hourStart window wraps midnight
+  ratePln: double       # PLN/kWh — distribution charge (RCE) or buy rate (fixed)
+  sellRatePln: double?  # PLN/kWh — sell rate, only used in 'fixed' mode (null for RCE)
+indexes:
+  price_time_range_user_idx:
+    fields: userInfoId
