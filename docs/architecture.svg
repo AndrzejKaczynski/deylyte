@@ -1,148 +1,160 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 660" width="900" height="660">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700">
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M2 1L8 5L2 9" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M2 1L8 5L2 9" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M2 1L8 5L2 9" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
 
-  <!-- Background -->
-  <rect width="900" height="660" fill="#0f172a"/>
+  <rect width="960" height="700" fill="#0f172a"/>
 
   <!-- Title -->
-  <text x="450" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="600" fill="#f1f5f9">EMS SaaS — System Architecture</text>
-  <text x="450" y="54" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">Flutter Web · HA Add-on (HACS) · AWS App Runner · Lambda · RDS · S3/CloudFront</text>
+  <text x="480" y="34" text-anchor="middle" font-family="system-ui,sans-serif" font-size="16" font-weight="700" fill="#f1f5f9">EMS SaaS — System Architecture</text>
+  <text x="480" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#64748b">100% Dart · Serverpod backend · Flutter Web · HA Add-on (HACS) · AWS + Terraform</text>
 
   <!-- ===== LEFT: USER LOCAL NETWORK ===== -->
-  <!-- HA Add-on outer container -->
-  <rect x="30" y="76" width="310" height="220" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
-  <text x="185" y="98" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#6ee7b7">Home Assistant Add-on</text>
-  <text x="185" y="114" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#34d399">On user's local network · distributed via HACS (GitHub)</text>
+  <rect x="28" y="68" width="310" height="228" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+  <text x="183" y="90" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#6ee7b7">Home Assistant Add-on</text>
+  <text x="183" y="106" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#34d399">User's local network · HACS (GitHub) distribution</text>
 
-  <!-- Deye inverter box -->
-  <rect x="48" y="128" width="118" height="76" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1"/>
-  <text x="107" y="152" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#a7f3d0">Deye inverter</text>
-  <text x="107" y="168" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">+ Solarman WiFi dongle</text>
-  <text x="107" y="183" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">TCP port 8899</text>
+  <rect x="44" y="118" width="118" height="80" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1"/>
+  <text x="103" y="142" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#a7f3d0">Deye inverter</text>
+  <text x="103" y="158" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#6ee7b7">Solarman WiFi dongle</text>
+  <text x="103" y="173" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#6ee7b7">TCP :8899 local</text>
 
-  <!-- EMS Agent box -->
-  <rect x="182" y="128" width="140" height="76" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1"/>
-  <text x="252" y="150" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#a7f3d0">EMS agent</text>
-  <text x="252" y="166" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">Python · pysolarmanv5</text>
-  <text x="252" y="181" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">polls inverter locally</text>
-  <text x="252" y="196" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#6ee7b7">executes schedules</text>
+  <rect x="176" y="118" width="144" height="80" rx="8" fill="#065f46" stroke="#34d399" stroke-width="1"/>
+  <text x="248" y="140" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#a7f3d0">EMS agent</text>
+  <text x="248" y="156" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#6ee7b7">Python · pysolarmanv5</text>
+  <text x="248" y="171" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#6ee7b7">polls inverter every 30s</text>
+  <text x="248" y="186" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#6ee7b7">executes schedules</text>
 
-  <!-- SolarmanV5 arrow -->
-  <line x1="166" y1="166" x2="182" y2="166" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-green)"/>
-  <text x="174" y="158" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" fill="#34d399">V5</text>
+  <line x1="162" y1="158" x2="176" y2="158" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr-green)"/>
+  <text x="169" y="151" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" fill="#34d399">V5</text>
 
-  <!-- HA Sidebar panel note -->
-  <rect x="48" y="220" width="274" height="62" rx="6" fill="#022c22" stroke="#059669" stroke-width="1" stroke-dasharray="4 3"/>
-  <text x="185" y="240" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#6ee7b7">HA Sidebar Panel (Webpage)</text>
-  <text x="185" y="256" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">Loads Flutter Web app from CloudFront URL</text>
-  <text x="185" y="271" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">User sees full Flutter UI inside HA</text>
+  <rect x="44" y="212" width="276" height="68" rx="6" fill="#022c22" stroke="#059669" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="182" y="232" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#6ee7b7">HA Sidebar Panel (Webpage dashboard)</text>
+  <text x="182" y="248" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#4ade80">Loads Flutter Web from CloudFront URL</text>
+  <text x="182" y="263" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#4ade80">Full Flutter UI visible inside Home Assistant</text>
 
-  <!-- HACS label -->
-  <rect x="30" y="312" width="148" height="44" rx="8" fill="#1c1917" stroke="#78716c" stroke-width="1"/>
-  <text x="104" y="330" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#d6d3d1">HACS distribution</text>
-  <text x="104" y="346" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a8a29e">GitHub repo · user installs</text>
+  <!-- HACS -->
+  <rect x="28" y="312" width="148" height="44" rx="8" fill="#1c1917" stroke="#78716c" stroke-width="1"/>
+  <text x="102" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#d6d3d1">HACS (GitHub)</text>
+  <text x="102" y="346" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a8a29e">add-on distribution</text>
 
-  <!-- GDPR note -->
-  <rect x="30" y="370" width="148" height="56" rx="8" fill="#14532d" stroke="#4ade80" stroke-width="1"/>
-  <text x="104" y="390" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#86efac">No PII on AWS</text>
-  <text x="104" y="406" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">No inverter creds stored</text>
-  <text x="104" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#4ade80">Minimal GDPR/RODO scope</text>
+  <!-- GDPR -->
+  <rect x="28" y="370" width="148" height="58" rx="8" fill="#14532d" stroke="#4ade80" stroke-width="1"/>
+  <text x="102" y="390" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#86efac">No PII on AWS</text>
+  <text x="102" y="406" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#4ade80">No inverter creds stored</text>
+  <text x="102" y="421" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#4ade80">Minimal GDPR/RODO scope</text>
 
-  <!-- Stripe / license key -->
-  <rect x="192" y="312" width="148" height="44" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
-  <text x="266" y="330" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#fde68a">Stripe billing</text>
-  <text x="266" y="346" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#fbbf24">License key activates add-on</text>
+  <!-- Stripe -->
+  <rect x="190" y="312" width="148" height="44" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+  <text x="264" y="330" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#fde68a">Stripe billing</text>
+  <text x="264" y="346" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#fbbf24">license key activates add-on</text>
 
-  <!-- Beta users note -->
-  <rect x="192" y="370" width="148" height="56" rx="8" fill="#1e1b4b" stroke="#818cf8" stroke-width="1"/>
-  <text x="266" y="390" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#c7d2fe">Beta users</text>
-  <text x="266" y="406" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">Manual key via admin panel</text>
-  <text x="266" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">tier = beta_free</text>
+  <!-- Beta -->
+  <rect x="190" y="370" width="148" height="58" rx="8" fill="#1e1b4b" stroke="#818cf8" stroke-width="1"/>
+  <text x="264" y="390" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#c7d2fe">Beta users</text>
+  <text x="264" y="406" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">manual key via admin panel</text>
+  <text x="264" y="421" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">tier = beta_free</text>
 
   <!-- ===== RIGHT: AWS BACKEND ===== -->
-  <rect x="560" y="76" width="310" height="440" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
-  <text x="715" y="98" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#a5b4fc">AWS Backend</text>
-  <text x="715" y="114" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#818cf8">Your SaaS platform</text>
+  <rect x="590" y="68" width="342" height="500" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="761" y="90" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#a5b4fc">AWS Backend</text>
+  <text x="761" y="106" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#818cf8">Dart · Serverpod · Terraform + GitHub Actions CI/CD</text>
 
-  <!-- App Runner -->
-  <rect x="578" y="126" width="274" height="56" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
-  <text x="715" y="148" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">AWS App Runner — API</text>
-  <text x="715" y="164" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">license validation · telemetry ingest · schedule delivery · auth</text>
+  <!-- Dart badge -->
+  <rect x="700" y="112" width="122" height="20" rx="4" fill="#0175c2" stroke="#54c5f8" stroke-width="1"/>
+  <text x="761" y="126" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#ffffff">100% Dart stack</text>
 
-  <!-- Lambda -->
-  <rect x="578" y="196" width="274" height="56" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
-  <text x="715" y="218" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">AWS Lambda — Optimization engine</text>
-  <text x="715" y="234" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">EMS logic · charge/discharge scheduling · redeploy without add-on update</text>
+  <!-- Serverpod API -->
+  <rect x="606" y="142" width="310" height="66" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="761" y="163" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">Serverpod API server</text>
+  <text x="761" y="179" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">EC2 autoscaling · load balancer · type-safe Dart endpoints</text>
+  <text x="761" y="195" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">license validation · telemetry ingest · schedule delivery · auth</text>
+
+  <!-- Optimization engine -->
+  <rect x="606" y="220" width="310" height="66" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="761" y="241" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">Optimization engine (Dart)</text>
+  <text x="761" y="257" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">Serverpod future calls · charge/discharge scheduling</text>
+  <text x="761" y="273" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">redeploy without touching HA add-on</text>
 
   <!-- RDS -->
-  <rect x="578" y="266" width="274" height="70" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
-  <text x="715" y="287" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">RDS PostgreSQL (t3.micro)</text>
-  <text x="715" y="303" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">users · license keys · Stripe state · schedules</text>
-  <text x="715" y="318" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">anonymized telemetry · hashed device IDs only</text>
+  <rect x="606" y="298" width="148" height="80" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="680" y="318" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#e0e7ff">RDS PostgreSQL</text>
+  <text x="680" y="334" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">users · license keys</text>
+  <text x="680" y="349" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">Stripe state · schedules</text>
+  <text x="680" y="364" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">hashed device IDs only</text>
+
+  <!-- Redis -->
+  <rect x="768" y="298" width="148" height="80" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="842" y="318" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#e0e7ff">Redis</text>
+  <text x="842" y="334" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">license key cache</text>
+  <text x="842" y="349" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">session state</text>
+  <text x="842" y="364" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">add-on heartbeat</text>
 
   <!-- S3 + CloudFront -->
-  <rect x="578" y="350" width="274" height="56" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
-  <text x="715" y="372" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">S3 + CloudFront</text>
-  <text x="715" y="388" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">Flutter Web static build · global CDN · HTTPS</text>
+  <rect x="606" y="390" width="310" height="54" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="761" y="411" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">S3 + CloudFront</text>
+  <text x="761" y="427" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">Flutter Web static build · global CDN · HTTPS</text>
 
-  <!-- Stripe webhook -->
-  <rect x="578" y="420" width="274" height="44" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
-  <text x="715" y="440" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">Stripe webhooks</text>
-  <text x="715" y="456" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a5b4fc">subscription lifecycle · auto license key management</text>
+  <!-- Stripe webhooks -->
+  <rect x="606" y="456" width="310" height="44" rx="8" fill="#312e81" stroke="#818cf8" stroke-width="1"/>
+  <text x="761" y="476" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#e0e7ff">Stripe webhooks</text>
+  <text x="761" y="492" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#a5b4fc">subscription lifecycle · auto license key management</text>
 
   <!-- Admin panel (planned) -->
-  <rect x="578" y="478" width="274" height="26" rx="6" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" stroke-dasharray="4 3"/>
-  <text x="715" y="495" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#818cf8">Admin panel (planned) — manage beta keys · fleet telemetry · Stripe ops</text>
+  <rect x="606" y="512" width="310" height="30" rx="6" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="761" y="531" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#818cf8">Admin panel (planned) · Flutter Web · beta keys · fleet telemetry · Stripe ops</text>
 
-  <!-- ===== BOTTOM: FLUTTER APP ===== -->
-  <rect x="240" y="548" width="420" height="82" rx="12" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.5"/>
-  <text x="450" y="572" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#7dd3fc">Flutter Web App</text>
-  <text x="450" y="589" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#38bdf8">Hosted on S3 + CloudFront · also a standalone PWA on mobile</text>
-  <text x="450" y="605" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#38bdf8">dashboard · energy charts · schedule editor · billing · account</text>
-  <text x="450" y="620" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#38bdf8">embedded in HA sidebar AND accessible directly via browser</text>
+  <!-- Terraform badge -->
+  <rect x="606" y="554" width="310" height="24" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="761" y="570" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#64748b">Terraform (infra) · GitHub Actions (CI/CD) · Docker (Serverpod container)</text>
+
+  <!-- ===== BOTTOM: FLUTTER WEB APP ===== -->
+  <rect x="200" y="600" width="560" height="84" rx="12" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="480" y="623" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#7dd3fc">Flutter Web App (Dart)</text>
+  <text x="480" y="640" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#38bdf8">Hosted on S3 + CloudFront · standalone PWA on mobile</text>
+  <text x="480" y="656" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#38bdf8">dashboard · energy charts · schedule editor · billing · account settings</text>
+  <text x="480" y="672" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#38bdf8">type-safe calls via Serverpod generated Dart client · embedded in HA sidebar</text>
 
   <!-- ===== ARROWS ===== -->
 
-  <!-- Agent → App Runner (telemetry) -->
-  <path d="M322 155 L560 155" fill="none" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow-green)"/>
-  <text x="440" y="148" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#4ade80">anonymized telemetry only</text>
+  <!-- Agent → Serverpod (telemetry) -->
+  <path d="M338 148 L590 162" fill="none" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <text x="462" y="143" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#4ade80">anonymized telemetry only</text>
 
-  <!-- App Runner → Agent (schedules) -->
-  <path d="M560 178 L322 178" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="440" y="193" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#60a5fa">schedules / commands</text>
+  <!-- Serverpod → Agent (schedules) -->
+  <path d="M590 182 L338 170" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <text x="462" y="196" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#60a5fa">schedules / commands</text>
 
-  <!-- Stripe box → App Runner (license check) -->
-  <path d="M340 334 L420 334 L420 154 L560 154" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow-amber)"/>
-  <text x="390" y="327" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#fbbf24">license check</text>
+  <!-- License check arrow -->
+  <path d="M338 334 L450 334 L450 172 L590 172" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-amber)"/>
+  <text x="400" y="326" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#fbbf24">license check</text>
 
-  <!-- CloudFront → Flutter app -->
-  <path d="M715 406 L715 530 L660 530 L660 548" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
-  <text x="740" y="490" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#60a5fa">serves</text>
+  <!-- CloudFront → Flutter (serves) -->
+  <path d="M761 444 L761 582 L740 582 L740 600" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <text x="800" y="518" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#60a5fa">serves</text>
 
-  <!-- Flutter → App Runner (API calls) -->
-  <path d="M660 548 L660 530 L715 530 L715 482" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-blue)"/>
-  <text x="760" y="516" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#38bdf8">JWT API calls</text>
+  <!-- Flutter → Serverpod (generated Dart client) -->
+  <path d="M740 600 L740 582 L810 582 L810 492" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr-blue)"/>
+  <text x="862" y="543" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#38bdf8">generated</text>
+  <text x="862" y="555" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#38bdf8">Dart client</text>
 
-  <!-- HA sidebar → CloudFront (loads flutter) -->
-  <path d="M185 282 L185 530 L240 530 L240 589" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-blue)"/>
-  <text x="148" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#38bdf8" transform="rotate(-90, 148, 420)">loads from CloudFront</text>
+  <!-- HA sidebar → CloudFront -->
+  <path d="M183 280 L183 582 L200 582 L200 642" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr-blue)"/>
+  <text x="144" y="440" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#38bdf8" transform="rotate(-90,144,440)">loads from CloudFront</text>
 
-  <!-- Lambda ↔ App Runner internal -->
-  <line x1="715" y1="182" x2="715" y2="196" stroke="#818cf8" stroke-width="1" marker-end="url(#arrow)"/>
-
-  <!-- App Runner ↔ RDS -->
-  <line x1="715" y1="252" x2="715" y2="266" stroke="#818cf8" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Internal arrows -->
+  <line x1="761" y1="208" x2="761" y2="220" stroke="#818cf8" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="680" y1="286" x2="680" y2="298" stroke="#818cf8" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="842" y1="286" x2="842" y2="298" stroke="#818cf8" stroke-width="1" marker-end="url(#arr)"/>
 </svg>
