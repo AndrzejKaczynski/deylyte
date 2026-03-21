@@ -69,6 +69,79 @@ class ScheduleEndpoint extends Endpoint {
     );
   }
 
+  /// Returns schedule frames AND an offline fallback policy for the add-on.
+  ///
+  /// The add-on should cache this response locally. If the server is
+  /// unreachable for more than [offlineGraceMinutes] (default 15), the add-on
+  /// applies [offlineFallback] instead of the cached schedule — stopping all
+  /// active charging/discharging commands to protect against expensive
+  /// runaway behaviour. Default grace period is 120 minutes (2 missed hourly
+  /// fetches) to avoid false positives from brief server restarts.
+  ///
+  /// [offlineFallback] keys:
+  ///   - `chargingEnabled` (bool)  — whether to charge when offline
+  ///   - `sellingEnabled`  (bool)  — whether to discharge/sell when offline
+  ///   - `maxBuyPricePln`  (double) — max buy price to honour offline
+  ///   - `priceSource`     (String) — pricing mode used for this fallback
+  ///   - `offlineGraceMinutes` (int) — grace period before fallback activates
+  Future<Map<String, dynamic>> getScheduleWithFallback(
+    Session session,
+    String licenseKey,
+  ) async {
+    final license = await LicenseKey.db.findFirstRow(
+      session,
+      where: (t) => t.licenseKey.equals(licenseKey) & t.isActive.equals(true),
+    );
+    if (license == null) {
+      return {'frames': [], 'offlineFallback': _safeDefaults()};
+    }
+
+    final now = DateTime.now().toUtc();
+    final hourStart = DateTime.utc(now.year, now.month, now.day, now.hour);
+
+    final frames = await OptimizationFrame.db.find(
+      session,
+      where: (t) =>
+          t.userInfoId.equals(license.userId) & (t.hour >= hourStart),
+      orderBy: (t) => t.hour,
+    );
+
+    final config = await AppConfig.db.findFirstRow(
+      session,
+      where: (t) => t.userInfoId.equals(license.userId),
+    );
+
+    // Prefer baseline values (captured at first live-enable) for the fallback
+    // — they represent the conservative settings the user started with.
+    final fallback = config == null
+        ? _safeDefaults()
+        : {
+            'chargingEnabled':
+                config.baselineChargingEnabled ?? false,
+            'sellingEnabled':
+                config.baselineSellingEnabled ?? false,
+            'maxBuyPricePln':
+                config.baselineMaxBuyPrice ?? config.alwaysChargePriceThreshold,
+            'priceSource':
+                config.baselinePriceSource ?? config.priceSource ?? 'fixed',
+            'offlineGraceMinutes': 120,
+          };
+
+    return {
+      'frames': frames.map((f) => f.toJson()).toList(),
+      'offlineFallback': fallback,
+    };
+  }
+
+  /// Conservative safe defaults used when no config exists yet.
+  Map<String, dynamic> _safeDefaults() => {
+        'chargingEnabled': false,
+        'sellingEnabled': false,
+        'maxBuyPricePln': 0.0,
+        'priceSource': 'fixed',
+        'offlineGraceMinutes': 120,
+      };
+
   int? _uid(Session session) {
     final auth = session.authenticated;
     if (auth == null) return null;
