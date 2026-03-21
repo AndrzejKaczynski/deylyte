@@ -3,11 +3,8 @@ import 'package:mailer/smtp_server.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_server/serverpod_auth_server.dart' as auth;
 
-import 'src/generated/protocol.dart';
 import 'src/generated/endpoints.dart';
-import 'src/future_calls/init_user_call.dart';
-import 'src/future_calls/poll_inverter_call.dart';
-import 'src/future_calls/run_optimizer_call.dart';
+import 'src/generated/protocol.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(
@@ -90,9 +87,6 @@ void run(List<String> args) async {
     },
   ));
 
-  pod.registerFutureCall(InitUserCall(), 'InitUserCall');
-  pod.registerFutureCall(PollInverterCall(), 'PollInverterCall');
-  pod.registerFutureCall(RunOptimizerCall(), 'RunOptimizerCall');
 
   await pod.start();
 
@@ -104,19 +98,21 @@ void run(List<String> args) async {
 Future<void> _bootstrapRecurringCalls(Serverpod pod) async {
   final session = await pod.createSession();
   try {
-    final anyConfigured = await IntegrationCredentials.db.findFirstRow(
+    // Price polling runs for any user with an AppConfig, regardless of Deye.
+    final anyConfig = await AppConfig.db.findFirstRow(session);
+    if (anyConfig != null) {
+      await pod.futureCalls.callWithDelay(Duration.zero).pollEnergyPricesCall.invoke(null);
+    }
+
+    // Inverter polling and optimizer only run once Deye is set up.
+    final anyDeye = await IntegrationCredentials.db.findFirstRow(
       session,
       where: (t) => t.deyeDeviceSn.notEquals(null),
     );
-    if (anyConfigured == null) return;
-
-    // Schedule both recurring calls on startup. The self-rescheduling pattern
-    // means they normally persist across restarts via the future_calls table,
-    // but this ensures they resume even if the server crashed mid-reschedule.
-    // A brief overlap (one extra poll) is acceptable.
-    await pod.futureCallWithDelay('PollInverterCall', null, Duration.zero);
-    await pod.futureCallWithDelay(
-        'RunOptimizerCall', null, const Duration(minutes: 5));
+    if (anyDeye != null) {
+      await pod.futureCalls.callWithDelay(Duration.zero).pollInverterCall.invoke(null);
+      await pod.futureCalls.callWithDelay(const Duration(minutes: 5)).runOptimizerCall.invoke(null);
+    }
   } catch (e) {
     print('Bootstrap FutureCalls error: $e');
   } finally {

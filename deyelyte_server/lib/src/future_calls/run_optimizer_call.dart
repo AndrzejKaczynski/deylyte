@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import '../engine/battery_optimizer.dart';
+import '../generated/future_calls.dart';
 import '../generated/protocol.dart';
 
 /// Runs the battery optimizer every hour for all users that have Deye
@@ -23,11 +24,10 @@ class RunOptimizerCall extends FutureCall {
       await _runForUser(session, creds.userInfoId);
     }
 
-    await session.serverpod.futureCallWithDelay(
-      'RunOptimizerCall',
-      null,
-      const Duration(hours: 1),
-    );
+    await session.serverpod.futureCalls
+        .callWithDelay(const Duration(hours: 1))
+        .runOptimizerCall
+        .invoke(null);
   }
 
   Future<void> _runForUser(Session session, int userInfoId) async {
