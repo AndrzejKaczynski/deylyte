@@ -44,9 +44,20 @@ class _OnboardingSetupScreenState
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: isDesktop
-          ? _DesktopLayout(licenseKey: _licenseKey)
-          : _MobileLayout(licenseKey: _licenseKey),
+      body: Stack(
+        children: [
+          isDesktop
+              ? _DesktopLayout(licenseKey: _licenseKey)
+              : _MobileLayout(licenseKey: _licenseKey),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: _LogoutButton(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -763,4 +774,24 @@ class _BoltPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BoltPainter old) => false;
+}
+
+// ── Logout button ─────────────────────────────────────────────────────────────
+
+class _LogoutButton extends ConsumerWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TextButton.icon(
+      icon: const Icon(Icons.logout_rounded, size: 16),
+      label: const Text('Sign out'),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.onSurfaceVariant,
+      ),
+      onPressed: () async {
+        await ref.read(sessionManagerProvider).signOutDevice();
+      },
+    );
+  }
 }

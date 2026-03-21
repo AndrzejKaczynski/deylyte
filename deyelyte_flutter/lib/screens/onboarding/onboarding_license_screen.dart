@@ -99,23 +99,34 @@ class _OnboardingLicenseScreenState
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: isDesktop
-          ? _DesktopLayout(
-              formKey: _formKey,
-              keyController: _keyController,
-              isLoading: _isLoading,
-              errorMessage: _errorMessage,
-              shakeAnimation: _shakeAnimation,
-              onSubmit: _submit,
-            )
-          : _MobileLayout(
-              formKey: _formKey,
-              keyController: _keyController,
-              isLoading: _isLoading,
-              errorMessage: _errorMessage,
-              shakeAnimation: _shakeAnimation,
-              onSubmit: _submit,
+      body: Stack(
+        children: [
+          isDesktop
+              ? _DesktopLayout(
+                  formKey: _formKey,
+                  keyController: _keyController,
+                  isLoading: _isLoading,
+                  errorMessage: _errorMessage,
+                  shakeAnimation: _shakeAnimation,
+                  onSubmit: _submit,
+                )
+              : _MobileLayout(
+                  formKey: _formKey,
+                  keyController: _keyController,
+                  isLoading: _isLoading,
+                  errorMessage: _errorMessage,
+                  shakeAnimation: _shakeAnimation,
+                  onSubmit: _submit,
+                ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: _LogoutButton(),
             ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -585,4 +596,24 @@ class _BoltPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BoltPainter old) => false;
+}
+
+// ── Logout button ─────────────────────────────────────────────────────────────
+
+class _LogoutButton extends ConsumerWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TextButton.icon(
+      icon: const Icon(Icons.logout_rounded, size: 16),
+      label: const Text('Sign out'),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.onSurfaceVariant,
+      ),
+      onPressed: () async {
+        await ref.read(sessionManagerProvider).signOutDevice();
+      },
+    );
+  }
 }

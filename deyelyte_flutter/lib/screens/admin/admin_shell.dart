@@ -35,6 +35,12 @@ class AdminShell extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sp4),
                 _NavItem(
+                  icon: Icons.dashboard_rounded,
+                  label: 'Overview',
+                  route: '/admin/dashboard',
+                  active: loc.startsWith('/admin/dashboard'),
+                ),
+                _NavItem(
                   icon: Icons.vpn_key_rounded,
                   label: 'License Keys',
                   route: '/admin/licenses',

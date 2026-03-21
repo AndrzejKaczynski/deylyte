@@ -12,6 +12,7 @@ import 'screens/settings_screen.dart';
 import 'screens/onboarding/onboarding_license_screen.dart';
 import 'screens/onboarding/onboarding_setup_screen.dart';
 import 'screens/admin/admin_shell.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/admin/admin_licenses_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/admin_devices_screen.dart';
@@ -84,6 +85,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           return null;
         },
         routes: [
+          GoRoute(
+            path: '/admin',
+            redirect: (_, __) => '/admin/dashboard',
+          ),
+          GoRoute(
+            path: '/admin/dashboard',
+            builder: (_, __) => const AdminDashboardScreen(),
+          ),
           GoRoute(
             path: '/admin/licenses',
             builder: (_, __) => const AdminLicensesScreen(),
