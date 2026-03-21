@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart';
 
+import 'config/app_config.dart';
 import 'theme/theme.dart';
 import 'providers/app_providers.dart';
 import 'router.dart';
@@ -10,7 +11,7 @@ import 'router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final client = Client('http://localhost:8080/')
+  final client = Client(Env.serverpodUrl)
     ..authKeyProvider = FlutterAuthenticationKeyManager();
 
   final sessionManager = SessionManager(
