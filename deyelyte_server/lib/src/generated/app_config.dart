@@ -40,6 +40,11 @@ abstract class AppConfig
     required this.planningOnly,
     required this.pstrykEnabled,
     this.currency,
+    this.baselineChargingEnabled,
+    this.baselineSellingEnabled,
+    this.baselineMaxBuyPrice,
+    this.baselineMinSellPrice,
+    this.baselinePriceSource,
   });
 
   factory AppConfig({
@@ -68,6 +73,11 @@ abstract class AppConfig
     required bool planningOnly,
     required bool pstrykEnabled,
     String? currency,
+    bool? baselineChargingEnabled,
+    bool? baselineSellingEnabled,
+    double? baselineMaxBuyPrice,
+    double? baselineMinSellPrice,
+    String? baselinePriceSource,
   }) = _AppConfigImpl;
 
   factory AppConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -122,6 +132,23 @@ abstract class AppConfig
         jsonSerialization['pstrykEnabled'],
       ),
       currency: jsonSerialization['currency'] as String?,
+      baselineChargingEnabled:
+          jsonSerialization['baselineChargingEnabled'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['baselineChargingEnabled'],
+            ),
+      baselineSellingEnabled:
+          jsonSerialization['baselineSellingEnabled'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['baselineSellingEnabled'],
+            ),
+      baselineMaxBuyPrice: (jsonSerialization['baselineMaxBuyPrice'] as num?)
+          ?.toDouble(),
+      baselineMinSellPrice: (jsonSerialization['baselineMinSellPrice'] as num?)
+          ?.toDouble(),
+      baselinePriceSource: jsonSerialization['baselinePriceSource'] as String?,
     );
   }
 
@@ -180,6 +207,16 @@ abstract class AppConfig
 
   String? currency;
 
+  bool? baselineChargingEnabled;
+
+  bool? baselineSellingEnabled;
+
+  double? baselineMaxBuyPrice;
+
+  double? baselineMinSellPrice;
+
+  String? baselinePriceSource;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -212,6 +249,11 @@ abstract class AppConfig
     bool? planningOnly,
     bool? pstrykEnabled,
     String? currency,
+    bool? baselineChargingEnabled,
+    bool? baselineSellingEnabled,
+    double? baselineMaxBuyPrice,
+    double? baselineMinSellPrice,
+    String? baselinePriceSource,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -244,6 +286,16 @@ abstract class AppConfig
       'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
       if (currency != null) 'currency': currency,
+      if (baselineChargingEnabled != null)
+        'baselineChargingEnabled': baselineChargingEnabled,
+      if (baselineSellingEnabled != null)
+        'baselineSellingEnabled': baselineSellingEnabled,
+      if (baselineMaxBuyPrice != null)
+        'baselineMaxBuyPrice': baselineMaxBuyPrice,
+      if (baselineMinSellPrice != null)
+        'baselineMinSellPrice': baselineMinSellPrice,
+      if (baselinePriceSource != null)
+        'baselinePriceSource': baselinePriceSource,
     };
   }
 
@@ -278,6 +330,16 @@ abstract class AppConfig
       'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
       if (currency != null) 'currency': currency,
+      if (baselineChargingEnabled != null)
+        'baselineChargingEnabled': baselineChargingEnabled,
+      if (baselineSellingEnabled != null)
+        'baselineSellingEnabled': baselineSellingEnabled,
+      if (baselineMaxBuyPrice != null)
+        'baselineMaxBuyPrice': baselineMaxBuyPrice,
+      if (baselineMinSellPrice != null)
+        'baselineMinSellPrice': baselineMinSellPrice,
+      if (baselinePriceSource != null)
+        'baselinePriceSource': baselinePriceSource,
     };
   }
 
@@ -340,6 +402,11 @@ class _AppConfigImpl extends AppConfig {
     required bool planningOnly,
     required bool pstrykEnabled,
     String? currency,
+    bool? baselineChargingEnabled,
+    bool? baselineSellingEnabled,
+    double? baselineMaxBuyPrice,
+    double? baselineMinSellPrice,
+    String? baselinePriceSource,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
@@ -366,6 +433,11 @@ class _AppConfigImpl extends AppConfig {
          planningOnly: planningOnly,
          pstrykEnabled: pstrykEnabled,
          currency: currency,
+         baselineChargingEnabled: baselineChargingEnabled,
+         baselineSellingEnabled: baselineSellingEnabled,
+         baselineMaxBuyPrice: baselineMaxBuyPrice,
+         baselineMinSellPrice: baselineMinSellPrice,
+         baselinePriceSource: baselinePriceSource,
        );
 
   /// Returns a shallow copy of this [AppConfig]
@@ -398,6 +470,11 @@ class _AppConfigImpl extends AppConfig {
     bool? planningOnly,
     bool? pstrykEnabled,
     Object? currency = _Undefined,
+    Object? baselineChargingEnabled = _Undefined,
+    Object? baselineSellingEnabled = _Undefined,
+    Object? baselineMaxBuyPrice = _Undefined,
+    Object? baselineMinSellPrice = _Undefined,
+    Object? baselinePriceSource = _Undefined,
   }) {
     return AppConfig(
       id: id is int? ? id : this.id,
@@ -446,6 +523,21 @@ class _AppConfigImpl extends AppConfig {
       planningOnly: planningOnly ?? this.planningOnly,
       pstrykEnabled: pstrykEnabled ?? this.pstrykEnabled,
       currency: currency is String? ? currency : this.currency,
+      baselineChargingEnabled: baselineChargingEnabled is bool?
+          ? baselineChargingEnabled
+          : this.baselineChargingEnabled,
+      baselineSellingEnabled: baselineSellingEnabled is bool?
+          ? baselineSellingEnabled
+          : this.baselineSellingEnabled,
+      baselineMaxBuyPrice: baselineMaxBuyPrice is double?
+          ? baselineMaxBuyPrice
+          : this.baselineMaxBuyPrice,
+      baselineMinSellPrice: baselineMinSellPrice is double?
+          ? baselineMinSellPrice
+          : this.baselineMinSellPrice,
+      baselinePriceSource: baselinePriceSource is String?
+          ? baselinePriceSource
+          : this.baselinePriceSource,
     );
   }
 }
@@ -582,6 +674,36 @@ class AppConfigUpdateTable extends _i1.UpdateTable<AppConfigTable> {
     table.currency,
     value,
   );
+
+  _i1.ColumnValue<bool, bool> baselineChargingEnabled(bool? value) =>
+      _i1.ColumnValue(
+        table.baselineChargingEnabled,
+        value,
+      );
+
+  _i1.ColumnValue<bool, bool> baselineSellingEnabled(bool? value) =>
+      _i1.ColumnValue(
+        table.baselineSellingEnabled,
+        value,
+      );
+
+  _i1.ColumnValue<double, double> baselineMaxBuyPrice(double? value) =>
+      _i1.ColumnValue(
+        table.baselineMaxBuyPrice,
+        value,
+      );
+
+  _i1.ColumnValue<double, double> baselineMinSellPrice(double? value) =>
+      _i1.ColumnValue(
+        table.baselineMinSellPrice,
+        value,
+      );
+
+  _i1.ColumnValue<String, String> baselinePriceSource(String? value) =>
+      _i1.ColumnValue(
+        table.baselinePriceSource,
+        value,
+      );
 }
 
 class AppConfigTable extends _i1.Table<int?> {
@@ -683,6 +805,26 @@ class AppConfigTable extends _i1.Table<int?> {
       'currency',
       this,
     );
+    baselineChargingEnabled = _i1.ColumnBool(
+      'baselineChargingEnabled',
+      this,
+    );
+    baselineSellingEnabled = _i1.ColumnBool(
+      'baselineSellingEnabled',
+      this,
+    );
+    baselineMaxBuyPrice = _i1.ColumnDouble(
+      'baselineMaxBuyPrice',
+      this,
+    );
+    baselineMinSellPrice = _i1.ColumnDouble(
+      'baselineMinSellPrice',
+      this,
+    );
+    baselinePriceSource = _i1.ColumnString(
+      'baselinePriceSource',
+      this,
+    );
   }
 
   late final AppConfigUpdateTable updateTable;
@@ -735,6 +877,16 @@ class AppConfigTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString currency;
 
+  late final _i1.ColumnBool baselineChargingEnabled;
+
+  late final _i1.ColumnBool baselineSellingEnabled;
+
+  late final _i1.ColumnDouble baselineMaxBuyPrice;
+
+  late final _i1.ColumnDouble baselineMinSellPrice;
+
+  late final _i1.ColumnString baselinePriceSource;
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -762,6 +914,11 @@ class AppConfigTable extends _i1.Table<int?> {
     planningOnly,
     pstrykEnabled,
     currency,
+    baselineChargingEnabled,
+    baselineSellingEnabled,
+    baselineMaxBuyPrice,
+    baselineMinSellPrice,
+    baselinePriceSource,
   ];
 }
 

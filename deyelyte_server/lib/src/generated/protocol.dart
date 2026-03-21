@@ -207,6 +207,36 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: true,
           dartType: 'String?',
         ),
+        _i2.ColumnDefinition(
+          name: 'baselineChargingEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: true,
+          dartType: 'bool?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'baselineSellingEnabled',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: true,
+          dartType: 'bool?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'baselineMaxBuyPrice',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'baselineMinSellPrice',
+          columnType: _i2.ColumnType.doublePrecision,
+          isNullable: true,
+          dartType: 'double?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'baselinePriceSource',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
       ],
       foreignKeys: [],
       indexes: [

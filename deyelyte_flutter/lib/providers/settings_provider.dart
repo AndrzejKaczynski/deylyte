@@ -23,6 +23,11 @@ class SettingsState {
     this.fixedBuyRatePln,
     this.fixedSellRatePln,
     this.priceTimeRanges = const [],
+    this.baselineChargingEnabled,
+    this.baselineSellingEnabled,
+    this.baselineMaxBuyPrice,
+    this.baselineMinSellPrice,
+    this.baselinePriceSource,
   });
 
   final double minSoc;
@@ -72,6 +77,19 @@ class SettingsState {
   /// User-defined price time ranges (for RCE distribution or fixed per-hour rates).
   final List<PriceTimeRange> priceTimeRanges;
 
+  // ── Baseline snapshot ──────────────────────────────────────────────────────
+  // Captured once when the user first enables live control (planningOnly → false).
+  // Used as a safe restore point when reverting to planning mode.
+
+  final bool? baselineChargingEnabled;
+  final bool? baselineSellingEnabled;
+  final double? baselineMaxBuyPrice;
+  final double? baselineMinSellPrice;
+  final String? baselinePriceSource;
+
+  /// Whether a baseline has been captured (i.e. user has gone live at least once).
+  bool get hasBaseline => baselineChargingEnabled != null;
+
   SettingsState copyWith({
     double? minSoc,
     bool? chargingEnabled,
@@ -93,6 +111,11 @@ class SettingsState {
     Object? fixedBuyRatePln = _sentinel,
     Object? fixedSellRatePln = _sentinel,
     List<PriceTimeRange>? priceTimeRanges,
+    Object? baselineChargingEnabled = _sentinel,
+    Object? baselineSellingEnabled = _sentinel,
+    Object? baselineMaxBuyPrice = _sentinel,
+    Object? baselineMinSellPrice = _sentinel,
+    Object? baselinePriceSource = _sentinel,
   }) =>
       SettingsState(
         minSoc: minSoc ?? this.minSoc,
@@ -126,6 +149,21 @@ class SettingsState {
             ? this.fixedSellRatePln
             : fixedSellRatePln as double?,
         priceTimeRanges: priceTimeRanges ?? this.priceTimeRanges,
+        baselineChargingEnabled: baselineChargingEnabled == _sentinel
+            ? this.baselineChargingEnabled
+            : baselineChargingEnabled as bool?,
+        baselineSellingEnabled: baselineSellingEnabled == _sentinel
+            ? this.baselineSellingEnabled
+            : baselineSellingEnabled as bool?,
+        baselineMaxBuyPrice: baselineMaxBuyPrice == _sentinel
+            ? this.baselineMaxBuyPrice
+            : baselineMaxBuyPrice as double?,
+        baselineMinSellPrice: baselineMinSellPrice == _sentinel
+            ? this.baselineMinSellPrice
+            : baselineMinSellPrice as double?,
+        baselinePriceSource: baselinePriceSource == _sentinel
+            ? this.baselinePriceSource
+            : baselinePriceSource as String?,
       );
 }
 
@@ -191,7 +229,26 @@ class SettingsNotifier extends Notifier<SettingsState> {
         fixedSellRatePln: c.fixedSellRatePln,
         priceTimeRanges: state.priceTimeRanges,
         pstryk: c.pstrykEnabled,
+        baselineChargingEnabled: c.baselineChargingEnabled,
+        baselineSellingEnabled: c.baselineSellingEnabled,
+        baselineMaxBuyPrice: c.baselineMaxBuyPrice,
+        baselineMinSellPrice: c.baselineMinSellPrice,
+        baselinePriceSource: c.baselinePriceSource,
       );
+
+  /// Revert charging/selling/pricing to the values captured at first live-enable.
+  /// No-op if no baseline has been captured yet.
+  void restoreToBaseline() {
+    if (!state.hasBaseline) return;
+    state = state.copyWith(
+      chargingEnabled: state.baselineChargingEnabled,
+      sellingEnabled: state.baselineSellingEnabled,
+      maxBuyPrice: state.baselineMaxBuyPrice ?? state.maxBuyPrice,
+      minSellPrice: state.baselineMinSellPrice,
+      priceSource: state.baselinePriceSource ?? state.priceSource,
+      planningOnly: true,
+    );
+  }
 }
 
 final settingsProvider =

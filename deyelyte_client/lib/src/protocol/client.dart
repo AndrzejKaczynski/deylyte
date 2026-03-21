@@ -403,6 +403,27 @@ class EndpointSchedule extends _i1.EndpointRef {
         'getSchedule',
         {'licenseKey': licenseKey},
       );
+
+  /// Returns schedule frames AND an offline fallback policy for the add-on.
+  ///
+  /// The add-on should cache this response locally. If the server is
+  /// unreachable for more than [offlineGraceMinutes] (default 15), the add-on
+  /// applies [offlineFallback] instead of the cached schedule — stopping all
+  /// active charging/discharging commands to protect against expensive
+  /// runaway behaviour.
+  ///
+  /// [offlineFallback] keys:
+  ///   - `chargingEnabled` (bool)  — whether to charge when offline
+  ///   - `sellingEnabled`  (bool)  — whether to discharge/sell when offline
+  ///   - `maxBuyPricePln`  (double) — max buy price to honour offline
+  ///   - `priceSource`     (String) — pricing mode used for this fallback
+  ///   - `offlineGraceMinutes` (int) — grace period before fallback activates
+  _i2.Future<Map<String, dynamic>> getScheduleWithFallback(String licenseKey) =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'schedule',
+        'getScheduleWithFallback',
+        {'licenseKey': licenseKey},
+      );
 }
 
 /// Handles inverter telemetry from the HA add-on and serves telemetry

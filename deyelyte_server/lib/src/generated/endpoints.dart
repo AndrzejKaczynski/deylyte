@@ -634,6 +634,25 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['licenseKey'],
                   ),
         ),
+        'getScheduleWithFallback': _i1.MethodConnector(
+          name: 'getScheduleWithFallback',
+          params: {
+            'licenseKey': _i1.ParameterDescription(
+              name: 'licenseKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['schedule'] as _i13.ScheduleEndpoint)
+                  .getScheduleWithFallback(
+                    session,
+                    params['licenseKey'],
+                  ),
+        ),
       },
     );
     connectors['telemetry'] = _i1.EndpointConnector(

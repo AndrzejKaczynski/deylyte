@@ -18,12 +18,24 @@ class AppConfigEndpoint extends Endpoint {
         where: (t) => t.userInfoId.equals(userInfoId));
 
     if (existing != null) {
-      await AppConfig.db.updateRow(
-          session,
-          config.copyWith(
-            id: existing.id,
-            userInfoId: userInfoId,
-          ));
+      // Capture baseline on first live-enable (planningOnly true → false).
+      final goingLive = existing.planningOnly && !config.planningOnly;
+      final alreadyHasBaseline = existing.baselineChargingEnabled != null;
+      final updated = (goingLive && !alreadyHasBaseline)
+          ? config.copyWith(
+              id: existing.id,
+              userInfoId: userInfoId,
+              baselineChargingEnabled: existing.chargingEnabled,
+              baselineSellingEnabled: existing.sellingEnabled,
+              baselineMaxBuyPrice: existing.alwaysChargePriceThreshold,
+              baselineMinSellPrice: existing.minSellPriceThreshold,
+              baselinePriceSource: existing.priceSource ?? 'pstryk',
+            )
+          : config.copyWith(
+              id: existing.id,
+              userInfoId: userInfoId,
+            );
+      await AppConfig.db.updateRow(session, updated);
     } else {
       await AppConfig.db.insertRow(
           session, config.copyWith(userInfoId: userInfoId));

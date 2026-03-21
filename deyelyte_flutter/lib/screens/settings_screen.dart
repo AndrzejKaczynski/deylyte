@@ -119,6 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         sellingEnabled: settings.sellingEnabled,
                         pvOnlySelling: settings.pvOnlySelling,
                         planningOnly: settings.planningOnly,
+                        hasBaseline: settings.hasBaseline,
                         maxBuyPrice: settings.maxBuyPrice,
                         minSellPrice: settings.minSellPrice,
                         onChargingChanged: notifier.setChargingEnabled,
@@ -127,6 +128,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPlanningOnlyChanged: notifier.setPlanningOnly,
                         onMaxBuyPriceChanged: notifier.setMaxBuyPrice,
                         onMinSellPriceChanged: notifier.setMinSellPrice,
+                        onRestoreBaseline: notifier.restoreToBaseline,
                       ),
                     ),
                   ),
@@ -178,6 +180,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onSolcastChanged: notifier.setSolcast,
                     onCityNameChanged: notifier.setCityName,
                   ),
+                  if (settings.hasBaseline) ...[
+                    const SizedBox(height: AppSpacing.sp4),
+                    _BaselineInfoCard(settings: settings),
+                  ],
                   const SizedBox(height: AppSpacing.sp4),
                   const _DangerZoneCard(),
                 ]),
@@ -287,6 +293,7 @@ class _EmsControlCard extends StatefulWidget {
     required this.sellingEnabled,
     required this.pvOnlySelling,
     required this.planningOnly,
+    required this.hasBaseline,
     required this.maxBuyPrice,
     required this.minSellPrice,
     required this.onChargingChanged,
@@ -295,12 +302,14 @@ class _EmsControlCard extends StatefulWidget {
     required this.onPlanningOnlyChanged,
     required this.onMaxBuyPriceChanged,
     required this.onMinSellPriceChanged,
+    required this.onRestoreBaseline,
   });
 
   final bool chargingEnabled;
   final bool sellingEnabled;
   final bool pvOnlySelling;
   final bool planningOnly;
+  final bool hasBaseline;
   final double maxBuyPrice;
   final double? minSellPrice;
   final ValueChanged<bool> onChargingChanged;
@@ -309,6 +318,7 @@ class _EmsControlCard extends StatefulWidget {
   final ValueChanged<bool> onPlanningOnlyChanged;
   final ValueChanged<double> onMaxBuyPriceChanged;
   final ValueChanged<double?> onMinSellPriceChanged;
+  final VoidCallback onRestoreBaseline;
 
   @override
   State<_EmsControlCard> createState() => _EmsControlCardState();
@@ -376,6 +386,19 @@ class _EmsControlCardState extends State<_EmsControlCard> {
               ),
             ]),
           ),
+          if (widget.hasBaseline) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.restore_rounded, size: 16),
+              label: const Text('Restore to baseline settings'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                textStyle: tt.labelSmall,
+              ),
+              onPressed: widget.onRestoreBaseline,
+            ),
+          ],
         ],
 
         const SizedBox(height: 20),
@@ -1588,6 +1611,76 @@ class _IntegrationRow extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ]),
+    );
+  }
+}
+
+// ── Danger Zone ───────────────────────────────────────────────────────────────
+
+// ── Baseline Info ─────────────────────────────────────────────────────────────
+
+class _BaselineInfoCard extends StatelessWidget {
+  const _BaselineInfoCard({required this.settings});
+  final SettingsState settings;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final chargingLabel =
+        (settings.baselineChargingEnabled ?? false) ? 'On' : 'Off';
+    final sellingLabel =
+        (settings.baselineSellingEnabled ?? false) ? 'On' : 'Off';
+    final priceLabel = settings.baselineMaxBuyPrice != null
+        ? '${settings.baselineMaxBuyPrice!.toStringAsFixed(4)} PLN/kWh'
+        : '—';
+    final sourceLabel = settings.baselinePriceSource ?? 'pstryk';
+
+    return SurfaceCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.safety_check_rounded,
+              size: 16, color: AppColors.secondary),
+          const SizedBox(width: 8),
+          Text('Offline Fallback',
+              style: tt.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600)),
+        ]),
+        const SizedBox(height: 6),
+        Text(
+          'If the add-on loses server connection for >15 min it reverts to '
+          'these baseline settings to prevent runaway charges.',
+          style: tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 12),
+        _BaselineRow(label: 'Charge from grid', value: chargingLabel),
+        _BaselineRow(label: 'Sell to grid', value: sellingLabel),
+        _BaselineRow(label: 'Max buy price', value: priceLabel),
+        _BaselineRow(label: 'Price source', value: sourceLabel),
+      ]),
+    );
+  }
+}
+
+class _BaselineRow extends StatelessWidget {
+  const _BaselineRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: tt.bodySmall
+                  ?.copyWith(color: AppColors.onSurfaceVariant)),
+          Text(value,
+              style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 }
