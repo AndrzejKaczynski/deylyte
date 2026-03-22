@@ -7,16 +7,13 @@ import '../providers/app_providers.dart';
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
-  static const _ranges = ['7 days', '30 days', '90 days'];
-
-  /// Tiers that can see 90 days of history.
-  static const _extendedHistoryTiers = {'pro', 'beta_free'};
+  static const _ranges = ['7 days', '30 days', '60 days', '90 days'];
+  static const _rangeDays = [7, 30, 60, 90];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedRange = ref.watch(historyRangeProvider);
-    final tier = ref.watch(userLicenseTierProvider).valueOrNull;
-    final hasExtendedHistory = _extendedHistoryTiers.contains(tier);
+    final maxDays = ref.watch(userHistoryDurationDaysProvider).valueOrNull ?? 7;
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
@@ -30,10 +27,10 @@ class HistoryScreen extends ConsumerWidget {
               _HistoryHeader(
                 selectedRange: selectedRange,
                 ranges: _ranges,
-                hasExtendedHistory: hasExtendedHistory,
+                rangeDays: _rangeDays,
+                maxDays: maxDays,
                 onRangeChanged: (i) {
-                  // Prevent basic users from selecting 90 days.
-                  if (i == 2 && !hasExtendedHistory) return;
+                  if (_rangeDays[i] > maxDays) return;
                   ref.read(historyRangeProvider.notifier).state = i;
                 },
               ),
@@ -70,12 +67,14 @@ class _HistoryHeader extends StatelessWidget {
   const _HistoryHeader({
     required this.selectedRange,
     required this.ranges,
-    required this.hasExtendedHistory,
+    required this.rangeDays,
+    required this.maxDays,
     required this.onRangeChanged,
   });
   final int selectedRange;
   final List<String> ranges;
-  final bool hasExtendedHistory;
+  final List<int> rangeDays;
+  final int maxDays;
   final ValueChanged<int> onRangeChanged;
 
   @override
@@ -102,9 +101,10 @@ class _HistoryHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: ranges.asMap().entries.map((e) {
               final active = selectedRange == e.key;
-              final locked = e.key == 2 && !hasExtendedHistory;
+              final locked = rangeDays[e.key] > maxDays;
               return Tooltip(
-                message: locked ? 'Available on Pro plan' : '',
+                message: locked ? 'Upgrade to Pro to unlock extended history' : '',
+                triggerMode: locked ? TooltipTriggerMode.tap : TooltipTriggerMode.longPress,
                 child: GestureDetector(
                   onTap: () => onRangeChanged(e.key),
                   child: AnimatedContainer(

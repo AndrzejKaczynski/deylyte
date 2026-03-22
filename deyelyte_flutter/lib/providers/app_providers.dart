@@ -160,7 +160,19 @@ final scheduleEventsProvider =
 // ── History ───────────────────────────────────────────────────────────────────
 
 /// Helper to map historyRangeProvider index to days.
-int rangeDays(int index) => const [7, 30, 90][index];
+int rangeDays(int index) => const [7, 30, 60, 90][index];
+
+/// Maximum history days the current user's tier allows.
+/// Falls back to 7 if the tier config has not been loaded yet.
+final userHistoryDurationDaysProvider = FutureProvider<int>((ref) async {
+  try {
+    final raw = await ref.read(clientProvider).license.getUserLicense();
+    final data = jsonDecode(raw) as Map<String, dynamic>;
+    return (data['historyDurationDays'] as int?) ?? 7;
+  } catch (_) {
+    return 7;
+  }
+});
 
 /// History summary metrics. Re-fetches when range changes.
 final historySummaryProvider =

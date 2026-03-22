@@ -84,9 +84,15 @@ class LicenseEndpoint extends Endpoint {
       return jsonEncode({'tier': null});
     }
 
+    final syncConfig = await TierSyncConfig.db.findFirstRow(
+      session,
+      where: (t) => t.tier.equals(row.tier),
+    );
+
     return jsonEncode({
       'tier': row.tier,
       'expiresAt': row.expiresAt?.toIso8601String(),
+      'historyDurationDays': syncConfig?.historyDurationDays ?? 7,
     });
   }
 }
