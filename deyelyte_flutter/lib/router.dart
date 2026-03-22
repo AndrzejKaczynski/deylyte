@@ -50,11 +50,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isAdmin ? null : '/';
       }
 
-      // Check license key
+      // Check license key — local storage first, then server fallback.
       const storage = FlutterSecureStorage();
-      final hasLicense =
-          (await storage.read(key: 'license_key'))?.isNotEmpty ?? false;
-      if (!hasLicense) return '/onboarding/license';
+      final localKey = await storage.read(key: 'license_key');
+      final hasLocalLicense = localKey?.isNotEmpty ?? false;
+
+      if (!hasLocalLicense) {
+        // Local key missing (new device / cleared storage) — check server.
+        try {
+          final tier = await ref.read(userLicenseTierProvider.future);
+          if (tier == null) return '/onboarding/license';
+          // Server confirms active license — no onboarding needed.
+        } catch (_) {
+          return '/onboarding/license';
+        }
+      }
 
       // Check device connection (has ever connected)
       try {
