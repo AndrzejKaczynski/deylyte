@@ -103,7 +103,11 @@ void run(List<String> args) async {
 
 /// Inverter model catalogue — add new models here as they are verified.
 /// registerMapJson uses Modbus holding-register (FC3) addresses.
+/// chargeCmd/sellCmd marked ⚠ are from the same protocol family but not yet
+/// confirmed on that specific hardware — update once verified.
 const _inverterModels = [
+  // ── Three-phase LP/HP family (SG0xLP3 / SG0xHP3) ─────────────────────────
+  // Register base: batterySoc=588, pv1=672. chargeCmd/sellCmd verified on SG04LP3.
   (
     modelId: 'deye_sg04lp3',
     displayName: 'Deye SG04LP3',
@@ -119,13 +123,65 @@ const _inverterModels = [
         '"sellCmd":243'
         '}',
     // Deye Cloud measurePoint keys confirmed on real SG04LP3 hardware.
-    // Run scrape_inverter_models.py to populate additional models.
     measurePointsFingerprintJson: '['
         '"p_pv1","p_pv2","p_pv3",'
         '"b_soc","b_volt","b_current","b_power",'
         '"p_grid","p_grid_apparent","p_load",'
         '"e_pv_day","e_load_day","e_grid_buy_day","e_grid_sell_day"'
-        ']',
+        ']' as String?,
+  ),
+  (
+    modelId: 'deye_sg01hp3',
+    displayName: 'Deye SG01HP3',
+    // Same register map as SG04LP3 (both 3-phase LP/HP family).
+    // chargeCmd/sellCmd ⚠ unverified — same family as SG04LP3.
+    registerMapJson: '{'
+        '"batterySoc":588,'
+        '"batteryPower":590,'
+        '"gridPower":625,'
+        '"loadPower":653,'
+        '"pv1Power":672,'
+        '"pv2Power":673,'
+        '"pv3Power":674,'
+        '"chargeCmd":240,'
+        '"sellCmd":243'
+        '}',
+    measurePointsFingerprintJson: null,
+  ),
+  // ── Single-phase LP family (SG0xLP1 / legacy Hybrid) ─────────────────────
+  // Register base: batterySoc=184, pv1=186. Different address space to 3-phase.
+  (
+    modelId: 'deye_hybrid',
+    displayName: 'Deye Hybrid',
+    // Older single-phase hybrid (2-string, no pv3). chargeCmd/sellCmd unknown.
+    registerMapJson: '{'
+        '"batterySoc":184,'
+        '"batteryPower":190,'
+        '"gridPower":169,'
+        '"loadPower":178,'
+        '"pv1Power":186,'
+        '"pv2Power":187,'
+        '"pv3Power":0'
+        '}',
+    measurePointsFingerprintJson: null,
+  ),
+  (
+    modelId: 'deye_sg02lp1',
+    displayName: 'Deye SG02LP1',
+    // Single-phase LP, 3-string (pv3Power=188). chargeCmd/sellCmd ⚠ unverified.
+    // Sources: kbialek/deye-inverter-mqtt, kellerza/sunsynk.
+    registerMapJson: '{'
+        '"batterySoc":184,'
+        '"batteryPower":190,'
+        '"gridPower":169,'
+        '"loadPower":175,'
+        '"pv1Power":186,'
+        '"pv2Power":187,'
+        '"pv3Power":188,'
+        '"chargeCmd":240,'
+        '"sellCmd":243'
+        '}',
+    measurePointsFingerprintJson: null,
   ),
 ];
 
@@ -150,7 +206,8 @@ Future<void> _seedInverterModels(Serverpod pod) async {
           ),
         );
         print('Seeded inverter model: ${m.displayName}');
-      } else if (exists.measurePointsFingerprintJson == null) {
+      } else if (exists.measurePointsFingerprintJson == null &&
+          m.measurePointsFingerprintJson != null) {
         // Backfill fingerprint added to seed after initial row was created.
         await InverterModel.db.updateRow(
           session,

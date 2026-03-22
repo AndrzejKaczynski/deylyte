@@ -1,0 +1,79 @@
+[
+  {
+    "modelId": "deye_sg04lp3",
+    "displayName": "Deye SG04LP3",
+    "registers": {
+      "batterySoc": 588,
+      "batteryPower": 590,
+      "gridPower": 625,
+      "loadPower": 653,
+      "pv1Power": 672,
+      "pv2Power": 673,
+      "pv3Power": 674,
+      "chargeCmd": 240,
+      "sellCmd": 243
+    },
+    "complete": true,
+    "missing": [],
+    "sources": ["StephanJoubert/home_assistant_solarman", "kbialek/deye-inverter-mqtt"],
+    "controlVerified": true
+  },
+  {
+    "modelId": "deye_sg01hp3",
+    "displayName": "Deye SG01HP3",
+    "registers": {
+      "batterySoc": 588,
+      "batteryPower": 590,
+      "gridPower": 625,
+      "loadPower": 653,
+      "pv1Power": 672,
+      "pv2Power": 673,
+      "pv3Power": 674,
+      "chargeCmd": 240,
+      "sellCmd": 243
+    },
+    "complete": true,
+    "missing": [],
+    "sources": ["kbialek/deye-inverter-mqtt"],
+    "controlVerified": false,
+    "notes": "Same register map as SG04LP3 (both 3-phase LP/HP family). chargeCmd/sellCmd unverified."
+  },
+  {
+    "modelId": "deye_hybrid",
+    "displayName": "Deye Hybrid",
+    "registers": {
+      "batterySoc": 184,
+      "batteryPower": 190,
+      "gridPower": 169,
+      "loadPower": 178,
+      "pv1Power": 186,
+      "pv2Power": 187,
+      "pv3Power": 0
+    },
+    "complete": true,
+    "missing": ["chargeCmd", "sellCmd"],
+    "sources": ["StephanJoubert/home_assistant_solarman", "davidrapan/ha-solarman", "kbialek/deye-inverter-mqtt"],
+    "controlVerified": false,
+    "notes": "Older single-phase hybrid (2-string). chargeCmd/sellCmd not documented in any source."
+  },
+  {
+    "modelId": "deye_sg02lp1",
+    "displayName": "Deye SG02LP1",
+    "registers": {
+      "batterySoc": 184,
+      "batteryPower": 190,
+      "gridPower": 169,
+      "loadPower": 175,
+      "pv1Power": 186,
+      "pv2Power": 187,
+      "pv3Power": 188,
+      "chargeCmd": 240,
+      "sellCmd": 243
+    },
+    "complete": true,
+    "missing": [],
+    "sources": ["kbialek/deye-inverter-mqtt", "kellerza/sunsynk"],
+    "controlVerified": false,
+    "notes": "Single-phase LP, 3-string (pv3Power=188). chargeCmd/sellCmd unverified — same family assumption."
+  }
+]

@@ -61,9 +61,20 @@ REGISTER_OVERRIDES: dict[str, dict[str, int]] = {
 # Key = model name substring (case-insensitive), value = (chargeCmd, sellCmd).
 
 KNOWN_CONTROL_REGS: dict[str, tuple[int, int]] = {
-    "sg04lp3": (240, 243),
-    "sg05lp1": (240, 243),   # same family — unverified, mark in output
-    "sg06lp1": (240, 243),   # same family — unverified, mark in output
+    # Three-phase LP/HP family — all share the same protocol base.
+    # chargeCmd=240/sellCmd=243 verified on SG04LP3 real hardware.
+    "sg01hp3": (240, 243),   # same family — unverified
+    "sg04lp3": (240, 243),   # ✓ verified
+    "sg05lp3": (240, 243),   # same family — unverified
+    "sg06lp3": (240, 243),   # same family — unverified
+    "sg08lp3": (240, 243),   # same family — unverified
+    "sg10lp3": (240, 243),   # same family — unverified
+    "sg12lp3": (240, 243),   # same family — unverified
+    # Single-phase LP family — unverified, same family assumption.
+    "sg02lp1": (240, 243),
+    "sg04lp1": (240, 243),
+    "sg05lp1": (240, 243),
+    "sg06lp1": (240, 243),
 }
 
 # ── Name heuristics for mapping items to our register keys ───────────────────
