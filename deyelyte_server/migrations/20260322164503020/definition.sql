@@ -1,6 +1,17 @@
 BEGIN;
 
 --
+-- Class AdminUser as table admin_users
+--
+CREATE TABLE "admin_users" (
+    "id" bigserial PRIMARY KEY,
+    "userInfoId" bigint NOT NULL
+);
+
+-- Indexes
+CREATE UNIQUE INDEX "admin_users_user_idx" ON "admin_users" USING btree ("userInfoId");
+
+--
 -- Class AppConfig as table app_config
 --
 CREATE TABLE "app_config" (
@@ -26,8 +37,14 @@ CREATE TABLE "app_config" (
     "priceSource" text,
     "fixedBuyRatePln" double precision,
     "fixedSellRatePln" double precision,
+    "planningOnly" boolean NOT NULL,
     "pstrykEnabled" boolean NOT NULL,
-    "currency" text
+    "currency" text,
+    "baselineChargingEnabled" boolean,
+    "baselineSellingEnabled" boolean,
+    "baselineMaxBuyPrice" double precision,
+    "baselineMinSellPrice" double precision,
+    "baselinePriceSource" text
 );
 
 --
@@ -59,6 +76,7 @@ CREATE TABLE "devices" (
     "licenseKey" text NOT NULL,
     "lastSeenAt" timestamp without time zone,
     "lastInverterOk" boolean NOT NULL,
+    "syncIntervalSeconds" bigint,
     "createdAt" timestamp without time zone NOT NULL
 );
 
@@ -189,6 +207,19 @@ CREATE TABLE "pv_forecast" (
 
 -- Indexes
 CREATE UNIQUE INDEX "pv_forecast_user_timestamp_idx" ON "pv_forecast" USING btree ("userInfoId", "timestamp");
+
+--
+-- Class TierSyncConfig as table tier_sync_configs
+--
+CREATE TABLE "tier_sync_configs" (
+    "id" bigserial PRIMARY KEY,
+    "tier" text NOT NULL,
+    "syncIntervalSeconds" bigint NOT NULL,
+    "historyDurationDays" bigint NOT NULL
+);
+
+-- Indexes
+CREATE UNIQUE INDEX "tier_sync_configs_tier_idx" ON "tier_sync_configs" USING btree ("tier");
 
 --
 -- Class CloudStorageEntry as table serverpod_cloud_storage
@@ -545,9 +576,9 @@ ALTER TABLE ONLY "serverpod_query_log"
 -- MIGRATION VERSION FOR deyelyte
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('deyelyte', '20260321142726934', now())
+    VALUES ('deyelyte', '20260322164503020', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260321142726934', "timestamp" = now();
+    DO UPDATE SET "version" = '20260322164503020', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

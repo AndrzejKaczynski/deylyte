@@ -4,6 +4,62 @@
   "tables": [
     {
       "__className__": "serverpod.TableDefinition",
+      "name": "admin_users",
+      "dartName": "AdminUser",
+      "module": "deyelyte",
+      "schema": "public",
+      "columns": [
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "id",
+          "columnType": 6,
+          "isNullable": false,
+          "columnDefault": "nextval('admin_users_id_seq'::regclass)",
+          "dartType": "int?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "userInfoId",
+          "columnType": 6,
+          "isNullable": false,
+          "dartType": "int"
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "admin_users_pkey",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "id"
+            }
+          ],
+          "type": "btree",
+          "isUnique": true,
+          "isPrimary": true
+        },
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "admin_users_user_idx",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "userInfoId"
+            }
+          ],
+          "type": "btree",
+          "isUnique": true,
+          "isPrimary": false
+        }
+      ],
+      "managed": true
+    },
+    {
+      "__className__": "serverpod.TableDefinition",
       "name": "app_config",
       "dartName": "AppConfig",
       "module": "deyelyte",
@@ -166,6 +222,13 @@
         },
         {
           "__className__": "serverpod.ColumnDefinition",
+          "name": "planningOnly",
+          "columnType": 1,
+          "isNullable": false,
+          "dartType": "bool"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
           "name": "pstrykEnabled",
           "columnType": 1,
           "isNullable": false,
@@ -174,6 +237,41 @@
         {
           "__className__": "serverpod.ColumnDefinition",
           "name": "currency",
+          "columnType": 0,
+          "isNullable": true,
+          "dartType": "String?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "baselineChargingEnabled",
+          "columnType": 1,
+          "isNullable": true,
+          "dartType": "bool?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "baselineSellingEnabled",
+          "columnType": 1,
+          "isNullable": true,
+          "dartType": "bool?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "baselineMaxBuyPrice",
+          "columnType": 3,
+          "isNullable": true,
+          "dartType": "double?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "baselineMinSellPrice",
+          "columnType": 3,
+          "isNullable": true,
+          "dartType": "double?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "baselinePriceSource",
           "columnType": 0,
           "isNullable": true,
           "dartType": "String?"
@@ -376,6 +474,13 @@
           "columnType": 1,
           "isNullable": false,
           "dartType": "bool"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "syncIntervalSeconds",
+          "columnType": 6,
+          "isNullable": true,
+          "dartType": "int?"
         },
         {
           "__className__": "serverpod.ColumnDefinition",
@@ -1162,6 +1267,76 @@
               "__className__": "serverpod.IndexElementDefinition",
               "type": 0,
               "definition": "timestamp"
+            }
+          ],
+          "type": "btree",
+          "isUnique": true,
+          "isPrimary": false
+        }
+      ],
+      "managed": true
+    },
+    {
+      "__className__": "serverpod.TableDefinition",
+      "name": "tier_sync_configs",
+      "dartName": "TierSyncConfig",
+      "module": "deyelyte",
+      "schema": "public",
+      "columns": [
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "id",
+          "columnType": 6,
+          "isNullable": false,
+          "columnDefault": "nextval('tier_sync_configs_id_seq'::regclass)",
+          "dartType": "int?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "tier",
+          "columnType": 0,
+          "isNullable": false,
+          "dartType": "String"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "syncIntervalSeconds",
+          "columnType": 6,
+          "isNullable": false,
+          "dartType": "int"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
+          "name": "historyDurationDays",
+          "columnType": 6,
+          "isNullable": false,
+          "dartType": "int"
+        }
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "tier_sync_configs_pkey",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "id"
+            }
+          ],
+          "type": "btree",
+          "isUnique": true,
+          "isPrimary": true
+        },
+        {
+          "__className__": "serverpod.IndexDefinition",
+          "indexName": "tier_sync_configs_tier_idx",
+          "elements": [
+            {
+              "__className__": "serverpod.IndexElementDefinition",
+              "type": 0,
+              "definition": "tier"
             }
           ],
           "type": "btree",
@@ -3142,7 +3317,7 @@
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
       "module": "deyelyte",
-      "version": "20260321142726934"
+      "version": "20260322164503020"
     },
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
