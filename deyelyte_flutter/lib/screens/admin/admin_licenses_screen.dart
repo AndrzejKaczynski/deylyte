@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../components/section_header.dart';
+import '../../utils/date_format.dart';
 import '../../components/surface_card.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/app_providers.dart';
@@ -365,9 +366,9 @@ class _KeysTable extends StatelessWidget {
                   ),
                   _cell(Text(k['tier'] as String, style: tt.bodySmall),
                       1.0),
-                  _cell(Text(_fmt(k['createdAt']), style: tt.bodySmall),
+                  _cell(Text(fmtDateTime(k['createdAt']), style: tt.bodySmall),
                       1.5),
-                  _cell(Text(_fmt(k['lastSeenAt']), style: tt.bodySmall),
+                  _cell(Text(fmtDateTime(k['lastSeenAt']), style: tt.bodySmall),
                       1.5),
                   _cell(
                     Switch(
@@ -406,11 +407,4 @@ class _KeysTable extends StatelessWidget {
         ),
       );
 
-  String _fmt(dynamic iso) {
-    if (iso == null) return '—';
-    final dt = DateTime.tryParse(iso as String);
-    if (dt == null) return '—';
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-'
-        '${dt.day.toString().padLeft(2, '0')}';
-  }
 }

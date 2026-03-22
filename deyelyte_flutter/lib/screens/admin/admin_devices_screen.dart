@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../components/section_header.dart';
+import '../../utils/date_format.dart';
 import '../../components/surface_card.dart';
 import '../../components/pulse_indicator.dart';
 import '../../providers/admin_provider.dart';
@@ -84,7 +85,7 @@ class _DevicesTable extends StatelessWidget {
                 '${d['userEmail'] ?? '—'}\n#${d['userId']}',
                 style: tt.bodySmall,
               )),
-              _cell(Text(_fmtFull(d['lastSeenAt']), style: tt.bodySmall)),
+              _cell(Text(fmtDateTime(d['lastSeenAt']), style: tt.bodySmall)),
               _cell(_StatusDot(
                 ok: d['connected'] as bool? ?? false,
                 label: (d['connected'] as bool? ?? false) ? 'Online' : 'Offline',
@@ -95,7 +96,7 @@ class _DevicesTable extends StatelessWidget {
                     ? 'Reachable'
                     : 'Unreachable',
               )),
-              _cell(Text(_fmt(d['createdAt']), style: tt.bodySmall)),
+              _cell(Text(fmtDateTime(d['createdAt']), style: tt.bodySmall)),
             ]),
         ],
       ),
@@ -115,22 +116,6 @@ class _DevicesTable extends StatelessWidget {
         child: child,
       );
 
-  String _fmt(dynamic iso) {
-    if (iso == null) return '—';
-    final dt = DateTime.tryParse(iso as String);
-    if (dt == null) return '—';
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-'
-        '${dt.day.toString().padLeft(2, '0')}';
-  }
-
-  String _fmtFull(dynamic iso) {
-    if (iso == null) return '—';
-    final dt = DateTime.tryParse(iso as String)?.toLocal();
-    if (dt == null) return '—';
-    return '${_fmt(iso)} '
-        '${dt.hour.toString().padLeft(2, '0')}:'
-        '${dt.minute.toString().padLeft(2, '0')}';
-  }
 }
 
 class _StatusDot extends StatelessWidget {

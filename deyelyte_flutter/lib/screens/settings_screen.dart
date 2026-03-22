@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../theme/theme.dart';
+import '../utils/date_format.dart';
 import '../components/components.dart';
 import '../providers/app_providers.dart';
 import '../providers/settings_provider.dart';
@@ -1531,7 +1532,9 @@ class _ApiIntegrationsCardState extends ConsumerState<_ApiIntegrationsCard> {
     final addonAsync = ref.watch(addonStatusProvider);
     final addonStatus = addonAsync.valueOrNull;
     final connected = addonStatus?['connected'] == true;
-    final lastSeen = addonStatus?['lastSeenAt'] as String?;
+    final lastSeen = addonStatus?['lastSeenAt'] != null
+        ? fmtDateTime(addonStatus!['lastSeenAt'])
+        : null;
     final addonDetail = connected
         ? 'Add-on connected'
         : (lastSeen != null ? 'Add-on offline' : 'Not configured');

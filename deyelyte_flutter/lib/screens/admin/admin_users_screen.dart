@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../components/section_header.dart';
+import '../../utils/date_format.dart';
 import '../../components/surface_card.dart';
 import '../../components/pulse_indicator.dart';
 import '../../providers/admin_provider.dart';
@@ -97,8 +98,8 @@ class _UsersTable extends ConsumerWidget {
                   child: Row(children: [
                     _cell(Text('#${u['id']}', style: tt.bodySmall), _flex[0]),
                     _cell(Text(u['email'] ?? '—', style: tt.bodySmall), _flex[1]),
-                    _cell(Text(_fmt(u['created']), style: tt.bodySmall), _flex[2]),
-                    _cell(Text(_fmt(u['dataGatheringSince']), style: tt.bodySmall), _flex[3]),
+                    _cell(Text(fmtDateTime(u['created']), style: tt.bodySmall), _flex[2]),
+                    _cell(Text(fmtDateTime(u['dataGatheringSince']), style: tt.bodySmall), _flex[3]),
                     _cell(Text(u['priceSource'] ?? '—', style: tt.bodySmall), _flex[4]),
                     _cell(_ModeChip(planningOnly: u['planningOnly'] as bool?), _flex[5]),
                     _cell(_DeviceStatus(
@@ -161,13 +162,13 @@ class _UsersTable extends ConsumerWidget {
                             Text(
                               '${k['tier']} · '
                               '${(k['isActive'] as bool? ?? false) ? 'Active' : 'Inactive'} · '
-                              'Created ${_fmt(k['createdAt'])}',
+                              'Created ${fmtDateTime(k['createdAt'])}',
                               style: tt.labelSmall?.copyWith(
                                   color: AppColors.onSurfaceVariant),
                             ),
                             if (k['lastSeenAt'] != null)
                               Text(
-                                'Last seen ${_fmt(k['lastSeenAt'])}',
+                                'Last seen ${fmtDateTime(k['lastSeenAt'])}',
                                 style: tt.labelSmall?.copyWith(
                                     color: AppColors.onSurfaceVariant),
                               ),
@@ -197,13 +198,6 @@ class _UsersTable extends ConsumerWidget {
         ),
       );
 
-  String _fmt(dynamic iso) {
-    if (iso == null) return '—';
-    final dt = DateTime.tryParse(iso as String);
-    if (dt == null) return '—';
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-'
-        '${dt.day.toString().padLeft(2, '0')}';
-  }
 }
 
 class _ModeChip extends StatelessWidget {
