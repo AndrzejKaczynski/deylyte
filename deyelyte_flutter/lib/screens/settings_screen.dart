@@ -71,6 +71,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final addonStatus = ref.watch(addonStatusProvider).valueOrNull;
     final addonEverConnected = addonStatus?['lastSeenAt'] != null;
     final lockInfo = _emsLockInfo(config, addonEverConnected: addonEverConnected);
+    final since = config?.dataGatheringSince;
+    final unlockDate = since?.add(const Duration(days: 7));
+    final baselineLocked = addonEverConnected &&
+        (since == null ||
+            (unlockDate != null &&
+                DateTime.now().toUtc().isBefore(unlockDate)));
 
     if (configAsync.isLoading && !_configLoaded) {
       return const Scaffold(
@@ -126,6 +132,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         priceSource: settings.priceSource,
                         maxBuyPrice: settings.maxBuyPrice,
                         minSellPrice: settings.minSellPrice,
+                        baselineLocked: baselineLocked,
+                        baselineUnlockDate: unlockDate,
                         onChargingChanged: notifier.setChargingEnabled,
                         onSellingChanged: notifier.setSellingEnabled,
                         onPvOnlySellingChanged: notifier.setPvOnlySelling,
@@ -303,6 +311,8 @@ class _EmsControlCard extends StatefulWidget {
     required this.priceSource,
     required this.maxBuyPrice,
     required this.minSellPrice,
+    required this.baselineLocked,
+    required this.baselineUnlockDate,
     required this.onChargingChanged,
     required this.onSellingChanged,
     required this.onPvOnlySellingChanged,
@@ -321,6 +331,8 @@ class _EmsControlCard extends StatefulWidget {
   final String priceSource;
   final double maxBuyPrice;
   final double? minSellPrice;
+  final bool baselineLocked;
+  final DateTime? baselineUnlockDate;
   final ValueChanged<bool> onChargingChanged;
   final ValueChanged<bool> onSellingChanged;
   final ValueChanged<bool> onPvOnlySellingChanged;
@@ -363,17 +375,49 @@ class _EmsControlCardState extends State<_EmsControlCard> {
         const SizedBox(height: 20),
 
         // ── Planning Mode ─────────────────────────────────────────────────────
-        _ToggleSetting(
-          icon: Icons.visibility_outlined,
-          iconColor: AppColors.primary,
-          label: 'Planning Mode',
-          detail: widget.planningOnly
-              ? 'Optimizer runs and generates schedule — no commands sent to inverter.'
-              : 'Live mode: optimizer controls the inverter directly.',
-          value: widget.planningOnly,
-          onChanged: widget.onPlanningOnlyChanged,
+        IgnorePointer(
+          ignoring: widget.baselineLocked,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: widget.baselineLocked ? 0.5 : 1.0,
+            child: _ToggleSetting(
+              icon: Icons.visibility_outlined,
+              iconColor: AppColors.primary,
+              label: 'Planning Mode',
+              detail: widget.planningOnly
+                  ? 'Optimizer runs and generates schedule — no commands sent to inverter.'
+                  : 'Live mode: optimizer controls the inverter directly.',
+              value: widget.planningOnly,
+              onChanged: widget.onPlanningOnlyChanged,
+            ),
+          ),
         ),
-        if (widget.planningOnly) ...[
+        if (widget.baselineLocked) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.06),
+              borderRadius: AppRadius.radiusMd,
+              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.25)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.hourglass_top_rounded, size: 14, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.baselineUnlockDate != null
+                      ? 'Collecting 7-day baseline — EMS control unlocks on '
+                        '${widget.baselineUnlockDate!.day.toString().padLeft(2, '0')}.'
+                        '${widget.baselineUnlockDate!.month.toString().padLeft(2, '0')}.'
+                        '${widget.baselineUnlockDate!.year}.'
+                      : 'Collecting 7-day baseline — EMS control unlocks soon.',
+                  style: tt.bodySmall?.copyWith(color: AppColors.secondary),
+                ),
+              ),
+            ]),
+          ),
+        ] else if (widget.planningOnly) ...[
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

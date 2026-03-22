@@ -73,10 +73,18 @@ class TelemetryEndpoint extends Endpoint {
     );
 
     // Look up the user's app config to check planning mode.
-    final config = await AppConfig.db.findFirstRow(
+    var config = await AppConfig.db.findFirstRow(
       session,
       where: (t) => t.userInfoId.equals(license.userId),
     );
+
+    // First telemetry ever — start the 7-day baseline collection period.
+    if (config != null && config.dataGatheringSince == null) {
+      config = await AppConfig.db.updateRow(
+        session,
+        config.copyWith(dataGatheringSince: DateTime.now().toUtc()),
+      );
+    }
 
     // Planning mode (or no config yet) → return empty response.
     // Add-on receives no commands and does nothing.
