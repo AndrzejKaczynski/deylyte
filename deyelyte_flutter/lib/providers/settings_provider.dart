@@ -97,7 +97,7 @@ class SettingsState {
       case 'pstryk':
         return pstryk; // requires active integration
       case 'rce':
-        return true; // public feed, always available
+        return priceTimeRanges.isNotEmpty; // requires at least one distribution charge range
       case 'fixed':
       case 'manual':
         return fixedBuyRatePln != null && fixedSellRatePln != null;

@@ -482,9 +482,11 @@ class _EmsControlCardState extends State<_EmsControlCard> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  widget.priceSource == 'pstryk'
-                      ? 'Connect your Pstryk account in the integrations section below to enable grid charging and selling.'
-                      : 'Enter fixed buy and sell rates in the Pricing Source card to enable grid charging and selling.',
+                  switch (widget.priceSource) {
+                    'pstryk' => 'Connect your Pstryk account in the integrations section below to enable grid charging and selling.',
+                    'rce' => 'Add at least one distribution charge range in the Pricing Source card to enable grid charging and selling.',
+                    _ => 'Enter fixed buy and sell rates in the Pricing Source card to enable grid charging and selling.',
+                  },
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
