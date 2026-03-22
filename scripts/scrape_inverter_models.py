@@ -47,6 +47,15 @@ _GITHUB_API = "https://api.github.com"
 _REPO       = "StephanJoubert/home_assistant_solarman"
 _DEFS_PATH  = "custom_components/solarman/inverter_definitions"
 
+# ── Manual register overrides ─────────────────────────────────────────────────
+# Registers confirmed on real hardware that the community YAML doesn't define
+# (e.g. pv3 on 2-string definitions, write-only control registers).
+# Key = modelId substring (case-insensitive), value = dict of register overrides.
+
+REGISTER_OVERRIDES: dict[str, dict[str, int]] = {
+    "sg04lp3": {"pv3Power": 674},
+}
+
 # ── Known control registers (manual, not in read-param YAML) ─────────────────
 # Add entries here as they are verified on real hardware.
 # Key = model name substring (case-insensitive), value = (chargeCmd, sellCmd).
@@ -131,8 +140,9 @@ def _raw_url(file_entry: dict) -> str:
 # ── Parser ────────────────────────────────────────────────────────────────────
 
 def _model_id(name: str) -> str:
-    """'SG04LP3-EU' → 'deye_sg04lp3_eu'"""
-    return "deye_" + name.lower().replace("-", "_").replace(" ", "_")
+    """'deye_sg04lp3' or 'SG04LP3-EU' → 'deye_sg04lp3_eu'"""
+    slug = name.lower().replace("-", "_").replace(" ", "_")
+    return slug if slug.startswith("deye_") else f"deye_{slug}"
 
 
 def parse_definition(raw_yaml: str, filename: str) -> RegisterMap | None:
@@ -145,14 +155,17 @@ def parse_definition(raw_yaml: str, filename: str) -> RegisterMap | None:
     if not isinstance(doc, dict):
         return None
 
-    model_name = doc.get("name") or filename.replace(".yaml", "")
+    # Some files have a top-level 'name', others don't — fall back to filename.
+    raw_name = doc.get("name") or filename.replace(".yaml", "")
+    # Humanise: 'deye_sg04lp3' → 'SG04LP3'
+    model_name = raw_name.replace("deye_", "").replace("_", " ").upper()
     rm = RegisterMap(
-        modelId=_model_id(model_name),
+        modelId=_model_id(raw_name),
         displayName=f"Deye {model_name}",
     )
 
-    # Walk all params → groups → items
-    for group in doc.get("params", []):
+    # Walk all parameters → groups → items
+    for group in doc.get("parameters", doc.get("params", [])):
         for item in group.get("items", []):
             name  = item.get("name", "")
             rule  = item.get("rule", 1)
@@ -168,9 +181,14 @@ def parse_definition(raw_yaml: str, filename: str) -> RegisterMap | None:
     if rm.regs.get("pv1Power") and rm.regs.get("pv2Power") and not rm.regs.get("pv3Power"):
         rm.regs["pv3Power"] = 0
 
+    # Apply manual register overrides (hardware-confirmed values)
+    for key_fragment, overrides in REGISTER_OVERRIDES.items():
+        if key_fragment in raw_name.lower():
+            rm.regs.update(overrides)
+
     # Apply known control registers
     for key_fragment, (charge, sell) in KNOWN_CONTROL_REGS.items():
-        if key_fragment in model_name.lower():
+        if key_fragment in raw_name.lower():
             rm.regs["chargeCmd"] = charge
             rm.regs["sellCmd"]   = sell
             rm.controlVerified   = key_fragment == "sg04lp3"
