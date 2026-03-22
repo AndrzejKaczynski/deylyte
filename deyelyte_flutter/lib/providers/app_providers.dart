@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:deyelyte_client/deyelyte_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart';
@@ -107,6 +109,34 @@ final latestTelemetryProvider = FutureProvider<DeviceTelemetry?>((ref) {
 /// Last 24 hours of telemetry, ordered oldest-first.
 final telemetryHistory24hProvider = FutureProvider<List<DeviceTelemetry>>((ref) {
   return ref.read(telemetryRepositoryProvider).getHistory(24);
+});
+
+/// PV energy produced today (kWh), integrated from telemetry samples since local midnight.
+final dailySolarYieldProvider = FutureProvider<double?>((ref) async {
+  final samples = await ref.watch(telemetryHistory24hProvider.future);
+  if (samples.isEmpty) return null;
+  final now = DateTime.now();
+  final midnight = DateTime(now.year, now.month, now.day);
+  final today = samples.where((s) => s.timestamp.toLocal().isAfter(midnight)).toList();
+  if (today.length < 2) return null;
+  double kwh = 0;
+  for (int i = 1; i < today.length; i++) {
+    final dt = today[i].timestamp.difference(today[i - 1].timestamp).inSeconds / 3600.0;
+    final avgW = (today[i].pvPowerW + today[i - 1].pvPowerW) / 2;
+    kwh += avgW * dt / 1000.0;
+  }
+  return kwh < 0 ? 0 : kwh;
+});
+
+/// The authenticated user's active license tier ('beta_free' | 'basic' | 'pro' | null).
+final userLicenseTierProvider = FutureProvider<String?>((ref) async {
+  try {
+    final raw = await ref.read(clientProvider).license.getUserLicense();
+    final data = jsonDecode(raw) as Map<String, dynamic>;
+    return data['tier'] as String?;
+  } catch (_) {
+    return null;
+  }
 });
 
 // ── Schedule ──────────────────────────────────────────────────────────────────

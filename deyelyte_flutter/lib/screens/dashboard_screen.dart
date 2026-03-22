@@ -197,6 +197,7 @@ class _KpiStrip extends ConsumerWidget {
     final soc = telemetry?.batterySOC;
     final pv = telemetry?.pvPowerW;
     final grid = telemetry?.gridPowerW;
+    final dailyKwh = ref.watch(dailySolarYieldProvider).valueOrNull;
 
     final socPct = soc != null ? '${soc.toStringAsFixed(0)}%' : '--';
     final socSub = soc != null
@@ -239,10 +240,19 @@ class _KpiStrip extends ConsumerWidget {
           iconColor: AppColors.primary,
         ),
         _KpiItem(
-          title: 'Solar Yield',
+          title: 'Solar Power',
           value: pvKw,
           subtitle: 'Now',
           icon: Icons.wb_sunny_rounded,
+          iconColor: AppColors.tertiary,
+        ),
+        _KpiItem(
+          title: 'Solar Today',
+          value: dailyKwh != null
+              ? '${dailyKwh.toStringAsFixed(1)} kWh'
+              : '--',
+          subtitle: 'Today',
+          icon: Icons.solar_power_rounded,
           iconColor: AppColors.tertiary,
         ),
       ];
