@@ -13,8 +13,9 @@ class DeviceEndpoint extends Endpoint {
   /// Returns add-on connection status.
   ///
   /// Response fields:
-  ///   connected       — true when telemetry received within last 5 minutes
-  ///   lastSeenAt      — ISO8601 UTC of most recent telemetry, or null
+  ///   connected         — true when telemetry received within 3× the device's
+  ///                       configured sync interval (i.e. 3 missed polls = offline)
+  ///   lastSeenAt        — ISO8601 UTC of most recent telemetry, or null
   ///   inverterReachable — true if last telemetry had valid inverter state
   Future<String> getStatus(Session session) async {
     final userInfoId = _uid(session);
@@ -34,8 +35,11 @@ class DeviceEndpoint extends Endpoint {
 
     final now = DateTime.now().toUtc();
     final lastSeen = device.lastSeenAt;
+    // Offline after 3 consecutive missed polls.
+    final interval = device.syncIntervalSeconds ?? 300;
     final connected =
-        lastSeen != null && now.difference(lastSeen).inMinutes < 5;
+        lastSeen != null &&
+        now.difference(lastSeen).inSeconds < interval * 3;
 
     return jsonEncode({
       'connected': connected,

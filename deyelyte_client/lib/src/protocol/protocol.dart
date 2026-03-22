@@ -24,11 +24,12 @@ import 'optimization_frame.dart' as _i11;
 import 'outage_reserve.dart' as _i12;
 import 'price_time_range.dart' as _i13;
 import 'pv_forecast.dart' as _i14;
-import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i15;
-import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i16;
-import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i17;
-import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i18;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i19;
+import 'tier_sync_config.dart' as _i15;
+import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i16;
+import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i17;
+import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i18;
+import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i19;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i20;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'device.dart';
@@ -42,6 +43,7 @@ export 'optimization_frame.dart';
 export 'outage_reserve.dart';
 export 'price_time_range.dart';
 export 'pv_forecast.dart';
+export 'tier_sync_config.dart';
 export 'client.dart';
 
 class Protocol extends _i1.SerializationManager {
@@ -117,6 +119,9 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i14.PvForecast) {
       return _i14.PvForecast.fromJson(data) as T;
     }
+    if (t == _i15.TierSyncConfig) {
+      return _i15.TierSyncConfig.fromJson(data) as T;
+    }
     if (t == _i1.getType<_i2.AdminUser?>()) {
       return (data != null ? _i2.AdminUser.fromJson(data) : null) as T;
     }
@@ -157,38 +162,41 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i14.PvForecast?>()) {
       return (data != null ? _i14.PvForecast.fromJson(data) : null) as T;
     }
+    if (t == _i1.getType<_i15.TierSyncConfig?>()) {
+      return (data != null ? _i15.TierSyncConfig.fromJson(data) : null) as T;
+    }
     if (t == Map<String, bool>) {
       return (data as Map).map(
             (k, v) => MapEntry(deserialize<String>(k), deserialize<bool>(v)),
           )
           as T;
     }
-    if (t == List<_i15.OptimizationFrame>) {
+    if (t == List<_i16.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i15.OptimizationFrame>(e))
+              .map((e) => deserialize<_i16.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i16.OutageReserve>) {
+    if (t == List<_i17.OutageReserve>) {
       return (data as List)
-              .map((e) => deserialize<_i16.OutageReserve>(e))
+              .map((e) => deserialize<_i17.OutageReserve>(e))
               .toList()
           as T;
     }
-    if (t == List<_i17.PriceTimeRange>) {
+    if (t == List<_i18.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i17.PriceTimeRange>(e))
+              .map((e) => deserialize<_i18.PriceTimeRange>(e))
               .toList()
           as T;
     }
-    if (t == List<_i18.DeviceTelemetry>) {
+    if (t == List<_i19.DeviceTelemetry>) {
       return (data as List)
-              .map((e) => deserialize<_i18.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i19.DeviceTelemetry>(e))
               .toList()
           as T;
     }
     try {
-      return _i19.Protocol().deserialize<T>(data, t);
+      return _i20.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -208,6 +216,7 @@ class Protocol extends _i1.SerializationManager {
       _i12.OutageReserve => 'OutageReserve',
       _i13.PriceTimeRange => 'PriceTimeRange',
       _i14.PvForecast => 'PvForecast',
+      _i15.TierSyncConfig => 'TierSyncConfig',
       _ => null,
     };
   }
@@ -248,8 +257,10 @@ class Protocol extends _i1.SerializationManager {
         return 'PriceTimeRange';
       case _i14.PvForecast():
         return 'PvForecast';
+      case _i15.TierSyncConfig():
+        return 'TierSyncConfig';
     }
-    className = _i19.Protocol().getClassNameForObject(data);
+    className = _i20.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
@@ -301,9 +312,12 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'PvForecast') {
       return deserialize<_i14.PvForecast>(data['data']);
     }
+    if (dataClassName == 'TierSyncConfig') {
+      return deserialize<_i15.TierSyncConfig>(data['data']);
+    }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i19.Protocol().deserializeByClassName(data);
+      return _i20.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -318,7 +332,7 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i19.Protocol().mapRecordToJson(record);
+      return _i20.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

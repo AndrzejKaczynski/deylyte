@@ -12,6 +12,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
   serverpod_flutter: 3.4.4
   deyelyte_client:
     path: ../deyelyte_client

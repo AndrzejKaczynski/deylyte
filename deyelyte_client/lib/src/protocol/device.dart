@@ -20,6 +20,7 @@ abstract class Device implements _i1.SerializableModel {
     required this.licenseKey,
     this.lastSeenAt,
     required this.lastInverterOk,
+    this.syncIntervalSeconds,
     required this.createdAt,
   });
 
@@ -30,6 +31,7 @@ abstract class Device implements _i1.SerializableModel {
     required String licenseKey,
     DateTime? lastSeenAt,
     required bool lastInverterOk,
+    int? syncIntervalSeconds,
     required DateTime createdAt,
   }) = _DeviceImpl;
 
@@ -45,6 +47,7 @@ abstract class Device implements _i1.SerializableModel {
       lastInverterOk: _i1.BoolJsonExtension.fromJson(
         jsonSerialization['lastInverterOk'],
       ),
+      syncIntervalSeconds: jsonSerialization['syncIntervalSeconds'] as int?,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -66,6 +69,8 @@ abstract class Device implements _i1.SerializableModel {
 
   bool lastInverterOk;
 
+  int? syncIntervalSeconds;
+
   DateTime createdAt;
 
   /// Returns a shallow copy of this [Device]
@@ -78,6 +83,7 @@ abstract class Device implements _i1.SerializableModel {
     String? licenseKey,
     DateTime? lastSeenAt,
     bool? lastInverterOk,
+    int? syncIntervalSeconds,
     DateTime? createdAt,
   });
   @override
@@ -90,6 +96,8 @@ abstract class Device implements _i1.SerializableModel {
       'licenseKey': licenseKey,
       if (lastSeenAt != null) 'lastSeenAt': lastSeenAt?.toJson(),
       'lastInverterOk': lastInverterOk,
+      if (syncIntervalSeconds != null)
+        'syncIntervalSeconds': syncIntervalSeconds,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -110,6 +118,7 @@ class _DeviceImpl extends Device {
     required String licenseKey,
     DateTime? lastSeenAt,
     required bool lastInverterOk,
+    int? syncIntervalSeconds,
     required DateTime createdAt,
   }) : super._(
          id: id,
@@ -118,6 +127,7 @@ class _DeviceImpl extends Device {
          licenseKey: licenseKey,
          lastSeenAt: lastSeenAt,
          lastInverterOk: lastInverterOk,
+         syncIntervalSeconds: syncIntervalSeconds,
          createdAt: createdAt,
        );
 
@@ -132,6 +142,7 @@ class _DeviceImpl extends Device {
     String? licenseKey,
     Object? lastSeenAt = _Undefined,
     bool? lastInverterOk,
+    Object? syncIntervalSeconds = _Undefined,
     DateTime? createdAt,
   }) {
     return Device(
@@ -141,6 +152,9 @@ class _DeviceImpl extends Device {
       licenseKey: licenseKey ?? this.licenseKey,
       lastSeenAt: lastSeenAt is DateTime? ? lastSeenAt : this.lastSeenAt,
       lastInverterOk: lastInverterOk ?? this.lastInverterOk,
+      syncIntervalSeconds: syncIntervalSeconds is int?
+          ? syncIntervalSeconds
+          : this.syncIntervalSeconds,
       createdAt: createdAt ?? this.createdAt,
     );
   }

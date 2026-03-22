@@ -16,11 +16,9 @@ options:
   api_url: "https://api.deylyte.com"
   dongle_ip: ""
   dongle_serial: ""
-  telemetry_interval_seconds: 300
 
 schema:
   license_key: str
   api_url: str
   dongle_ip: str
   dongle_serial: str
-  telemetry_interval_seconds: int

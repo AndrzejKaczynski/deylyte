@@ -16,6 +16,7 @@ import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/admin/admin_licenses_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/admin_devices_screen.dart';
+import 'screens/admin/admin_sync_settings_screen.dart';
 import 'providers/admin_provider.dart';
 import 'providers/app_providers.dart';
 
@@ -104,6 +105,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/admin/devices',
             builder: (_, __) => const AdminDevicesScreen(),
+          ),
+          GoRoute(
+            path: '/admin/sync-settings',
+            builder: (_, __) => const AdminSyncSettingsScreen(),
           ),
         ],
       ),

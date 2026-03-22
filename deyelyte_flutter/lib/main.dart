@@ -1,6 +1,7 @@
 import 'package:deyelyte_client/deyelyte_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:serverpod_auth_shared_flutter/serverpod_auth_shared_flutter.dart';
 
 import 'config/app_config.dart';
@@ -9,6 +10,7 @@ import 'providers/app_providers.dart';
 import 'router.dart';
 
 void main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   final client = Client(Env.serverpodUrl)

@@ -13,9 +13,15 @@ class TelemetryEndpoint extends Endpoint {
   /// Auth: the add-on provides its licenseKey as a plain parameter.
   ///
   /// On success:
-  ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk)
+  ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk + syncIntervalSeconds)
   ///   - Inserts a DeviceTelemetry row
-  /// Returns JSON: `{}` in planning mode, `{"commands": {...}}` in live mode.
+  ///
+  /// Returns JSON:
+  ///   { "stop": true }                      — license expired/deactivated; add-on must stop
+  ///   { }                                   — planning mode, no commands
+  ///   { "commands": {...} }                 — live mode commands
+  ///   Any response may also include:
+  ///   { "syncIntervalSeconds": N }          — if the interval has changed, add-on must update
   Future<String> ingest(
     Session session,
     String licenseKey,
@@ -29,15 +35,35 @@ class TelemetryEndpoint extends Endpoint {
   ) async {
     final license = await LicenseKey.db.findFirstRow(
       session,
-      where: (t) => t.licenseKey.equals(licenseKey) & t.isActive.equals(true),
+      where: (t) => t.licenseKey.equals(licenseKey),
     );
-    if (license == null) return jsonEncode({}); // silently reject invalid keys
+
+    // Unknown key — silently reject.
+    if (license == null) return jsonEncode({});
+
+    // Expired or deactivated — tell the add-on to stop.
+    final now = DateTime.now().toUtc();
+    final expired =
+        license.expiresAt != null && license.expiresAt!.isBefore(now);
+    if (!license.isActive || expired) {
+      return jsonEncode({'stop': true});
+    }
+
+    // Look up this tier's configured sync interval.
+    final syncConfig = await TierSyncConfig.db.findFirstRow(
+      session,
+      where: (t) => t.tier.equals(license.tier),
+    );
+    final expectedInterval = syncConfig?.syncIntervalSeconds ?? 300;
 
     // Upsert Device row.
     final existing = await Device.db.findFirstRow(
       session,
       where: (t) => t.hashedSerial.equals(deviceId),
     );
+
+    final intervalChanged = existing?.syncIntervalSeconds != expectedInterval;
+
     if (existing == null) {
       await Device.db.insertRow(
         session,
@@ -47,13 +73,18 @@ class TelemetryEndpoint extends Endpoint {
           licenseKey: licenseKey,
           lastSeenAt: timestamp,
           lastInverterOk: true,
+          syncIntervalSeconds: expectedInterval,
           createdAt: DateTime.now().toUtc(),
         ),
       );
     } else {
       await Device.db.updateRow(
         session,
-        existing.copyWith(lastSeenAt: timestamp, lastInverterOk: true),
+        existing.copyWith(
+          lastSeenAt: timestamp,
+          lastInverterOk: true,
+          syncIntervalSeconds: expectedInterval,
+        ),
       );
     }
 
@@ -86,20 +117,21 @@ class TelemetryEndpoint extends Endpoint {
       );
     }
 
-    // Planning mode (or no config yet) → return empty response.
-    // Add-on receives no commands and does nothing.
+    // Build response — always include syncIntervalSeconds if it changed.
+    final extra = intervalChanged ? {'syncIntervalSeconds': expectedInterval} : <String, dynamic>{};
+
+    // Planning mode (or no config yet) → return empty response (+ interval if changed).
     if (config == null || config.planningOnly) {
-      return jsonEncode({});
+      return jsonEncode({...extra});
     }
 
-    // Live mode → return current commands derived from config.
-    // The optimizer will eventually populate a schedule table; for now we
-    // derive simple on/off commands directly from the user's settings.
+    // Live mode → return current commands (+ interval if changed).
     return jsonEncode({
       'commands': {
         'chargeFromGrid': config.chargingEnabled,
         'sellToGrid': config.sellingEnabled,
       },
+      ...extra,
     });
   }
 
@@ -121,16 +153,27 @@ class TelemetryEndpoint extends Endpoint {
     );
   }
 
-  /// Returns up to [hours] hours of telemetry history for the authenticated user.
+  /// Returns telemetry history for the authenticated user.
+  /// The window is capped server-side by tier:
+  ///   pro / beta_free → 90 days
+  ///   basic           → 30 days
+  /// [hours] is the client's requested window; the server enforces the cap.
   Future<List<DeviceTelemetry>> getHistory(Session session, int hours) async {
     final uid = _uid(session);
     if (uid == null) return [];
-    final cutoff =
-        DateTime.now().toUtc().subtract(Duration(hours: hours));
+
+    // Determine tier cap.
+    final license = await LicenseKey.db.findFirstRow(
+      session,
+      where: (t) => t.userId.equals(uid) & t.isActive.equals(true),
+    );
+    final maxDays = (license?.tier == 'basic') ? 30 : 90;
+    final cappedHours = hours.clamp(1, maxDays * 24);
+
+    final cutoff = DateTime.now().toUtc().subtract(Duration(hours: cappedHours));
     return DeviceTelemetry.db.find(
       session,
-      where: (t) =>
-          t.userId.equals(uid) & (t.timestamp >= cutoff),
+      where: (t) => t.userId.equals(uid) & (t.timestamp >= cutoff),
       orderBy: (t) => t.timestamp,
     );
   }

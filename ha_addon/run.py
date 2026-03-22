@@ -2,10 +2,15 @@
 """
 DeyLyte EMS Add-on
 ------------------
-1. Reads inverter state via SolarmanV5 every TELEMETRY_INTERVAL seconds.
-2. POSTs telemetry to the DeyLyte backend.
-3. Receives schedule + planning mode flag in the response.
-4. Applies inverter commands only when NOT in planning mode.
+1. On startup: validates license with server → receives sync interval.
+2. Captures current inverter control-register state as baseline for revert.
+3. Reads inverter state via SolarmanV5 every syncInterval seconds.
+4. POSTs telemetry to the DeyLyte backend.
+5. Receives schedule + planning mode flag in the response.
+6. Applies inverter commands only when NOT in planning mode.
+7. If the response includes a new syncIntervalSeconds, stores it and adapts.
+8. If the response includes stop=true (license expired/deactivated), reverts
+   inverter to baseline and halts telemetry collection.
 
 Traffic spreading: startup is delayed by a deterministic jitter derived from
 the license key so that all devices do NOT hit the backend at the same time.
@@ -29,6 +34,10 @@ logging.basicConfig(
 )
 log = logging.getLogger("deylyte")
 
+_SYNC_CONFIG_PATH    = "/data/sync_config.json"
+_INITIAL_STATE_PATH  = "/data/initial_inverter_state.json"
+_DEFAULT_INTERVAL    = 300  # fallback when server unreachable at startup
+
 # ── Config ────────────────────────────────────────────────────────────────────
 
 def load_config() -> dict:
@@ -41,7 +50,6 @@ def load_config() -> dict:
             "api_url": os.environ.get("API_URL", "http://localhost:8080"),
             "dongle_ip": os.environ.get("DONGLE_IP", ""),
             "dongle_serial": os.environ.get("DONGLE_SERIAL", ""),
-            "telemetry_interval_seconds": int(os.environ.get("TELEMETRY_INTERVAL", "300")),
         }
     with open(options_path) as f:
         return json.load(f)
@@ -53,6 +61,22 @@ def validate_config(cfg: dict) -> bool:
         log.error("Missing required config: %s", ", ".join(missing))
         return False
     return True
+
+
+# ── Sync interval (server-controlled) ────────────────────────────────────────
+
+def load_sync_interval() -> int:
+    """Read stored sync interval from disk, or return the default."""
+    try:
+        with open(_SYNC_CONFIG_PATH) as f:
+            return int(json.load(f).get("syncIntervalSeconds", _DEFAULT_INTERVAL))
+    except Exception:
+        return _DEFAULT_INTERVAL
+
+
+def save_sync_interval(seconds: int) -> None:
+    with open(_SYNC_CONFIG_PATH, "w") as f:
+        json.dump({"syncIntervalSeconds": seconds}, f)
 
 
 # ── Jitter ────────────────────────────────────────────────────────────────────
@@ -109,6 +133,18 @@ def read_inverter(dongle_ip: str, dongle_serial: int) -> dict | None:
         return None
 
 
+def read_inverter_control_state(dongle_ip: str, dongle_serial: int) -> dict | None:
+    """Read the current charge/sell register states — saved as revert baseline."""
+    try:
+        s = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
+        charge = s.read_holding_registers(_REG_CHARGE_CMD, 1)[0]
+        sell   = s.read_holding_registers(_REG_SELL_CMD, 1)[0]
+        return {"chargeFromGrid": bool(charge), "sellToGrid": bool(sell)}
+    except Exception as exc:
+        log.warning("Failed to read inverter control state: %s", exc)
+        return None
+
+
 def apply_schedule(dongle_ip: str, dongle_serial: int, commands: dict) -> None:
     """Write charge/sell commands to the inverter via holding registers."""
     try:
@@ -122,7 +158,37 @@ def apply_schedule(dongle_ip: str, dongle_serial: int, commands: dict) -> None:
         log.warning("Failed to apply schedule: %s", exc)
 
 
+def revert_inverter(dongle_ip: str, dongle_serial: int) -> None:
+    """Restore the inverter to the state captured at add-on startup."""
+    try:
+        with open(_INITIAL_STATE_PATH) as f:
+            baseline = json.load(f)
+        log.info("Reverting inverter to baseline: %s", baseline)
+        apply_schedule(dongle_ip, dongle_serial, baseline)
+    except Exception as exc:
+        log.warning("Failed to revert inverter (no baseline saved?): %s", exc)
+
+
 # ── Backend ───────────────────────────────────────────────────────────────────
+
+def fetch_license(api_url: str, license_key: str) -> dict:
+    """
+    Call license/validate on the server to obtain the sync interval assigned
+    to this license tier. Returns the parsed response dict, or {} on failure.
+    """
+    try:
+        resp = requests.post(
+            f"{api_url}/license/validate",
+            json={"licenseKey": license_key},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        raw = resp.json()
+        return raw if isinstance(raw, dict) else json.loads(raw)
+    except Exception as exc:
+        log.warning("Failed to fetch license info: %s", exc)
+        return {}
+
 
 def post_telemetry(api_url: str, license_key: str, device_id: str, telemetry: dict) -> dict | None:
     payload = {
@@ -154,14 +220,39 @@ def main() -> None:
     if not validate_config(cfg):
         sys.exit(1)
 
-    license_key = cfg["license_key"]
-    api_url     = cfg["api_url"].rstrip("/")
-    dongle_ip   = cfg["dongle_ip"]
+    license_key   = cfg["license_key"]
+    api_url       = cfg["api_url"].rstrip("/")
+    dongle_ip     = cfg["dongle_ip"]
     dongle_serial = int(cfg["dongle_serial"])
-    interval    = int(cfg["telemetry_interval_seconds"])
 
     # Deterministic device ID — hash of serial so we don't expose it
     device_id = hashlib.sha256(str(dongle_serial).encode()).hexdigest()[:16]
+
+    # ── Step 1: validate license + fetch server-assigned sync interval ────────
+    log.info("Validating license with server…")
+    license_info = fetch_license(api_url, license_key)
+    if license_info.get("valid") is False:
+        log.error("License rejected by server: %s", license_info.get("reason", "unknown"))
+        sys.exit(1)
+
+    if "syncIntervalSeconds" in license_info:
+        interval = license_info["syncIntervalSeconds"]
+        save_sync_interval(interval)
+        log.info("Sync interval from server: %ds", interval)
+    else:
+        interval = load_sync_interval()
+        log.info("Using stored sync interval: %ds", interval)
+
+    # ── Step 2: capture baseline inverter state for later revert ─────────────
+    if not os.path.exists(_INITIAL_STATE_PATH):
+        log.info("Capturing initial inverter control state…")
+        baseline = read_inverter_control_state(dongle_ip, dongle_serial)
+        if baseline:
+            with open(_INITIAL_STATE_PATH, "w") as f:
+                json.dump(baseline, f)
+            log.info("Baseline saved: %s", baseline)
+        else:
+            log.warning("Could not read inverter baseline — revert will be unavailable")
 
     log.info("DeyLyte EMS starting — device_id=%s, interval=%ds, api=%s",
              device_id, interval, api_url)
@@ -171,6 +262,7 @@ def main() -> None:
     log.info("Startup jitter: %ds (spreads load across %ds window)", jitter, interval)
     time.sleep(jitter)
 
+    # ── Step 3: main telemetry loop ───────────────────────────────────────────
     while True:
         loop_start = time.monotonic()
 
@@ -188,10 +280,28 @@ def main() -> None:
             telemetry["batteryPowerW"],
         )
 
-        # 2. POST to backend; receive commands if user is in live mode
+        # 2. POST to backend; receive commands / control signals
         response = post_telemetry(api_url, license_key, device_id, telemetry)
 
-        # 3. Apply commands only if backend included them (live mode).
+        # 3. Handle stop signal — license expired or deactivated
+        if (response or {}).get("stop"):
+            log.warning("Server signalled stop (license expired or deactivated). "
+                        "Reverting inverter and halting telemetry.")
+            revert_inverter(dongle_ip, dongle_serial)
+            # Sleep indefinitely — operator must fix the license situation
+            # and restart the add-on.
+            while True:
+                time.sleep(3600)
+
+        # 4. Handle sync interval update from server
+        if response and "syncIntervalSeconds" in response:
+            new_interval = int(response["syncIntervalSeconds"])
+            if new_interval != interval:
+                log.info("Sync interval updated by server: %ds → %ds", interval, new_interval)
+                interval = new_interval
+                save_sync_interval(interval)
+
+        # 5. Apply commands only if backend included them (live mode).
         #    No commands in response = planning mode → do nothing.
         commands = (response or {}).get("commands")
         if commands:

@@ -9,9 +9,14 @@ class HistoryScreen extends ConsumerWidget {
 
   static const _ranges = ['7 days', '30 days', '90 days'];
 
+  /// Tiers that can see 90 days of history.
+  static const _extendedHistoryTiers = {'pro', 'beta_free'};
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedRange = ref.watch(historyRangeProvider);
+    final tier = ref.watch(userLicenseTierProvider).valueOrNull;
+    final hasExtendedHistory = _extendedHistoryTiers.contains(tier);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
@@ -25,8 +30,12 @@ class HistoryScreen extends ConsumerWidget {
               _HistoryHeader(
                 selectedRange: selectedRange,
                 ranges: _ranges,
-                onRangeChanged: (i) =>
-                    ref.read(historyRangeProvider.notifier).state = i,
+                hasExtendedHistory: hasExtendedHistory,
+                onRangeChanged: (i) {
+                  // Prevent basic users from selecting 90 days.
+                  if (i == 2 && !hasExtendedHistory) return;
+                  ref.read(historyRangeProvider.notifier).state = i;
+                },
               ),
               const SizedBox(height: AppSpacing.sp4),
               // KPI row
@@ -61,10 +70,12 @@ class _HistoryHeader extends StatelessWidget {
   const _HistoryHeader({
     required this.selectedRange,
     required this.ranges,
+    required this.hasExtendedHistory,
     required this.onRangeChanged,
   });
   final int selectedRange;
   final List<String> ranges;
+  final bool hasExtendedHistory;
   final ValueChanged<int> onRangeChanged;
 
   @override
@@ -91,20 +102,37 @@ class _HistoryHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: ranges.asMap().entries.map((e) {
               final active = selectedRange == e.key;
-              return GestureDetector(
-                onTap: () => onRangeChanged(e.key),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: active ? AppColors.surfaceContainerHighest : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                  child: Text(
-                    e.value,
-                    style: tt.labelMedium?.copyWith(
-                      color: active ? AppColors.primary : AppColors.outline,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              final locked = e.key == 2 && !hasExtendedHistory;
+              return Tooltip(
+                message: locked ? 'Available on Pro plan' : '',
+                child: GestureDetector(
+                  onTap: () => onRangeChanged(e.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: active ? AppColors.surfaceContainerHighest : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (locked) ...[
+                          const Icon(Icons.lock_rounded, size: 11, color: AppColors.outline),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          e.value,
+                          style: tt.labelMedium?.copyWith(
+                            color: locked
+                                ? AppColors.outline.withValues(alpha: 0.5)
+                                : active
+                                    ? AppColors.primary
+                                    : AppColors.outline,
+                            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
