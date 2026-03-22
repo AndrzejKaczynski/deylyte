@@ -87,6 +87,29 @@ class EndpointAdmin extends _i1.EndpointRef {
     'listDevices',
     {},
   );
+
+  /// Returns all tier permission configurations (JSON string).
+  _i2.Future<String> listTierSyncConfigs() => caller.callServerEndpoint<String>(
+    'admin',
+    'listTierSyncConfigs',
+    {},
+  );
+
+  /// Updates (or inserts) the permissions for the given [tier].
+  /// syncIntervalSeconds minimum is 300 s (logger hardware limitation).
+  _i2.Future<void> updateTierSyncConfig({
+    required String tier,
+    required int syncIntervalSeconds,
+    required int historyDurationDays,
+  }) => caller.callServerEndpoint<void>(
+    'admin',
+    'updateTierSyncConfig',
+    {
+      'tier': tier,
+      'syncIntervalSeconds': syncIntervalSeconds,
+      'historyDurationDays': historyDurationDays,
+    },
+  );
 }
 
 /// {@category Endpoint}
@@ -215,8 +238,9 @@ class EndpointDevice extends _i1.EndpointRef {
   /// Returns add-on connection status.
   ///
   /// Response fields:
-  ///   connected       — true when telemetry received within last 5 minutes
-  ///   lastSeenAt      — ISO8601 UTC of most recent telemetry, or null
+  ///   connected         — true when telemetry received within 3× the device's
+  ///                       configured sync interval (i.e. 3 missed polls = offline)
+  ///   lastSeenAt        — ISO8601 UTC of most recent telemetry, or null
   ///   inverterReachable — true if last telemetry had valid inverter state
   _i2.Future<String> getStatus() => caller.callServerEndpoint<String>(
     'device',
@@ -293,7 +317,8 @@ class EndpointHistory extends _i1.EndpointRef {
 }
 
 /// License key validation. Called during onboarding (user is authenticated
-/// but license not yet verified). Also called by the HA add-on on startup.
+/// but license not yet verified). Also called by the HA add-on on startup
+/// to obtain the server-assigned sync interval.
 /// {@category Endpoint}
 class EndpointLicense extends _i1.EndpointRef {
   EndpointLicense(_i1.EndpointCaller caller) : super(caller);
@@ -304,15 +329,28 @@ class EndpointLicense extends _i1.EndpointRef {
   /// Validates a license key and associates it with the authenticated user.
   ///
   /// Returns:
-  ///   valid  — bool
-  ///   tier   — String? ('beta_free' | 'basic' | 'pro') when valid
-  ///   reason — String? human-readable denial reason when invalid
+  ///   valid               — bool
+  ///   tier                — String? ('beta_free' | 'basic' | 'pro') when valid
+  ///   syncIntervalSeconds — int? server-assigned poll interval when valid
+  ///   reason              — String? human-readable denial reason when invalid
   _i2.Future<String> validate(String licenseKey) =>
       caller.callServerEndpoint<String>(
         'license',
         'validate',
         {'licenseKey': licenseKey},
       );
+
+  /// Returns the active license info for the authenticated user.
+  /// Used by the Flutter app to determine feature availability (e.g. history range).
+  ///
+  /// Returns:
+  ///   tier      — String ('beta_free' | 'basic' | 'pro'), or null if no active license
+  ///   expiresAt — ISO8601 UTC expiry date, or null if never expires
+  _i2.Future<String> getUserLicense() => caller.callServerEndpoint<String>(
+    'license',
+    'getUserLicense',
+    {},
+  );
 }
 
 /// {@category Endpoint}
@@ -507,9 +545,15 @@ class EndpointTelemetry extends _i1.EndpointRef {
   /// Auth: the add-on provides its licenseKey as a plain parameter.
   ///
   /// On success:
-  ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk)
+  ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk + syncIntervalSeconds)
   ///   - Inserts a DeviceTelemetry row
-  /// Returns JSON: `{}` in planning mode, `{"commands": {...}}` in live mode.
+  ///
+  /// Returns JSON:
+  ///   { "stop": true }                      — license expired/deactivated; add-on must stop
+  ///   { }                                   — planning mode, no commands
+  ///   { "commands": {...} }                 — live mode commands
+  ///   Any response may also include:
+  ///   { "syncIntervalSeconds": N }          — if the interval has changed, add-on must update
   _i2.Future<String> ingest(
     String licenseKey,
     String deviceId,
@@ -543,7 +587,11 @@ class EndpointTelemetry extends _i1.EndpointRef {
         {},
       );
 
-  /// Returns up to [hours] hours of telemetry history for the authenticated user.
+  /// Returns telemetry history for the authenticated user.
+  /// The window is capped server-side by tier:
+  ///   pro / beta_free → 90 days
+  ///   basic           → 30 days
+  /// [hours] is the client's requested window; the server enforces the cap.
   _i2.Future<List<_i7.DeviceTelemetry>> getHistory(int hours) =>
       caller.callServerEndpoint<List<_i7.DeviceTelemetry>>(
         'telemetry',

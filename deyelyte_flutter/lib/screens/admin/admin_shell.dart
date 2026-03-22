@@ -59,6 +59,12 @@ class AdminShell extends StatelessWidget {
                   route: '/admin/devices',
                   active: loc.startsWith('/admin/devices'),
                 ),
+                _NavItem(
+                  icon: Icons.tune_rounded,
+                  label: 'Permissions',
+                  route: '/admin/sync-settings',
+                  active: loc.startsWith('/admin/sync-settings'),
+                ),
                 const Spacer(),
                 const _NavItem(
                   icon: Icons.arrow_back_rounded,

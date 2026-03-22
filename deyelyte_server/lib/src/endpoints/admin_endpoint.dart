@@ -121,8 +121,9 @@ class AdminEndpoint extends Endpoint {
       } catch (_) {}
 
       final lastSeen = device?.lastSeenAt;
+      final interval = device?.syncIntervalSeconds ?? 300;
       final connected = lastSeen != null &&
-          DateTime.now().toUtc().difference(lastSeen).inMinutes < 5;
+          DateTime.now().toUtc().difference(lastSeen).inSeconds < interval * 3;
 
       result.add({
         'id': u.id,
@@ -163,17 +164,71 @@ class AdminEndpoint extends Endpoint {
           ? null
           : DateTime.now().toUtc().difference(d.lastSeenAt!);
 
+      final dInterval = d.syncIntervalSeconds ?? 300;
       result.add({
         'id': d.id,
         'userId': d.userId,
         'userEmail': user?.email,
         'lastSeenAt': d.lastSeenAt?.toIso8601String(),
-        'connected': age != null && age.inMinutes < 5,
+        'connected': age != null && age.inSeconds < dInterval * 3,
         'inverterReachable': d.lastInverterOk,
+        'syncIntervalSeconds': dInterval,
         'createdAt': d.createdAt.toIso8601String(),
       });
     }
     return jsonEncode(result);
+  }
+
+  // ── Tier sync config ───────────────────────────────────────────────────────
+
+  /// Returns all tier permission configurations (JSON string).
+  Future<String> listTierSyncConfigs(Session session) async {
+    await _requireAdmin(session);
+    final configs = await TierSyncConfig.db.find(session);
+    return jsonEncode(configs
+        .map((c) => {
+              'id': c.id,
+              'tier': c.tier,
+              'syncIntervalSeconds': c.syncIntervalSeconds,
+              'historyDurationDays': c.historyDurationDays,
+            })
+        .toList());
+  }
+
+  /// Updates (or inserts) the permissions for the given [tier].
+  /// syncIntervalSeconds minimum is 300 s (logger hardware limitation).
+  Future<void> updateTierSyncConfig(
+    Session session, {
+    required String tier,
+    required int syncIntervalSeconds,
+    required int historyDurationDays,
+  }) async {
+    await _requireAdmin(session);
+
+    final clampedInterval = syncIntervalSeconds < 300 ? 300 : syncIntervalSeconds;
+    final clampedHistory = historyDurationDays < 1 ? 1 : historyDurationDays;
+    final existing = await TierSyncConfig.db.findFirstRow(
+      session,
+      where: (t) => t.tier.equals(tier),
+    );
+    if (existing == null) {
+      await TierSyncConfig.db.insertRow(
+        session,
+        TierSyncConfig(
+          tier: tier,
+          syncIntervalSeconds: clampedInterval,
+          historyDurationDays: clampedHistory,
+        ),
+      );
+    } else {
+      await TierSyncConfig.db.updateRow(
+        session,
+        existing.copyWith(
+          syncIntervalSeconds: clampedInterval,
+          historyDurationDays: clampedHistory,
+        ),
+      );
+    }
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

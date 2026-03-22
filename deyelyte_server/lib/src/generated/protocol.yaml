@@ -5,6 +5,8 @@ admin:
   - setLicenseKeyActive:
   - listUsers:
   - listDevices:
+  - listTierSyncConfigs:
+  - updateTierSyncConfig:
 appConfig:
   - getConfig:
   - saveConfig:
@@ -29,6 +31,7 @@ history:
   - getEvents:
 license:
   - validate:
+  - getUserLicense:
 optimizer:
   - calculateAndStore:
   - getSchedule:

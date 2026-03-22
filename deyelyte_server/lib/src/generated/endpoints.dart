@@ -222,6 +222,47 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
               ),
         ),
+        'listTierSyncConfigs': _i1.MethodConnector(
+          name: 'listTierSyncConfigs',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .listTierSyncConfigs(session),
+        ),
+        'updateTierSyncConfig': _i1.MethodConnector(
+          name: 'updateTierSyncConfig',
+          params: {
+            'tier': _i1.ParameterDescription(
+              name: 'tier',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'syncIntervalSeconds': _i1.ParameterDescription(
+              name: 'syncIntervalSeconds',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'historyDurationDays': _i1.ParameterDescription(
+              name: 'historyDurationDays',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .updateTierSyncConfig(
+                    session,
+                    tier: params['tier'],
+                    syncIntervalSeconds: params['syncIntervalSeconds'],
+                    historyDurationDays: params['historyDurationDays'],
+                  ),
+        ),
       },
     );
     connectors['appConfig'] = _i1.EndpointConnector(
@@ -522,6 +563,16 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     params['licenseKey'],
                   ),
+        ),
+        'getUserLicense': _i1.MethodConnector(
+          name: 'getUserLicense',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['license'] as _i10.LicenseEndpoint)
+                  .getUserLicense(session),
         ),
       },
     );

@@ -26,10 +26,11 @@ import 'optimization_frame.dart' as _i13;
 import 'outage_reserve.dart' as _i14;
 import 'price_time_range.dart' as _i15;
 import 'pv_forecast.dart' as _i16;
-import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i17;
-import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i18;
-import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i19;
-import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i20;
+import 'tier_sync_config.dart' as _i17;
+import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i18;
+import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i19;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i20;
+import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i21;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'device.dart';
@@ -43,6 +44,7 @@ export 'optimization_frame.dart';
 export 'outage_reserve.dart';
 export 'price_time_range.dart';
 export 'pv_forecast.dart';
+export 'tier_sync_config.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
   Protocol._();
@@ -465,6 +467,12 @@ class Protocol extends _i1.SerializationManagerServer {
           columnType: _i2.ColumnType.boolean,
           isNullable: false,
           dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'syncIntervalSeconds',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: true,
+          dartType: 'int?',
         ),
         _i2.ColumnDefinition(
           name: 'createdAt',
@@ -1174,6 +1182,69 @@ class Protocol extends _i1.SerializationManagerServer {
       ],
       managed: true,
     ),
+    _i2.TableDefinition(
+      name: 'tier_sync_configs',
+      dartName: 'TierSyncConfig',
+      schema: 'public',
+      module: 'deyelyte',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'tier_sync_configs_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'tier',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'syncIntervalSeconds',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'historyDurationDays',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'tier_sync_configs_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'tier_sync_configs_tier_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'tier',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     ..._i3.Protocol.targetTableDefinitions,
     ..._i2.Protocol.targetTableDefinitions,
   ];
@@ -1244,6 +1315,9 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i16.PvForecast) {
       return _i16.PvForecast.fromJson(data) as T;
     }
+    if (t == _i17.TierSyncConfig) {
+      return _i17.TierSyncConfig.fromJson(data) as T;
+    }
     if (t == _i1.getType<_i4.AdminUser?>()) {
       return (data != null ? _i4.AdminUser.fromJson(data) : null) as T;
     }
@@ -1284,33 +1358,36 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i16.PvForecast?>()) {
       return (data != null ? _i16.PvForecast.fromJson(data) : null) as T;
     }
+    if (t == _i1.getType<_i17.TierSyncConfig?>()) {
+      return (data != null ? _i17.TierSyncConfig.fromJson(data) : null) as T;
+    }
     if (t == Map<String, bool>) {
       return (data as Map).map(
             (k, v) => MapEntry(deserialize<String>(k), deserialize<bool>(v)),
           )
           as T;
     }
-    if (t == List<_i17.OptimizationFrame>) {
+    if (t == List<_i18.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i17.OptimizationFrame>(e))
+              .map((e) => deserialize<_i18.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i18.OutageReserve>) {
+    if (t == List<_i19.OutageReserve>) {
       return (data as List)
-              .map((e) => deserialize<_i18.OutageReserve>(e))
+              .map((e) => deserialize<_i19.OutageReserve>(e))
               .toList()
           as T;
     }
-    if (t == List<_i19.PriceTimeRange>) {
+    if (t == List<_i20.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i19.PriceTimeRange>(e))
+              .map((e) => deserialize<_i20.PriceTimeRange>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.DeviceTelemetry>) {
+    if (t == List<_i21.DeviceTelemetry>) {
       return (data as List)
-              .map((e) => deserialize<_i20.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i21.DeviceTelemetry>(e))
               .toList()
           as T;
     }
@@ -1338,6 +1415,7 @@ class Protocol extends _i1.SerializationManagerServer {
       _i14.OutageReserve => 'OutageReserve',
       _i15.PriceTimeRange => 'PriceTimeRange',
       _i16.PvForecast => 'PvForecast',
+      _i17.TierSyncConfig => 'TierSyncConfig',
       _ => null,
     };
   }
@@ -1378,6 +1456,8 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'PriceTimeRange';
       case _i16.PvForecast():
         return 'PvForecast';
+      case _i17.TierSyncConfig():
+        return 'TierSyncConfig';
     }
     className = _i2.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -1435,6 +1515,9 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'PvForecast') {
       return deserialize<_i16.PvForecast>(data['data']);
     }
+    if (dataClassName == 'TierSyncConfig') {
+      return deserialize<_i17.TierSyncConfig>(data['data']);
+    }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
       return _i2.Protocol().deserializeByClassName(data);
@@ -1485,6 +1568,8 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i15.PriceTimeRange.t;
       case _i16.PvForecast:
         return _i16.PvForecast.t;
+      case _i17.TierSyncConfig:
+        return _i17.TierSyncConfig.t;
     }
     return null;
   }
