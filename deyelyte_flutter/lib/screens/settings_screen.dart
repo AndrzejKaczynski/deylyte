@@ -1102,7 +1102,6 @@ class _PriceSourcePicker extends StatelessWidget {
     ('pstryk', 'Pstryk'),
     ('rce', 'RCE'),
     ('fixed', 'Fixed'),
-    ('manual', 'Manual'),
   ];
 
   @override
@@ -1232,14 +1231,12 @@ class _PricingSourceCardState extends State<_PricingSourceCard> {
             'pstryk' => 'Hourly buy/sell prices from the Pstryk API.',
             'rce' =>
               'RCE wholesale market prices (PSE) plus per-range distribution charges.',
-            'manual' =>
-              'Manually entered fixed buy/sell rates. Identical to Fixed but without time ranges.',
             _ => 'Fixed buy/sell rates, optionally varied by time range.',
           },
           style: tt.bodySmall?.copyWith(color: AppColors.outline),
         ),
 
-        // ── Fixed / Manual: fallback rates ────────────────────────────────
+        // ── Fixed: fallback rates ──────────────────────────────────────────
         if (widget.priceSource == 'fixed' || widget.priceSource == 'manual') ...[
           const SizedBox(height: 16),
           const Divider(height: 1),
