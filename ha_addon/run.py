@@ -69,33 +69,40 @@ def startup_jitter(license_key: str, interval: int) -> int:
 
 # ── Inverter ──────────────────────────────────────────────────────────────────
 
-# SolarmanV5 register addresses for Deye Sun series
-# Adjust these if your inverter firmware uses different addresses.
-_REG_BATTERY_SOC    = 168   # % (0-100)
-_REG_PV_POWER       = 186   # W (total PV input)
-_REG_GRID_POWER     = 625   # W (positive = import from grid, negative = export to grid)
-_REG_LOAD_POWER     = 178   # W
-_REG_BATTERY_POWER  = 190   # W (positive = charging, negative = discharging)
-_REG_CHARGE_MODE    = 168   # used as a proxy; real charge cmd reg below
+# Holding register addresses for Deye SG04LP3 (confirmed working via FC3)
+# All reads use read_holding_registers (FC3) — Deye does not respond to FC4.
+_REG_BATTERY_SOC    = 588   # % (0-100)
+_REG_BATTERY_POWER  = 590   # W, signed int16 (positive = charging, negative = discharging)
+_REG_GRID_POWER     = 625   # W, signed int16 (positive = import from grid, negative = export)
+_REG_LOAD_POWER     = 653   # W
+_REG_PV1_POWER      = 672   # W (string 1)
+_REG_PV2_POWER      = 673   # W (string 2)
+_REG_PV3_POWER      = 674   # W (string 3, 0 if not present)
 _REG_CHARGE_CMD     = 240   # write: 1 = charge from grid, 0 = disable
 _REG_SELL_CMD       = 243   # write: 1 = sell to grid, 0 = disable
 
 
+def _s16(val: int) -> int:
+    """Convert unsigned 16-bit register value to signed int16."""
+    return val if val < 32768 else val - 65536
+
+
 def read_inverter(dongle_ip: str, dongle_serial: int) -> dict | None:
     try:
-        solarman = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
-        battery_soc   = solarman.read_input_register_formatted(_REG_BATTERY_SOC, 1)
-        pv_power      = solarman.read_input_register_formatted(_REG_PV_POWER, 1)
-        grid_power    = solarman.read_input_register_formatted(_REG_GRID_POWER, 1)
-        load_power    = solarman.read_input_register_formatted(_REG_LOAD_POWER, 1)
-        battery_power = solarman.read_input_register_formatted(_REG_BATTERY_POWER, 1)
-        solarman.disconnect()
+        s = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
+        soc  = s.read_holding_registers(_REG_BATTERY_SOC, 1)[0]
+        batt = _s16(s.read_holding_registers(_REG_BATTERY_POWER, 1)[0])
+        grid = _s16(s.read_holding_registers(_REG_GRID_POWER, 1)[0])
+        load = s.read_holding_registers(_REG_LOAD_POWER, 1)[0]
+        pv   = (s.read_holding_registers(_REG_PV1_POWER, 1)[0] +
+                s.read_holding_registers(_REG_PV2_POWER, 1)[0] +
+                s.read_holding_registers(_REG_PV3_POWER, 1)[0])
         return {
-            "batterySOC":    float(battery_soc),
-            "pvPowerW":      float(pv_power),
-            "gridPowerW":    float(grid_power),
-            "loadPowerW":    float(load_power),
-            "batteryPowerW": float(battery_power),
+            "batterySOC":    float(soc),
+            "pvPowerW":      float(pv),
+            "gridPowerW":    float(grid),
+            "loadPowerW":    float(load),
+            "batteryPowerW": float(batt),
         }
     except Exception as exc:
         log.warning("Failed to read inverter: %s", exc)
@@ -103,14 +110,13 @@ def read_inverter(dongle_ip: str, dongle_serial: int) -> dict | None:
 
 
 def apply_schedule(dongle_ip: str, dongle_serial: int, commands: dict) -> None:
-    """Write charge/sell commands to the inverter."""
+    """Write charge/sell commands to the inverter via holding registers."""
     try:
-        solarman = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
+        s = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
         if "chargeFromGrid" in commands:
-            solarman.write_holding_register(_REG_CHARGE_CMD, 1 if commands["chargeFromGrid"] else 0)
+            s.write_holding_register(_REG_CHARGE_CMD, 1 if commands["chargeFromGrid"] else 0)
         if "sellToGrid" in commands:
-            solarman.write_holding_register(_REG_SELL_CMD, 1 if commands["sellToGrid"] else 0)
-        solarman.disconnect()
+            s.write_holding_register(_REG_SELL_CMD, 1 if commands["sellToGrid"] else 0)
         log.info("Applied commands: %s", commands)
     except Exception as exc:
         log.warning("Failed to apply schedule: %s", exc)
@@ -133,7 +139,9 @@ def post_telemetry(api_url: str, license_key: str, device_id: str, telemetry: di
             timeout=10,
         )
         resp.raise_for_status()
-        return resp.json()
+        raw = resp.json()
+        # Serverpod double-encodes String return types — unwrap if needed
+        return raw if isinstance(raw, dict) else json.loads(raw)
     except Exception as exc:
         log.warning("Failed to POST telemetry: %s", exc)
         return None
