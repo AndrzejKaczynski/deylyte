@@ -2,75 +2,23 @@ import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
 import '../../components/components.dart';
 
-class HardwareCard extends StatefulWidget {
+class HardwareCard extends StatelessWidget {
   const HardwareCard({
     super.key,
-    required this.batteryCapacityKwh,
-    required this.batteryCost,
-    required this.batteryLifecycles,
-    required this.maxDischargeRateKw,
-    required this.maxChargeRateKw,
-    required this.gridConnectionKw,
-    required this.onCapacityChanged,
-    required this.onCostChanged,
-    required this.onLifecyclesChanged,
-    required this.onDischargeRateChanged,
-    required this.onChargeRateChanged,
-    required this.onGridConnectionChanged,
+    required this.capacityCtrl,
+    required this.gridConnectionCtrl,
+    required this.chargeRateCtrl,
+    required this.dischargeRateCtrl,
+    required this.costCtrl,
+    required this.lifecyclesCtrl,
   });
 
-  final double batteryCapacityKwh;
-  final double? batteryCost;
-  final int batteryLifecycles;
-  final double maxDischargeRateKw;
-  final double? maxChargeRateKw;
-  final double? gridConnectionKw;
-  final ValueChanged<double> onCapacityChanged;
-  final ValueChanged<double?> onCostChanged;
-  final ValueChanged<int> onLifecyclesChanged;
-  final ValueChanged<double> onDischargeRateChanged;
-  final ValueChanged<double?> onChargeRateChanged;
-  final ValueChanged<double?> onGridConnectionChanged;
-
-  @override
-  State<HardwareCard> createState() => _HardwareCardState();
-}
-
-class _HardwareCardState extends State<HardwareCard> {
-  late final TextEditingController _capacityCtrl;
-  late final TextEditingController _costCtrl;
-  late final TextEditingController _lifecyclesCtrl;
-  late final TextEditingController _dischargeRateCtrl;
-  late final TextEditingController _chargeRateCtrl;
-  late final TextEditingController _gridConnectionCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _capacityCtrl = TextEditingController(
-        text: widget.batteryCapacityKwh.toStringAsFixed(1));
-    _costCtrl = TextEditingController(
-        text: widget.batteryCost?.toStringAsFixed(0) ?? '');
-    _lifecyclesCtrl = TextEditingController(
-        text: widget.batteryLifecycles.toString());
-    _dischargeRateCtrl = TextEditingController(
-        text: widget.maxDischargeRateKw.toStringAsFixed(1));
-    _chargeRateCtrl = TextEditingController(
-        text: widget.maxChargeRateKw?.toStringAsFixed(1) ?? '');
-    _gridConnectionCtrl = TextEditingController(
-        text: widget.gridConnectionKw?.toStringAsFixed(1) ?? '');
-  }
-
-  @override
-  void dispose() {
-    _capacityCtrl.dispose();
-    _costCtrl.dispose();
-    _lifecyclesCtrl.dispose();
-    _dischargeRateCtrl.dispose();
-    _chargeRateCtrl.dispose();
-    _gridConnectionCtrl.dispose();
-    super.dispose();
-  }
+  final TextEditingController capacityCtrl;
+  final TextEditingController gridConnectionCtrl;
+  final TextEditingController chargeRateCtrl;
+  final TextEditingController dischargeRateCtrl;
+  final TextEditingController costCtrl;
+  final TextEditingController lifecyclesCtrl;
 
   @override
   Widget build(BuildContext context) {
@@ -129,20 +77,16 @@ class _HardwareCardState extends State<HardwareCard> {
           Expanded(
             child: _NumericField(
               label: 'Capacity',
-              controller: _capacityCtrl,
+              controller: capacityCtrl,
               suffix: 'kWh',
-              onChanged: (v) {
-                if (v != null) widget.onCapacityChanged(v);
-              },
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _NumericField(
               label: 'Grid Connection',
-              controller: _gridConnectionCtrl,
+              controller: gridConnectionCtrl,
               suffix: 'kW',
-              onChanged: widget.onGridConnectionChanged,
             ),
           ),
         ]),
@@ -156,20 +100,16 @@ class _HardwareCardState extends State<HardwareCard> {
           Expanded(
             child: _NumericField(
               label: 'Max Charge Rate',
-              controller: _chargeRateCtrl,
+              controller: chargeRateCtrl,
               suffix: 'kW',
-              onChanged: widget.onChargeRateChanged,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _NumericField(
               label: 'Max Discharge Rate',
-              controller: _dischargeRateCtrl,
+              controller: dischargeRateCtrl,
               suffix: 'kW',
-              onChanged: (v) {
-                if (v != null) widget.onDischargeRateChanged(v);
-              },
             ),
           ),
         ]),
@@ -183,22 +123,18 @@ class _HardwareCardState extends State<HardwareCard> {
           Expanded(
             child: _NumericField(
               label: 'Battery Cost',
-              controller: _costCtrl,
+              controller: costCtrl,
               suffix: 'PLN',
               optional: true,
-              onChanged: widget.onCostChanged,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _NumericField(
               label: 'Rated Cycles',
-              controller: _lifecyclesCtrl,
+              controller: lifecyclesCtrl,
               hint: '6000',
               optional: true,
-              onChanged: (v) {
-                if (v != null) widget.onLifecyclesChanged(v.toInt());
-              },
             ),
           ),
         ]),
@@ -211,7 +147,6 @@ class _NumericField extends StatelessWidget {
   const _NumericField({
     required this.label,
     required this.controller,
-    required this.onChanged,
     this.suffix,
     this.hint,
     this.optional = false,
@@ -219,7 +154,6 @@ class _NumericField extends StatelessWidget {
 
   final String label;
   final TextEditingController controller;
-  final ValueChanged<double?> onChanged;
   final String? suffix;
   final String? hint;
   final bool optional;
@@ -252,8 +186,6 @@ class _NumericField extends StatelessWidget {
         keyboardType:
             const TextInputType.numberWithOptions(decimal: true),
         style: tt.bodyMedium,
-        onChanged: (text) =>
-            onChanged(text.isEmpty ? null : double.tryParse(text)),
         decoration: InputDecoration(
           hintText: hint,
           suffixText: suffix,

@@ -10,12 +10,6 @@ class SettingsState {
     this.planningOnly = true,
     this.maxBuyPrice = 0.0,
     this.minSellPrice,
-    this.batteryCapacityKwh = 10.0,
-    this.batteryCost,
-    this.batteryLifecycles = 6000,
-    this.maxDischargeRateKw = 5.0,
-    this.maxChargeRateKw,
-    this.gridConnectionKw,
     this.solcast = false,
     this.pstryk = false,
     this.cityName,
@@ -44,13 +38,6 @@ class SettingsState {
 
   final double maxBuyPrice;
   final double? minSellPrice;
-
-  final double batteryCapacityKwh;
-  final double? batteryCost;
-  final int batteryLifecycles;
-  final double maxDischargeRateKw;
-  final double? maxChargeRateKw;
-  final double? gridConnectionKw;
 
   // Integration enabled flags. Credentials (API keys, tokens) are stored
   // server-side in IntegrationCredentials table, keyed by userInfoId.
@@ -114,12 +101,6 @@ class SettingsState {
     bool? planningOnly,
     double? maxBuyPrice,
     Object? minSellPrice = _sentinel,
-    double? batteryCapacityKwh,
-    Object? batteryCost = _sentinel,
-    int? batteryLifecycles,
-    double? maxDischargeRateKw,
-    Object? maxChargeRateKw = _sentinel,
-    Object? gridConnectionKw = _sentinel,
     bool? solcast,
     bool? pstryk,
     Object? cityName = _sentinel,
@@ -143,17 +124,6 @@ class SettingsState {
         minSellPrice: minSellPrice == _sentinel
             ? this.minSellPrice
             : minSellPrice as double?,
-        batteryCapacityKwh: batteryCapacityKwh ?? this.batteryCapacityKwh,
-        batteryCost:
-            batteryCost == _sentinel ? this.batteryCost : batteryCost as double?,
-        batteryLifecycles: batteryLifecycles ?? this.batteryLifecycles,
-        maxDischargeRateKw: maxDischargeRateKw ?? this.maxDischargeRateKw,
-        maxChargeRateKw: maxChargeRateKw == _sentinel
-            ? this.maxChargeRateKw
-            : maxChargeRateKw as double?,
-        gridConnectionKw: gridConnectionKw == _sentinel
-            ? this.gridConnectionKw
-            : gridConnectionKw as double?,
         solcast: solcast ?? this.solcast,
         pstryk: pstryk ?? this.pstryk,
         cityName: cityName == _sentinel ? this.cityName : cityName as String?,
@@ -196,17 +166,6 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setPvOnlySelling(bool v) => state = state.copyWith(pvOnlySelling: v);
   void setMaxBuyPrice(double v) => state = state.copyWith(maxBuyPrice: v);
   void setMinSellPrice(double? v) => state = state.copyWith(minSellPrice: v);
-  void setBatteryCapacityKwh(double v) =>
-      state = state.copyWith(batteryCapacityKwh: v);
-  void setBatteryCost(double? v) => state = state.copyWith(batteryCost: v);
-  void setBatteryLifecycles(int v) =>
-      state = state.copyWith(batteryLifecycles: v);
-  void setMaxDischargeRateKw(double v) =>
-      state = state.copyWith(maxDischargeRateKw: v);
-  void setMaxChargeRateKw(double? v) =>
-      state = state.copyWith(maxChargeRateKw: v);
-  void setGridConnectionKw(double? v) =>
-      state = state.copyWith(gridConnectionKw: v);
   void setPlanningOnly(bool v) => state = state.copyWith(planningOnly: v);
   void setSolcast(bool v) => state = state.copyWith(solcast: v);
   void setPstryk(bool v) => state = state.copyWith(pstryk: v);
@@ -232,13 +191,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
         planningOnly: c.planningOnly,
         maxBuyPrice: c.alwaysChargePriceThreshold,
         minSellPrice: c.minSellPriceThreshold,
-        batteryCapacityKwh: c.batteryCapacityKwh ?? 10.0,
-        batteryCost: c.batteryCost,
-        batteryLifecycles: c.batteryLifecycles ?? 6000,
         minSoc: c.minSocPercentage ?? 0.15,
-        maxDischargeRateKw: c.maxDischargeRateKw ?? 5.0,
-        maxChargeRateKw: c.maxChargeRateKw,
-        gridConnectionKw: c.gridConnectionKw,
         cityName: c.cityName,
         priceSource: c.priceSource ?? 'pstryk',
         fixedBuyRatePln: c.fixedBuyRatePln,

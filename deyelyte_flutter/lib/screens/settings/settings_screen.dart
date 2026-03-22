@@ -27,6 +27,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _rangesLoaded = false; // ignore: unused_field
   bool _saving = false;
 
+  // Hardware spec controllers — owned here and read at save time.
+  final _capacityCtrl = TextEditingController();
+  final _gridConnectionCtrl = TextEditingController();
+  final _chargeRateCtrl = TextEditingController();
+  final _dischargeRateCtrl = TextEditingController();
+  final _costCtrl = TextEditingController();
+  final _lifecyclesCtrl = TextEditingController();
+
+  void _populateHardwareControllers(AppConfig c) {
+    _capacityCtrl.text = c.batteryCapacityKwh?.toStringAsFixed(1) ?? '';
+    _gridConnectionCtrl.text = c.gridConnectionKw?.toStringAsFixed(1) ?? '';
+    _chargeRateCtrl.text = c.maxChargeRateKw?.toStringAsFixed(1) ?? '';
+    _dischargeRateCtrl.text = c.maxDischargeRateKw?.toStringAsFixed(1) ?? '';
+    _costCtrl.text = c.batteryCost?.toStringAsFixed(0) ?? '';
+    _lifecyclesCtrl.text = c.batteryLifecycles?.toString() ?? '';
+  }
+
+  @override
+  void dispose() {
+    _capacityCtrl.dispose();
+    _gridConnectionCtrl.dispose();
+    _chargeRateCtrl.dispose();
+    _dischargeRateCtrl.dispose();
+    _costCtrl.dispose();
+    _lifecyclesCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Populate local settings from server config once on first load.
@@ -36,6 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (config != null) {
         _configLoaded = true;
         ref.read(settingsProvider.notifier).loadFrom(config);
+        _populateHardwareControllers(config);
       } else if (next is AsyncData) {
         // Server returned null — no config yet, use defaults.
         _configLoaded = true;
@@ -69,6 +98,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
 
     final configAsync = ref.watch(appConfigProvider);
+
+    // ref.listen only fires on changes. If the provider was already loaded
+    // before this screen built (e.g. navigating back), eagerly initialize.
+    if (!_configLoaded && configAsync is AsyncData) {
+      _configLoaded = true;
+      final config = configAsync.valueOrNull;
+      if (config != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref.read(settingsProvider.notifier).loadFrom(config);
+            _populateHardwareControllers(config);
+          }
+        });
+      }
+    }
+
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
@@ -156,18 +201,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sp4),
                   HardwareCard(
-                    batteryCapacityKwh: settings.batteryCapacityKwh,
-                    batteryCost: settings.batteryCost,
-                    batteryLifecycles: settings.batteryLifecycles,
-                    maxDischargeRateKw: settings.maxDischargeRateKw,
-                    maxChargeRateKw: settings.maxChargeRateKw,
-                    gridConnectionKw: settings.gridConnectionKw,
-                    onCapacityChanged: notifier.setBatteryCapacityKwh,
-                    onCostChanged: notifier.setBatteryCost,
-                    onLifecyclesChanged: notifier.setBatteryLifecycles,
-                    onDischargeRateChanged: notifier.setMaxDischargeRateKw,
-                    onChargeRateChanged: notifier.setMaxChargeRateKw,
-                    onGridConnectionChanged: notifier.setGridConnectionKw,
+                    capacityCtrl: _capacityCtrl,
+                    gridConnectionCtrl: _gridConnectionCtrl,
+                    chargeRateCtrl: _chargeRateCtrl,
+                    dischargeRateCtrl: _dischargeRateCtrl,
+                    costCtrl: _costCtrl,
+                    lifecyclesCtrl: _lifecyclesCtrl,
                   ),
                 ]),
                 sidebar: Column(children: [
@@ -248,13 +287,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         topUpRequested: existing?.topUpRequested ?? false,
         alwaysChargePriceThreshold: s.maxBuyPrice,
         minSellPriceThreshold: s.minSellPrice,
-        batteryCapacityKwh: s.batteryCapacityKwh,
-        batteryCost: s.batteryCost,
-        batteryLifecycles: s.batteryLifecycles,
+        batteryCapacityKwh: double.tryParse(_capacityCtrl.text),
+        batteryCost: double.tryParse(_costCtrl.text),
+        batteryLifecycles: int.tryParse(_lifecyclesCtrl.text),
         minSocPercentage: s.minSoc,
-        maxDischargeRateKw: s.maxDischargeRateKw,
-        maxChargeRateKw: s.maxChargeRateKw,
-        gridConnectionKw: s.gridConnectionKw,
+        maxDischargeRateKw: double.tryParse(_dischargeRateCtrl.text),
+        maxChargeRateKw: double.tryParse(_chargeRateCtrl.text),
+        gridConnectionKw: double.tryParse(_gridConnectionCtrl.text),
         cityName: s.cityName,
         latitude: existing?.latitude,
         longitude: existing?.longitude,
