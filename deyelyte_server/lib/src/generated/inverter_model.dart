@@ -19,6 +19,7 @@ abstract class InverterModel
     required this.modelId,
     required this.displayName,
     required this.registerMapJson,
+    this.measurePointsFingerprintJson,
   });
 
   factory InverterModel({
@@ -26,6 +27,7 @@ abstract class InverterModel
     required String modelId,
     required String displayName,
     required String registerMapJson,
+    String? measurePointsFingerprintJson,
   }) = _InverterModelImpl;
 
   factory InverterModel.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -34,6 +36,8 @@ abstract class InverterModel
       modelId: jsonSerialization['modelId'] as String,
       displayName: jsonSerialization['displayName'] as String,
       registerMapJson: jsonSerialization['registerMapJson'] as String,
+      measurePointsFingerprintJson:
+          jsonSerialization['measurePointsFingerprintJson'] as String?,
     );
   }
 
@@ -50,6 +54,8 @@ abstract class InverterModel
 
   String registerMapJson;
 
+  String? measurePointsFingerprintJson;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -61,6 +67,7 @@ abstract class InverterModel
     String? modelId,
     String? displayName,
     String? registerMapJson,
+    String? measurePointsFingerprintJson,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -70,6 +77,8 @@ abstract class InverterModel
       'modelId': modelId,
       'displayName': displayName,
       'registerMapJson': registerMapJson,
+      if (measurePointsFingerprintJson != null)
+        'measurePointsFingerprintJson': measurePointsFingerprintJson,
     };
   }
 
@@ -81,6 +90,8 @@ abstract class InverterModel
       'modelId': modelId,
       'displayName': displayName,
       'registerMapJson': registerMapJson,
+      if (measurePointsFingerprintJson != null)
+        'measurePointsFingerprintJson': measurePointsFingerprintJson,
     };
   }
 
@@ -122,11 +133,13 @@ class _InverterModelImpl extends InverterModel {
     required String modelId,
     required String displayName,
     required String registerMapJson,
+    String? measurePointsFingerprintJson,
   }) : super._(
          id: id,
          modelId: modelId,
          displayName: displayName,
          registerMapJson: registerMapJson,
+         measurePointsFingerprintJson: measurePointsFingerprintJson,
        );
 
   /// Returns a shallow copy of this [InverterModel]
@@ -138,12 +151,16 @@ class _InverterModelImpl extends InverterModel {
     String? modelId,
     String? displayName,
     String? registerMapJson,
+    Object? measurePointsFingerprintJson = _Undefined,
   }) {
     return InverterModel(
       id: id is int? ? id : this.id,
       modelId: modelId ?? this.modelId,
       displayName: displayName ?? this.displayName,
       registerMapJson: registerMapJson ?? this.registerMapJson,
+      measurePointsFingerprintJson: measurePointsFingerprintJson is String?
+          ? measurePointsFingerprintJson
+          : this.measurePointsFingerprintJson,
     );
   }
 }
@@ -166,6 +183,12 @@ class InverterModelUpdateTable extends _i1.UpdateTable<InverterModelTable> {
         table.registerMapJson,
         value,
       );
+
+  _i1.ColumnValue<String, String> measurePointsFingerprintJson(String? value) =>
+      _i1.ColumnValue(
+        table.measurePointsFingerprintJson,
+        value,
+      );
 }
 
 class InverterModelTable extends _i1.Table<int?> {
@@ -184,6 +207,10 @@ class InverterModelTable extends _i1.Table<int?> {
       'registerMapJson',
       this,
     );
+    measurePointsFingerprintJson = _i1.ColumnString(
+      'measurePointsFingerprintJson',
+      this,
+    );
   }
 
   late final InverterModelUpdateTable updateTable;
@@ -194,12 +221,15 @@ class InverterModelTable extends _i1.Table<int?> {
 
   late final _i1.ColumnString registerMapJson;
 
+  late final _i1.ColumnString measurePointsFingerprintJson;
+
   @override
   List<_i1.Column> get columns => [
     id,
     modelId,
     displayName,
     registerMapJson,
+    measurePointsFingerprintJson,
   ];
 }
 

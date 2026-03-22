@@ -50,24 +50,62 @@ class InitUserCall extends FutureCall {
 
       final deviceSn = await client.fetchDeviceSn(session);
 
+      // Rebuild client with the real device SN so measurePoints works.
+      final clientWithSn = DeyeCloudClient(
+        username: creds.deyeUsername!,
+        password: creds.deyePasswordHash!,
+        appId: session.passwords['deyeAppId'] ?? '',
+        appSecret: session.passwords['deyeAppSecret'] ?? '',
+        deviceSn: deviceSn,
+      );
+      await clientWithSn.authenticateWithHash(session);
+
       await IntegrationCredentials.db.updateRow(
         session,
         creds.copyWith(deyeDeviceSn: deviceSn),
       );
 
-      // Set dataGatheringSince on AppConfig (creates one if missing).
+      // Attempt model auto-detection via Deye Cloud measure-point fingerprint.
       final config = await AppConfig.db.findFirstRow(
         session,
         where: (t) => t.userInfoId.equals(userInfoId),
       );
+      String? suggestedModelId;
+      if (config?.inverterModelId == null) {
+        try {
+          final points = await clientWithSn.fetchMeasurePoints(session);
+          suggestedModelId = await clientWithSn.suggestModelId(session, points);
+          if (suggestedModelId != null) {
+            session.log(
+              'InitUserCall: auto-detected model "$suggestedModelId" for userInfoId $userInfoId',
+            );
+          } else {
+            session.log(
+              'InitUserCall: no model match for userInfoId $userInfoId — user must select manually',
+              level: LogLevel.warning,
+            );
+          }
+        } catch (e) {
+          session.log(
+            'InitUserCall: measurePoints fingerprint failed for userInfoId $userInfoId: $e',
+            level: LogLevel.warning,
+          );
+        }
+      }
+
+      // Set dataGatheringSince and (if detected) inverterModelId on AppConfig.
       if (config != null) {
         await AppConfig.db.updateRow(
           session,
-          config.copyWith(dataGatheringSince: DateTime.now().toUtc()),
+          config.copyWith(
+            dataGatheringSince: DateTime.now().toUtc(),
+            inverterModelId: suggestedModelId ?? config.inverterModelId,
+          ),
         );
       }
 
-      session.log('InitUserCall: userInfoId $userInfoId initialised, SN=$deviceSn');
+      session.log('InitUserCall: userInfoId $userInfoId initialised, SN=$deviceSn'
+          '${suggestedModelId != null ? ", model=$suggestedModelId" : ""}');
     } catch (e) {
       session.log(
         'InitUserCall: failed for userInfoId $userInfoId: $e',

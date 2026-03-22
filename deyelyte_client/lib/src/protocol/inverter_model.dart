@@ -18,6 +18,7 @@ abstract class InverterModel implements _i1.SerializableModel {
     required this.modelId,
     required this.displayName,
     required this.registerMapJson,
+    this.measurePointsFingerprintJson,
   });
 
   factory InverterModel({
@@ -25,6 +26,7 @@ abstract class InverterModel implements _i1.SerializableModel {
     required String modelId,
     required String displayName,
     required String registerMapJson,
+    String? measurePointsFingerprintJson,
   }) = _InverterModelImpl;
 
   factory InverterModel.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -33,6 +35,8 @@ abstract class InverterModel implements _i1.SerializableModel {
       modelId: jsonSerialization['modelId'] as String,
       displayName: jsonSerialization['displayName'] as String,
       registerMapJson: jsonSerialization['registerMapJson'] as String,
+      measurePointsFingerprintJson:
+          jsonSerialization['measurePointsFingerprintJson'] as String?,
     );
   }
 
@@ -47,6 +51,8 @@ abstract class InverterModel implements _i1.SerializableModel {
 
   String registerMapJson;
 
+  String? measurePointsFingerprintJson;
+
   /// Returns a shallow copy of this [InverterModel]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -55,6 +61,7 @@ abstract class InverterModel implements _i1.SerializableModel {
     String? modelId,
     String? displayName,
     String? registerMapJson,
+    String? measurePointsFingerprintJson,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -64,6 +71,8 @@ abstract class InverterModel implements _i1.SerializableModel {
       'modelId': modelId,
       'displayName': displayName,
       'registerMapJson': registerMapJson,
+      if (measurePointsFingerprintJson != null)
+        'measurePointsFingerprintJson': measurePointsFingerprintJson,
     };
   }
 
@@ -81,11 +90,13 @@ class _InverterModelImpl extends InverterModel {
     required String modelId,
     required String displayName,
     required String registerMapJson,
+    String? measurePointsFingerprintJson,
   }) : super._(
          id: id,
          modelId: modelId,
          displayName: displayName,
          registerMapJson: registerMapJson,
+         measurePointsFingerprintJson: measurePointsFingerprintJson,
        );
 
   /// Returns a shallow copy of this [InverterModel]
@@ -97,12 +108,16 @@ class _InverterModelImpl extends InverterModel {
     String? modelId,
     String? displayName,
     String? registerMapJson,
+    Object? measurePointsFingerprintJson = _Undefined,
   }) {
     return InverterModel(
       id: id is int? ? id : this.id,
       modelId: modelId ?? this.modelId,
       displayName: displayName ?? this.displayName,
       registerMapJson: registerMapJson ?? this.registerMapJson,
+      measurePointsFingerprintJson: measurePointsFingerprintJson is String?
+          ? measurePointsFingerprintJson
+          : this.measurePointsFingerprintJson,
     );
   }
 }

@@ -118,6 +118,14 @@ const _inverterModels = [
         '"chargeCmd":240,'
         '"sellCmd":243'
         '}',
+    // Deye Cloud measurePoint keys confirmed on real SG04LP3 hardware.
+    // Run scrape_inverter_models.py to populate additional models.
+    measurePointsFingerprintJson: '['
+        '"p_pv1","p_pv2","p_pv3",'
+        '"b_soc","b_volt","b_current","b_power",'
+        '"p_grid","p_grid_apparent","p_load",'
+        '"e_pv_day","e_load_day","e_grid_buy_day","e_grid_sell_day"'
+        ']',
   ),
 ];
 
@@ -138,9 +146,19 @@ Future<void> _seedInverterModels(Serverpod pod) async {
             modelId: m.modelId,
             displayName: m.displayName,
             registerMapJson: m.registerMapJson,
+            measurePointsFingerprintJson: m.measurePointsFingerprintJson,
           ),
         );
         print('Seeded inverter model: ${m.displayName}');
+      } else if (exists.measurePointsFingerprintJson == null) {
+        // Backfill fingerprint added to seed after initial row was created.
+        await InverterModel.db.updateRow(
+          session,
+          exists.copyWith(
+            measurePointsFingerprintJson: m.measurePointsFingerprintJson,
+          ),
+        );
+        print('Updated inverter model fingerprint: ${m.displayName}');
       }
     }
   } catch (e) {

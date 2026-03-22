@@ -157,6 +157,84 @@ class DeyeCloudClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Model fingerprinting
+  // ---------------------------------------------------------------------------
+
+  /// Returns the set of measurePoint keys available for this device.
+  /// Used to auto-detect the inverter model by matching against
+  /// [InverterModel.measurePointsFingerprintJson].
+  Future<Set<String>> fetchMeasurePoints(Session session) async {
+    await _ensureAuthenticated(session);
+    final response = await http.post(
+      Uri.parse('$_baseUrl/device/measurePoints'),
+      headers: _authHeaders(),
+      body: jsonEncode({'deviceSn': deviceSn}),
+    );
+
+    if (response.statusCode != 200) {
+      session.log(
+        'Deye measurePoints failed: ${response.statusCode} ${response.body}',
+        level: LogLevel.warning,
+      );
+      return {};
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    // Response shape: { "measurePointList": [{"measurePoint": "p_pv1", ...}, ...] }
+    final list = body['measurePointList'] as List<dynamic>? ?? [];
+    return {
+      for (final item in list.cast<Map<String, dynamic>>())
+        if (item['measurePoint'] is String) item['measurePoint'] as String,
+    };
+  }
+
+  /// Compares [devicePoints] against every [InverterModel] fingerprint in the
+  /// database and returns the modelId with the highest Jaccard similarity,
+  /// or null when no model has a fingerprint or the best score is below [minScore].
+  Future<String?> suggestModelId(
+    Session session,
+    Set<String> devicePoints, {
+    double minScore = 0.5,
+  }) async {
+    if (devicePoints.isEmpty) return null;
+
+    final models = await InverterModel.db.find(session);
+    String? bestId;
+    double bestScore = -1;
+
+    for (final model in models) {
+      final fp = model.measurePointsFingerprintJson;
+      if (fp == null) continue;
+
+      final fingerprint =
+          (jsonDecode(fp) as List<dynamic>).cast<String>().toSet();
+      if (fingerprint.isEmpty) continue;
+
+      // Jaccard similarity = |intersection| / |union|
+      final intersection = devicePoints.intersection(fingerprint).length;
+      final union = devicePoints.union(fingerprint).length;
+      final score = intersection / union;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = model.modelId;
+      }
+    }
+
+    if (bestScore < minScore) {
+      session.log(
+        'Deye model suggestion: best match "$bestId" score=$bestScore '
+        '— below threshold $minScore, not suggesting',
+        level: LogLevel.warning,
+      );
+      return null;
+    }
+
+    session.log('Deye model suggested: $bestId (Jaccard=$bestScore)');
+    return bestId;
+  }
+
+  // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 

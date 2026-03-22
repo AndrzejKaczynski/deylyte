@@ -17,6 +17,11 @@ fields:
   modelId: String        # stable identifier, e.g. 'deye_sg04lp3'
   displayName: String    # human-readable, shown in Flutter picker
   registerMapJson: String
+  # JSON array of Deye Cloud measurePoint keys present on this model.
+  # Used for auto-detection: after Deye credentials are saved we call
+  # /device/measurePoints and pick the model with the highest overlap.
+  # Null until a fingerprint is established for this model.
+  measurePointsFingerprintJson: String?
 indexes:
   inverter_models_model_idx:
     fields: modelId
