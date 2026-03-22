@@ -133,10 +133,15 @@ class _OfflineBanner extends StatelessWidget {
 
 // ── Header ───────────────────────────────────────────────────────────────────
 
-class _DashboardHeader extends StatelessWidget {
+class _DashboardHeader extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final telemetry = ref.watch(latestTelemetryProvider).valueOrNull;
+    final lastSync = telemetry?.timestamp;
+    final syncLabel = lastSync == null
+        ? 'Waiting for data...'
+        : 'Last sync: ${_formatSync(lastSync)}';
     return Row(
       children: [
         Expanded(
@@ -149,10 +154,7 @@ class _DashboardHeader extends StatelessWidget {
                 children: [
                   const PulseIndicator(color: AppColors.secondary, size: 6),
                   const SizedBox(width: 8),
-                  Text(
-                    'Real-time optimization active for Household 402',
-                    style: tt.bodySmall,
-                  ),
+                  Text(syncLabel, style: tt.bodySmall),
                 ],
               ),
             ],
@@ -175,6 +177,15 @@ class _DashboardHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+String _formatSync(DateTime ts) {
+  final local = ts.toLocal();
+  final now = DateTime.now();
+  final diff = now.difference(local);
+  if (diff.inSeconds < 60) return 'just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }
 
 // ── KPI Strip ────────────────────────────────────────────────────────────────
