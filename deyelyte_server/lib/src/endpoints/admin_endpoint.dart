@@ -182,7 +182,7 @@ class AdminEndpoint extends Endpoint {
   // ── Tier sync config ───────────────────────────────────────────────────────
 
   /// Returns all tier permission configurations (JSON string).
-  Future<String> listTierSyncConfigs(Session session) async {
+  Future<String> listTierPermissions(Session session) async {
     await _requireAdmin(session);
     final configs = await TierSyncConfig.db.find(session);
     return jsonEncode(configs
@@ -197,7 +197,7 @@ class AdminEndpoint extends Endpoint {
 
   /// Updates (or inserts) the permissions for the given [tier].
   /// syncIntervalSeconds minimum is 300 s (logger hardware limitation).
-  Future<void> updateTierSyncConfig(
+  Future<void> updateTierPermissions(
     Session session, {
     required String tier,
     required int syncIntervalSeconds,

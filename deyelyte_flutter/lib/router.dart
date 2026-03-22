@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
@@ -56,11 +58,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final hasLocalLicense = localKey?.isNotEmpty ?? false;
 
       if (!hasLocalLicense) {
-        // Local key missing (new device / cleared storage) — check server.
+        // Local key missing — check server directly (bypass cached provider).
         try {
-          final tier = await ref.read(userLicenseTierProvider.future);
-          if (tier == null) return '/onboarding/license';
-          // Server confirms active license — no onboarding needed.
+          final raw = await ref.read(clientProvider).license.getUserLicense();
+          final data = jsonDecode(raw) as Map<String, dynamic>;
+          if (data['tier'] == null) return '/onboarding/license';
         } catch (_) {
           return '/onboarding/license';
         }

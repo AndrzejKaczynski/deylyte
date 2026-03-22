@@ -57,12 +57,13 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: AppSpacing.sp4),
                 itemBuilder: (_, i) => _TierCard(
+                  key: ValueKey('${rows[i]['tier']}_${rows[i]['syncIntervalSeconds']}_${rows[i]['historyDurationDays']}'),
                   config: rows[i],
                   onSave: (tier, seconds, days) async {
                     await ref
                         .read(clientProvider)
                         .admin
-                        .updateTierSyncConfig(
+                        .updateTierPermissions(
                           tier: tier,
                           syncIntervalSeconds: seconds,
                           historyDurationDays: days,
@@ -82,7 +83,7 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
 // ── Tier card ──────────────────────────────────────────────────────────────────
 
 class _TierCard extends StatefulWidget {
-  const _TierCard({required this.config, required this.onSave});
+  const _TierCard({super.key, required this.config, required this.onSave});
 
   final Map<String, dynamic> config;
   final Future<void> Function(String tier, int seconds, int days) onSave;

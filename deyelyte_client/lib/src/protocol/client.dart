@@ -89,21 +89,21 @@ class EndpointAdmin extends _i1.EndpointRef {
   );
 
   /// Returns all tier permission configurations (JSON string).
-  _i2.Future<String> listTierSyncConfigs() => caller.callServerEndpoint<String>(
+  _i2.Future<String> listTierPermissions() => caller.callServerEndpoint<String>(
     'admin',
-    'listTierSyncConfigs',
+    'listTierPermissions',
     {},
   );
 
   /// Updates (or inserts) the permissions for the given [tier].
   /// syncIntervalSeconds minimum is 300 s (logger hardware limitation).
-  _i2.Future<void> updateTierSyncConfig({
+  _i2.Future<void> updateTierPermissions({
     required String tier,
     required int syncIntervalSeconds,
     required int historyDurationDays,
   }) => caller.callServerEndpoint<void>(
     'admin',
-    'updateTierSyncConfig',
+    'updateTierPermissions',
     {
       'tier': tier,
       'syncIntervalSeconds': syncIntervalSeconds,

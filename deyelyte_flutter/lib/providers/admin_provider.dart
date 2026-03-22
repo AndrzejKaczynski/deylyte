@@ -33,6 +33,6 @@ final adminDevicesProvider =
 
 final adminSyncSettingsProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final json = await ref.read(clientProvider).admin.listTierSyncConfigs();
+  final json = await ref.read(clientProvider).admin.listTierPermissions();
   return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
 });

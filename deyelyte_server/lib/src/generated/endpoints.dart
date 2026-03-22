@@ -222,18 +222,18 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
               ),
         ),
-        'listTierSyncConfigs': _i1.MethodConnector(
-          name: 'listTierSyncConfigs',
+        'listTierPermissions': _i1.MethodConnector(
+          name: 'listTierPermissions',
           params: {},
           call:
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async => (endpoints['admin'] as _i2.AdminEndpoint)
-                  .listTierSyncConfigs(session),
+                  .listTierPermissions(session),
         ),
-        'updateTierSyncConfig': _i1.MethodConnector(
-          name: 'updateTierSyncConfig',
+        'updateTierPermissions': _i1.MethodConnector(
+          name: 'updateTierPermissions',
           params: {
             'tier': _i1.ParameterDescription(
               name: 'tier',
@@ -256,7 +256,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async => (endpoints['admin'] as _i2.AdminEndpoint)
-                  .updateTierSyncConfig(
+                  .updateTierPermissions(
                     session,
                     tier: params['tier'],
                     syncIntervalSeconds: params['syncIntervalSeconds'],

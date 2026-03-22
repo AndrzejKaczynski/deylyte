@@ -154,20 +154,25 @@ class TelemetryEndpoint extends Endpoint {
   }
 
   /// Returns telemetry history for the authenticated user.
-  /// The window is capped server-side by tier:
-  ///   pro / beta_free → 90 days
-  ///   basic           → 30 days
-  /// [hours] is the client's requested window; the server enforces the cap.
+  /// The window is capped server-side using [TierSyncConfig.historyDurationDays]
+  /// for the user's active tier. [hours] is the client's requested window;
+  /// the server enforces the cap.
   Future<List<DeviceTelemetry>> getHistory(Session session, int hours) async {
     final uid = _uid(session);
     if (uid == null) return [];
 
-    // Determine tier cap.
+    // Determine tier cap from TierSyncConfig.
     final license = await LicenseKey.db.findFirstRow(
       session,
       where: (t) => t.userId.equals(uid) & t.isActive.equals(true),
     );
-    final maxDays = (license?.tier == 'basic') ? 30 : 90;
+    final syncConfig = license == null
+        ? null
+        : await TierSyncConfig.db.findFirstRow(
+            session,
+            where: (t) => t.tier.equals(license.tier),
+          );
+    final maxDays = syncConfig?.historyDurationDays ?? 7;
     final cappedHours = hours.clamp(1, maxDays * 24);
 
     final cutoff = DateTime.now().toUtc().subtract(Duration(hours: cappedHours));

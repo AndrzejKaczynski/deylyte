@@ -5,8 +5,8 @@ admin:
   - setLicenseKeyActive:
   - listUsers:
   - listDevices:
-  - listTierSyncConfigs:
-  - updateTierSyncConfig:
+  - listTierPermissions:
+  - updateTierPermissions:
 appConfig:
   - getConfig:
   - saveConfig:
