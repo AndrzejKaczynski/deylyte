@@ -1290,18 +1290,6 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == Map<String, dynamic>) {
-      return (data as Map).map(
-            (k, v) => MapEntry(deserialize<String>(k), deserialize<dynamic>(v)),
-          )
-          as T;
-    }
-    if (t == List<Map<String, dynamic>>) {
-      return (data as List)
-              .map((e) => deserialize<Map<String, dynamic>>(e))
-              .toList()
-          as T;
-    }
     if (t == List<_i17.OptimizationFrame>) {
       return (data as List)
               .map((e) => deserialize<_i17.OptimizationFrame>(e))

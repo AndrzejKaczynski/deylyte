@@ -1,0 +1,26 @@
+name: DeyLyte EMS
+description: Connects your Deye inverter to the DeyLyte Energy Management System via SolarmanV5.
+version: "0.1.0"
+slug: deylyte_ems
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armv7
+
+homeassistant_api: false
+hassio_api: false
+
+options:
+  license_key: ""
+  api_url: "https://api.deylyte.com"
+  dongle_ip: ""
+  dongle_serial: ""
+  telemetry_interval_seconds: 300
+
+schema:
+  license_key: str
+  api_url: str
+  dongle_ip: str
+  dongle_serial: str
+  telemetry_interval_seconds: int
