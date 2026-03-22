@@ -257,12 +257,13 @@ def main() -> None:
     log.info("DeyLyte EMS starting — device_id=%s, interval=%ds, api=%s",
              device_id, interval, api_url)
 
-    # Spread load: sleep a deterministic offset before the first poll
+    # Deterministic jitter — used after the first cycle to re-spread load.
+    # On start/restart we send immediately so the user doesn't wait.
     jitter = startup_jitter(license_key, interval)
-    log.info("Startup jitter: %ds (spreads load across %ds window)", jitter, interval)
-    time.sleep(jitter)
+    log.info("First telemetry will be sent immediately; jitter of %ds applied after to re-spread load", jitter)
 
     # ── Step 3: main telemetry loop ───────────────────────────────────────────
+    first_cycle = True
     while True:
         loop_start = time.monotonic()
 
@@ -309,10 +310,17 @@ def main() -> None:
         else:
             log.info("No commands received — planning mode or no schedule yet")
 
-        # Sleep for the remainder of the interval
+        # Sleep for the remainder of the interval.
+        # After the immediate first cycle, sleep the jitter to re-spread backend load;
+        # subsequent cycles use the normal interval.
         elapsed = time.monotonic() - loop_start
-        sleep_for = max(0, interval - elapsed)
-        log.info("Cycle done in %.1fs, sleeping %.0fs", elapsed, sleep_for)
+        if first_cycle:
+            first_cycle = False
+            sleep_for = max(0, jitter - elapsed)
+            log.info("First cycle done in %.1fs, jitter sleep %.0fs before resuming schedule", elapsed, sleep_for)
+        else:
+            sleep_for = max(0, interval - elapsed)
+            log.info("Cycle done in %.1fs, sleeping %.0fs", elapsed, sleep_for)
         time.sleep(sleep_for)
 
 
