@@ -849,7 +849,7 @@ class _HardwareCardState extends State<_HardwareCard> {
                         style: tt.bodyMedium
                             ?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 2),
-                    Text('Specs auto-filled once Deye Cloud is connected.',
+                    Text('Enter your inverter model and battery specs below.',
                         style:
                             tt.bodySmall?.copyWith(color: AppColors.outline)),
                   ]),
@@ -862,7 +862,7 @@ class _HardwareCardState extends State<_HardwareCard> {
             style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 2),
         Text(
-          'Used by the optimizer for wear cost and SoC planning. Will be pre-filled from inverter data once Deye integration is active.',
+          'Used by the optimizer for scheduling and wear cost calculations.',
           style: tt.bodySmall?.copyWith(color: AppColors.outline),
         ),
         const SizedBox(height: 16),
@@ -915,6 +915,11 @@ class _HardwareCardState extends State<_HardwareCard> {
             ),
           ),
         ]),
+        const SizedBox(height: 4),
+        Text(
+          'Used for calculations only — these values are not sent to the inverter.',
+          style: tt.bodySmall?.copyWith(color: AppColors.outline),
+        ),
         const SizedBox(height: 12),
         Row(children: [
           Expanded(
