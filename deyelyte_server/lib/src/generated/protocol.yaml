@@ -22,6 +22,8 @@ credentials:
   - getStatus:
 device:
   - getStatus:
+  - listModels:
+  - setModel:
 example:
   - hello:
 forecast:

@@ -32,7 +32,14 @@ final Map<String, dynamic> mockDeviceStatus = {
   'connected': true,
   'lastSeenAt': DateTime.now().toUtc().toIso8601String(),
   'inverterReachable': true,
+  'inverterModelId': 'deye_sg04lp3',
+  'inverterModelName': 'Deye SG04LP3',
+  'modelValidationStatus': 'ok',
 };
+
+final List<Map<String, dynamic>> mockInverterModels = [
+  {'modelId': 'deye_sg04lp3', 'displayName': 'Deye SG04LP3'},
+];
 
 final Map<String, dynamic> mockHistorySummary = {
   'priceVelocity': 0.54,

@@ -2,18 +2,24 @@
 """
 DeyLyte EMS Add-on
 ------------------
-1. On startup: validates license with server → receives sync interval.
+1. On startup: validates license with server → receives sync interval + register map.
 2. Captures current inverter control-register state as baseline for revert.
 3. Reads inverter state via SolarmanV5 every syncInterval seconds.
-4. POSTs telemetry to the DeyLyte backend.
+4. POSTs telemetry to the DeyLyte backend (includes currentModelId so server
+   can push an updated register map when the user changes their model selection).
 5. Receives schedule + planning mode flag in the response.
 6. Applies inverter commands only when NOT in planning mode.
 7. If the response includes a new syncIntervalSeconds, stores it and adapts.
-8. If the response includes stop=true (license expired/deactivated), reverts
+8. If the response includes a new registerMap, saves it and uses it next cycle.
+9. If the response includes stop=true (license expired/deactivated), reverts
    inverter to baseline and halts telemetry collection.
 
 Traffic spreading: startup is delayed by a deterministic jitter derived from
 the license key so that all devices do NOT hit the backend at the same time.
+
+Register map: received from the server based on the user's model selection in
+the Flutter app. Stored in /data/register_map.json. Falls back to built-in
+Deye SG04LP3 addresses when no model has been selected yet.
 """
 
 import hashlib
@@ -36,7 +42,23 @@ log = logging.getLogger("deylyte")
 
 _SYNC_CONFIG_PATH    = "/data/sync_config.json"
 _INITIAL_STATE_PATH  = "/data/initial_inverter_state.json"
+_REGISTER_MAP_PATH   = "/data/register_map.json"
 _DEFAULT_INTERVAL    = 300  # fallback when server unreachable at startup
+
+# Built-in fallback for Deye SG04LP3 (used until the user selects a model
+# in the Flutter app and the server pushes the register map down).
+_FALLBACK_REGISTER_MAP = {
+    "modelId":      "deye_sg04lp3",
+    "batterySoc":   588,   # % (0-100)
+    "batteryPower": 590,   # W, signed int16 (positive = charging, negative = discharging)
+    "gridPower":    625,   # W, signed int16 (positive = import from grid, negative = export)
+    "loadPower":    653,   # W
+    "pv1Power":     672,   # W (string 1)
+    "pv2Power":     673,   # W (string 2)
+    "pv3Power":     674,   # W (string 3, 0 if not present)
+    "chargeCmd":    240,   # write: 1 = charge from grid, 0 = disable
+    "sellCmd":      243,   # write: 1 = sell to grid, 0 = disable
+}
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -79,6 +101,22 @@ def save_sync_interval(seconds: int) -> None:
         json.dump({"syncIntervalSeconds": seconds}, f)
 
 
+# ── Register map (server-controlled, model-specific) ─────────────────────────
+
+def load_register_map() -> dict:
+    """Read stored register map from disk, or return the built-in fallback."""
+    try:
+        with open(_REGISTER_MAP_PATH) as f:
+            return json.load(f)
+    except Exception:
+        return _FALLBACK_REGISTER_MAP
+
+
+def save_register_map(data: dict) -> None:
+    with open(_REGISTER_MAP_PATH, "w") as f:
+        json.dump(data, f)
+
+
 # ── Jitter ────────────────────────────────────────────────────────────────────
 
 def startup_jitter(license_key: str, interval: int) -> int:
@@ -93,34 +131,21 @@ def startup_jitter(license_key: str, interval: int) -> int:
 
 # ── Inverter ──────────────────────────────────────────────────────────────────
 
-# Holding register addresses for Deye SG04LP3 (confirmed working via FC3)
-# All reads use read_holding_registers (FC3) — Deye does not respond to FC4.
-_REG_BATTERY_SOC    = 588   # % (0-100)
-_REG_BATTERY_POWER  = 590   # W, signed int16 (positive = charging, negative = discharging)
-_REG_GRID_POWER     = 625   # W, signed int16 (positive = import from grid, negative = export)
-_REG_LOAD_POWER     = 653   # W
-_REG_PV1_POWER      = 672   # W (string 1)
-_REG_PV2_POWER      = 673   # W (string 2)
-_REG_PV3_POWER      = 674   # W (string 3, 0 if not present)
-_REG_CHARGE_CMD     = 240   # write: 1 = charge from grid, 0 = disable
-_REG_SELL_CMD       = 243   # write: 1 = sell to grid, 0 = disable
-
-
 def _s16(val: int) -> int:
     """Convert unsigned 16-bit register value to signed int16."""
     return val if val < 32768 else val - 65536
 
 
-def read_inverter(dongle_ip: str, dongle_serial: int) -> dict | None:
+def read_inverter(dongle_ip: str, dongle_serial: int, regs: dict) -> dict | None:
     try:
         s = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
-        soc  = s.read_holding_registers(_REG_BATTERY_SOC, 1)[0]
-        batt = _s16(s.read_holding_registers(_REG_BATTERY_POWER, 1)[0])
-        grid = _s16(s.read_holding_registers(_REG_GRID_POWER, 1)[0])
-        load = s.read_holding_registers(_REG_LOAD_POWER, 1)[0]
-        pv   = (s.read_holding_registers(_REG_PV1_POWER, 1)[0] +
-                s.read_holding_registers(_REG_PV2_POWER, 1)[0] +
-                s.read_holding_registers(_REG_PV3_POWER, 1)[0])
+        soc  = s.read_holding_registers(regs["batterySoc"], 1)[0]
+        batt = _s16(s.read_holding_registers(regs["batteryPower"], 1)[0])
+        grid = _s16(s.read_holding_registers(regs["gridPower"], 1)[0])
+        load = s.read_holding_registers(regs["loadPower"], 1)[0]
+        pv   = (s.read_holding_registers(regs["pv1Power"], 1)[0] +
+                s.read_holding_registers(regs["pv2Power"], 1)[0] +
+                s.read_holding_registers(regs["pv3Power"], 1)[0])
         return {
             "batterySOC":    float(soc),
             "pvPowerW":      float(pv),
@@ -133,38 +158,38 @@ def read_inverter(dongle_ip: str, dongle_serial: int) -> dict | None:
         return None
 
 
-def read_inverter_control_state(dongle_ip: str, dongle_serial: int) -> dict | None:
+def read_inverter_control_state(dongle_ip: str, dongle_serial: int, regs: dict) -> dict | None:
     """Read the current charge/sell register states — saved as revert baseline."""
     try:
         s = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
-        charge = s.read_holding_registers(_REG_CHARGE_CMD, 1)[0]
-        sell   = s.read_holding_registers(_REG_SELL_CMD, 1)[0]
+        charge = s.read_holding_registers(regs["chargeCmd"], 1)[0]
+        sell   = s.read_holding_registers(regs["sellCmd"], 1)[0]
         return {"chargeFromGrid": bool(charge), "sellToGrid": bool(sell)}
     except Exception as exc:
         log.warning("Failed to read inverter control state: %s", exc)
         return None
 
 
-def apply_schedule(dongle_ip: str, dongle_serial: int, commands: dict) -> None:
+def apply_schedule(dongle_ip: str, dongle_serial: int, regs: dict, commands: dict) -> None:
     """Write charge/sell commands to the inverter via holding registers."""
     try:
         s = PySolarmanV5(dongle_ip, dongle_serial, port=8899, mb_slave_id=1, verbose=False)
         if "chargeFromGrid" in commands:
-            s.write_holding_register(_REG_CHARGE_CMD, 1 if commands["chargeFromGrid"] else 0)
+            s.write_holding_register(regs["chargeCmd"], 1 if commands["chargeFromGrid"] else 0)
         if "sellToGrid" in commands:
-            s.write_holding_register(_REG_SELL_CMD, 1 if commands["sellToGrid"] else 0)
+            s.write_holding_register(regs["sellCmd"], 1 if commands["sellToGrid"] else 0)
         log.info("Applied commands: %s", commands)
     except Exception as exc:
         log.warning("Failed to apply schedule: %s", exc)
 
 
-def revert_inverter(dongle_ip: str, dongle_serial: int) -> None:
+def revert_inverter(dongle_ip: str, dongle_serial: int, regs: dict) -> None:
     """Restore the inverter to the state captured at add-on startup."""
     try:
         with open(_INITIAL_STATE_PATH) as f:
             baseline = json.load(f)
         log.info("Reverting inverter to baseline: %s", baseline)
-        apply_schedule(dongle_ip, dongle_serial, baseline)
+        apply_schedule(dongle_ip, dongle_serial, regs, baseline)
     except Exception as exc:
         log.warning("Failed to revert inverter (no baseline saved?): %s", exc)
 
@@ -173,8 +198,9 @@ def revert_inverter(dongle_ip: str, dongle_serial: int) -> None:
 
 def fetch_license(api_url: str, license_key: str) -> dict:
     """
-    Call license/validate on the server to obtain the sync interval assigned
-    to this license tier. Returns the parsed response dict, or {} on failure.
+    Call license/validate on the server to obtain the sync interval and
+    inverter register map assigned to this license. Returns the parsed
+    response dict, or {} on failure.
     """
     try:
         resp = requests.post(
@@ -190,12 +216,19 @@ def fetch_license(api_url: str, license_key: str) -> dict:
         return {}
 
 
-def post_telemetry(api_url: str, license_key: str, device_id: str, telemetry: dict) -> dict | None:
+def post_telemetry(
+    api_url: str,
+    license_key: str,
+    device_id: str,
+    current_model_id: str | None,
+    telemetry: dict,
+) -> dict | None:
     payload = {
         "method": "ingest",
         "licenseKey": license_key,
         "deviceId": device_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "currentModelId": current_model_id,
         **telemetry,
     }
     try:
@@ -243,10 +276,19 @@ def main() -> None:
         interval = load_sync_interval()
         log.info("Using stored sync interval: %ds", interval)
 
+    # Persist register map received at startup (if the user has selected a model).
+    if "registerMap" in license_info:
+        save_register_map(license_info["registerMap"])
+        log.info("Register map updated from license response: model=%s",
+                 license_info["registerMap"].get("modelId"))
+
+    regs = load_register_map()
+    log.info("Using register map for model: %s", regs.get("modelId", "unknown"))
+
     # ── Step 2: capture baseline inverter state for later revert ─────────────
     if not os.path.exists(_INITIAL_STATE_PATH):
         log.info("Capturing initial inverter control state…")
-        baseline = read_inverter_control_state(dongle_ip, dongle_serial)
+        baseline = read_inverter_control_state(dongle_ip, dongle_serial, regs)
         if baseline:
             with open(_INITIAL_STATE_PATH, "w") as f:
                 json.dump(baseline, f)
@@ -257,18 +299,17 @@ def main() -> None:
     log.info("DeyLyte EMS starting — device_id=%s, interval=%ds, api=%s",
              device_id, interval, api_url)
 
-    # Deterministic jitter — used after the first cycle to re-spread load.
-    # On start/restart we send immediately so the user doesn't wait.
+    # Spread load: sleep a deterministic offset before the first poll
     jitter = startup_jitter(license_key, interval)
-    log.info("First telemetry will be sent immediately; jitter of %ds applied after to re-spread load", jitter)
+    log.info("Startup jitter: %ds (spreads load across %ds window)", jitter, interval)
+    time.sleep(jitter)
 
     # ── Step 3: main telemetry loop ───────────────────────────────────────────
-    first_cycle = True
     while True:
         loop_start = time.monotonic()
 
         # 1. Read inverter
-        telemetry = read_inverter(dongle_ip, dongle_serial)
+        telemetry = read_inverter(dongle_ip, dongle_serial, regs)
         if telemetry is None:
             log.warning("Skipping this cycle — inverter unreachable")
             time.sleep(interval)
@@ -282,13 +323,17 @@ def main() -> None:
         )
 
         # 2. POST to backend; receive commands / control signals
-        response = post_telemetry(api_url, license_key, device_id, telemetry)
+        response = post_telemetry(
+            api_url, license_key, device_id,
+            regs.get("modelId"),
+            telemetry,
+        )
 
         # 3. Handle stop signal — license expired or deactivated
         if (response or {}).get("stop"):
             log.warning("Server signalled stop (license expired or deactivated). "
                         "Reverting inverter and halting telemetry.")
-            revert_inverter(dongle_ip, dongle_serial)
+            revert_inverter(dongle_ip, dongle_serial, regs)
             # Sleep indefinitely — operator must fix the license situation
             # and restart the add-on.
             while True:
@@ -302,25 +347,29 @@ def main() -> None:
                 interval = new_interval
                 save_sync_interval(interval)
 
-        # 5. Apply commands only if backend included them (live mode).
+        # 5. Handle register map update from server (user changed model in Flutter app).
+        #    Takes effect immediately — baseline is not affected since it uses
+        #    the same physical registers (chargeCmd/sellCmd) across all models.
+        if response and "registerMap" in response:
+            new_map = response["registerMap"]
+            if new_map.get("modelId") != regs.get("modelId"):
+                log.info("Register map updated by server: %s → %s",
+                         regs.get("modelId"), new_map.get("modelId"))
+                save_register_map(new_map)
+                regs = new_map
+
+        # 6. Apply commands only if backend included them (live mode).
         #    No commands in response = planning mode → do nothing.
         commands = (response or {}).get("commands")
         if commands:
-            apply_schedule(dongle_ip, dongle_serial, commands)
+            apply_schedule(dongle_ip, dongle_serial, regs, commands)
         else:
             log.info("No commands received — planning mode or no schedule yet")
 
-        # Sleep for the remainder of the interval.
-        # After the immediate first cycle, sleep the jitter to re-spread backend load;
-        # subsequent cycles use the normal interval.
+        # Sleep for the remainder of the interval
         elapsed = time.monotonic() - loop_start
-        if first_cycle:
-            first_cycle = False
-            sleep_for = max(0, jitter - elapsed)
-            log.info("First cycle done in %.1fs, jitter sleep %.0fs before resuming schedule", elapsed, sleep_for)
-        else:
-            sleep_for = max(0, interval - elapsed)
-            log.info("Cycle done in %.1fs, sleeping %.0fs", elapsed, sleep_for)
+        sleep_for = max(0, interval - elapsed)
+        log.info("Cycle done in %.1fs, sleeping %.0fs", elapsed, sleep_for)
         time.sleep(sleep_for)
 
 

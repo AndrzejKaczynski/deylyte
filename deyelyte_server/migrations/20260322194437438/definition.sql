@@ -40,6 +40,7 @@ CREATE TABLE "app_config" (
     "planningOnly" boolean NOT NULL,
     "pstrykEnabled" boolean NOT NULL,
     "currency" text,
+    "inverterModelId" text,
     "baselineChargingEnabled" boolean,
     "baselineSellingEnabled" boolean,
     "baselineMaxBuyPrice" double precision,
@@ -77,6 +78,8 @@ CREATE TABLE "devices" (
     "lastSeenAt" timestamp without time zone,
     "lastInverterOk" boolean NOT NULL,
     "syncIntervalSeconds" bigint,
+    "modelValidationStatus" text,
+    "modelValidationAttempts" bigint NOT NULL,
     "createdAt" timestamp without time zone NOT NULL
 );
 
@@ -128,6 +131,19 @@ CREATE TABLE "inverter_data" (
 
 -- Indexes
 CREATE UNIQUE INDEX "inverter_data_user_timestamp_idx" ON "inverter_data" USING btree ("userInfoId", "timestamp");
+
+--
+-- Class InverterModel as table inverter_models
+--
+CREATE TABLE "inverter_models" (
+    "id" bigserial PRIMARY KEY,
+    "modelId" text NOT NULL,
+    "displayName" text NOT NULL,
+    "registerMapJson" text NOT NULL
+);
+
+-- Indexes
+CREATE UNIQUE INDEX "inverter_models_model_idx" ON "inverter_models" USING btree ("modelId");
 
 --
 -- Class LicenseKey as table license_keys
@@ -576,9 +592,9 @@ ALTER TABLE ONLY "serverpod_query_log"
 -- MIGRATION VERSION FOR deyelyte
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('deyelyte', '20260322164503020', now())
+    VALUES ('deyelyte', '20260322194437438', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260322164503020', "timestamp" = now();
+    DO UPDATE SET "version" = '20260322194437438', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

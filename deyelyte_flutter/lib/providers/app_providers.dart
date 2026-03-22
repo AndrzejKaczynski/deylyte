@@ -94,9 +94,15 @@ final priceTimeRangesProvider = FutureProvider<List<PriceTimeRange>>((ref) async
 
 // ── Device / add-on status ────────────────────────────────────────────────────
 
-/// Add-on connection status. Refreshed on demand (invalidate to re-fetch).
+/// Add-on connection status + inverter model info. Refreshed on demand.
 final addonStatusProvider = FutureProvider<Map<String, dynamic>>((ref) {
   return ref.read(deviceRepositoryProvider).getStatus();
+});
+
+/// Supported inverter models from the server catalogue.
+/// Each entry: { 'modelId': String, 'displayName': String }.
+final inverterModelsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+  return ref.read(deviceRepositoryProvider).listModels();
 });
 
 // ── Telemetry ─────────────────────────────────────────────────────────────────

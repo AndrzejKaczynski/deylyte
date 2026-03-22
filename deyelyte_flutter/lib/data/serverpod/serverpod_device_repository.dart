@@ -13,4 +13,16 @@ class ServerpodDeviceRepository implements DeviceRepository {
     final json = await _client.device.getStatus();
     return jsonDecode(json) as Map<String, dynamic>;
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> listModels() async {
+    final json = await _client.device.listModels();
+    final list = jsonDecode(json) as List<dynamic>;
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  @override
+  Future<void> setModel(String? modelId) async {
+    await _client.device.setModel(modelId);
+  }
 }

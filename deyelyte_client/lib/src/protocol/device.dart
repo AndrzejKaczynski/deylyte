@@ -21,6 +21,8 @@ abstract class Device implements _i1.SerializableModel {
     this.lastSeenAt,
     required this.lastInverterOk,
     this.syncIntervalSeconds,
+    this.modelValidationStatus,
+    required this.modelValidationAttempts,
     required this.createdAt,
   });
 
@@ -32,6 +34,8 @@ abstract class Device implements _i1.SerializableModel {
     DateTime? lastSeenAt,
     required bool lastInverterOk,
     int? syncIntervalSeconds,
+    String? modelValidationStatus,
+    required int modelValidationAttempts,
     required DateTime createdAt,
   }) = _DeviceImpl;
 
@@ -48,6 +52,10 @@ abstract class Device implements _i1.SerializableModel {
         jsonSerialization['lastInverterOk'],
       ),
       syncIntervalSeconds: jsonSerialization['syncIntervalSeconds'] as int?,
+      modelValidationStatus:
+          jsonSerialization['modelValidationStatus'] as String?,
+      modelValidationAttempts:
+          jsonSerialization['modelValidationAttempts'] as int,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -71,6 +79,10 @@ abstract class Device implements _i1.SerializableModel {
 
   int? syncIntervalSeconds;
 
+  String? modelValidationStatus;
+
+  int modelValidationAttempts;
+
   DateTime createdAt;
 
   /// Returns a shallow copy of this [Device]
@@ -84,6 +96,8 @@ abstract class Device implements _i1.SerializableModel {
     DateTime? lastSeenAt,
     bool? lastInverterOk,
     int? syncIntervalSeconds,
+    String? modelValidationStatus,
+    int? modelValidationAttempts,
     DateTime? createdAt,
   });
   @override
@@ -98,6 +112,9 @@ abstract class Device implements _i1.SerializableModel {
       'lastInverterOk': lastInverterOk,
       if (syncIntervalSeconds != null)
         'syncIntervalSeconds': syncIntervalSeconds,
+      if (modelValidationStatus != null)
+        'modelValidationStatus': modelValidationStatus,
+      'modelValidationAttempts': modelValidationAttempts,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -119,6 +136,8 @@ class _DeviceImpl extends Device {
     DateTime? lastSeenAt,
     required bool lastInverterOk,
     int? syncIntervalSeconds,
+    String? modelValidationStatus,
+    required int modelValidationAttempts,
     required DateTime createdAt,
   }) : super._(
          id: id,
@@ -128,6 +147,8 @@ class _DeviceImpl extends Device {
          lastSeenAt: lastSeenAt,
          lastInverterOk: lastInverterOk,
          syncIntervalSeconds: syncIntervalSeconds,
+         modelValidationStatus: modelValidationStatus,
+         modelValidationAttempts: modelValidationAttempts,
          createdAt: createdAt,
        );
 
@@ -143,6 +164,8 @@ class _DeviceImpl extends Device {
     Object? lastSeenAt = _Undefined,
     bool? lastInverterOk,
     Object? syncIntervalSeconds = _Undefined,
+    Object? modelValidationStatus = _Undefined,
+    int? modelValidationAttempts,
     DateTime? createdAt,
   }) {
     return Device(
@@ -155,6 +178,11 @@ class _DeviceImpl extends Device {
       syncIntervalSeconds: syncIntervalSeconds is int?
           ? syncIntervalSeconds
           : this.syncIntervalSeconds,
+      modelValidationStatus: modelValidationStatus is String?
+          ? modelValidationStatus
+          : this.modelValidationStatus,
+      modelValidationAttempts:
+          modelValidationAttempts ?? this.modelValidationAttempts,
       createdAt: createdAt ?? this.createdAt,
     );
   }

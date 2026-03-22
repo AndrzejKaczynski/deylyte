@@ -21,6 +21,8 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     this.lastSeenAt,
     required this.lastInverterOk,
     this.syncIntervalSeconds,
+    this.modelValidationStatus,
+    required this.modelValidationAttempts,
     required this.createdAt,
   });
 
@@ -32,6 +34,8 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     DateTime? lastSeenAt,
     required bool lastInverterOk,
     int? syncIntervalSeconds,
+    String? modelValidationStatus,
+    required int modelValidationAttempts,
     required DateTime createdAt,
   }) = _DeviceImpl;
 
@@ -48,6 +52,10 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
         jsonSerialization['lastInverterOk'],
       ),
       syncIntervalSeconds: jsonSerialization['syncIntervalSeconds'] as int?,
+      modelValidationStatus:
+          jsonSerialization['modelValidationStatus'] as String?,
+      modelValidationAttempts:
+          jsonSerialization['modelValidationAttempts'] as int,
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -73,6 +81,10 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   int? syncIntervalSeconds;
 
+  String? modelValidationStatus;
+
+  int modelValidationAttempts;
+
   DateTime createdAt;
 
   @override
@@ -89,6 +101,8 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     DateTime? lastSeenAt,
     bool? lastInverterOk,
     int? syncIntervalSeconds,
+    String? modelValidationStatus,
+    int? modelValidationAttempts,
     DateTime? createdAt,
   });
   @override
@@ -103,6 +117,9 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'lastInverterOk': lastInverterOk,
       if (syncIntervalSeconds != null)
         'syncIntervalSeconds': syncIntervalSeconds,
+      if (modelValidationStatus != null)
+        'modelValidationStatus': modelValidationStatus,
+      'modelValidationAttempts': modelValidationAttempts,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -119,6 +136,9 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       'lastInverterOk': lastInverterOk,
       if (syncIntervalSeconds != null)
         'syncIntervalSeconds': syncIntervalSeconds,
+      if (modelValidationStatus != null)
+        'modelValidationStatus': modelValidationStatus,
+      'modelValidationAttempts': modelValidationAttempts,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -164,6 +184,8 @@ class _DeviceImpl extends Device {
     DateTime? lastSeenAt,
     required bool lastInverterOk,
     int? syncIntervalSeconds,
+    String? modelValidationStatus,
+    required int modelValidationAttempts,
     required DateTime createdAt,
   }) : super._(
          id: id,
@@ -173,6 +195,8 @@ class _DeviceImpl extends Device {
          lastSeenAt: lastSeenAt,
          lastInverterOk: lastInverterOk,
          syncIntervalSeconds: syncIntervalSeconds,
+         modelValidationStatus: modelValidationStatus,
+         modelValidationAttempts: modelValidationAttempts,
          createdAt: createdAt,
        );
 
@@ -188,6 +212,8 @@ class _DeviceImpl extends Device {
     Object? lastSeenAt = _Undefined,
     bool? lastInverterOk,
     Object? syncIntervalSeconds = _Undefined,
+    Object? modelValidationStatus = _Undefined,
+    int? modelValidationAttempts,
     DateTime? createdAt,
   }) {
     return Device(
@@ -200,6 +226,11 @@ class _DeviceImpl extends Device {
       syncIntervalSeconds: syncIntervalSeconds is int?
           ? syncIntervalSeconds
           : this.syncIntervalSeconds,
+      modelValidationStatus: modelValidationStatus is String?
+          ? modelValidationStatus
+          : this.modelValidationStatus,
+      modelValidationAttempts:
+          modelValidationAttempts ?? this.modelValidationAttempts,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -239,6 +270,18 @@ class DeviceUpdateTable extends _i1.UpdateTable<DeviceTable> {
     value,
   );
 
+  _i1.ColumnValue<String, String> modelValidationStatus(String? value) =>
+      _i1.ColumnValue(
+        table.modelValidationStatus,
+        value,
+      );
+
+  _i1.ColumnValue<int, int> modelValidationAttempts(int value) =>
+      _i1.ColumnValue(
+        table.modelValidationAttempts,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -273,6 +316,14 @@ class DeviceTable extends _i1.Table<int?> {
       'syncIntervalSeconds',
       this,
     );
+    modelValidationStatus = _i1.ColumnString(
+      'modelValidationStatus',
+      this,
+    );
+    modelValidationAttempts = _i1.ColumnInt(
+      'modelValidationAttempts',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -293,6 +344,10 @@ class DeviceTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt syncIntervalSeconds;
 
+  late final _i1.ColumnString modelValidationStatus;
+
+  late final _i1.ColumnInt modelValidationAttempts;
+
   late final _i1.ColumnDateTime createdAt;
 
   @override
@@ -304,6 +359,8 @@ class DeviceTable extends _i1.Table<int?> {
     lastSeenAt,
     lastInverterOk,
     syncIntervalSeconds,
+    modelValidationStatus,
+    modelValidationAttempts,
     createdAt,
   ];
 }

@@ -226,8 +226,8 @@ class EndpointCredentials extends _i1.EndpointRef {
       );
 }
 
-/// Returns HA add-on connection status for the authenticated user.
-/// Called by Flutter on every app launch and by the onboarding polling widget.
+/// Returns HA add-on connection status and inverter model info for the
+/// authenticated user. Also exposes model catalogue and model selection.
 /// {@category Endpoint}
 class EndpointDevice extends _i1.EndpointRef {
   EndpointDevice(_i1.EndpointCaller caller) : super(caller);
@@ -235,17 +235,39 @@ class EndpointDevice extends _i1.EndpointRef {
   @override
   String get name => 'device';
 
-  /// Returns add-on connection status.
+  /// Returns add-on connection status plus the user's current model selection
+  /// and validation state.
   ///
   /// Response fields:
-  ///   connected         — true when telemetry received within 3× the device's
-  ///                       configured sync interval (i.e. 3 missed polls = offline)
-  ///   lastSeenAt        — ISO8601 UTC of most recent telemetry, or null
-  ///   inverterReachable — true if last telemetry had valid inverter state
+  ///   connected              — true when telemetry received within 3× sync interval
+  ///   lastSeenAt             — ISO8601 UTC of most recent telemetry, or null
+  ///   inverterReachable      — true if last telemetry had valid inverter state
+  ///   inverterModelId        — currently selected model ID, or null
+  ///   inverterModelName      — display name of selected model, or null
+  ///   modelValidationStatus  — null | 'pending' | 'ok' | 'failed'
   _i2.Future<String> getStatus() => caller.callServerEndpoint<String>(
     'device',
     'getStatus',
     {},
+  );
+
+  /// Returns the full list of supported inverter models.
+  /// Response: JSON array of { modelId, displayName }.
+  _i2.Future<String> listModels() => caller.callServerEndpoint<String>(
+    'device',
+    'listModels',
+    {},
+  );
+
+  /// Saves the user's inverter model choice.
+  /// Resets the device's validation state to 'pending' so the next telemetry
+  /// cycle re-verifies that the registers make sense for the chosen model.
+  ///
+  /// Passing null clears the selection.
+  _i2.Future<void> setModel(String? modelId) => caller.callServerEndpoint<void>(
+    'device',
+    'setModel',
+    {'modelId': modelId},
   );
 }
 
@@ -318,7 +340,7 @@ class EndpointHistory extends _i1.EndpointRef {
 
 /// License key validation. Called during onboarding (user is authenticated
 /// but license not yet verified). Also called by the HA add-on on startup
-/// to obtain the server-assigned sync interval.
+/// to obtain the server-assigned sync interval and the inverter register map.
 /// {@category Endpoint}
 class EndpointLicense extends _i1.EndpointRef {
   EndpointLicense(_i1.EndpointCaller caller) : super(caller);
@@ -332,6 +354,7 @@ class EndpointLicense extends _i1.EndpointRef {
   ///   valid               — bool
   ///   tier                — String? ('beta_free' | 'basic' | 'pro') when valid
   ///   syncIntervalSeconds — int? server-assigned poll interval when valid
+  ///   registerMap         — Map? inverter register addresses when a model is selected
   ///   reason              — String? human-readable denial reason when invalid
   _i2.Future<String> validate(String licenseKey) =>
       caller.callServerEndpoint<String>(
@@ -544,16 +567,22 @@ class EndpointTelemetry extends _i1.EndpointRef {
   /// Receives a single telemetry snapshot from the HA add-on.
   /// Auth: the add-on provides its licenseKey as a plain parameter.
   ///
+  /// [currentModelId] is the model ID the add-on is currently using (if any).
+  /// When this differs from the server-side selection, the response includes
+  /// a [registerMap] so the add-on updates its local cache without restarting.
+  ///
   /// On success:
   ///   - Upserts a Device row (updates lastSeenAt + lastInverterOk + syncIntervalSeconds)
   ///   - Inserts a DeviceTelemetry row
+  ///   - Validates telemetry against the selected model when status is 'pending'
   ///
   /// Returns JSON:
   ///   { "stop": true }                      — license expired/deactivated; add-on must stop
   ///   { }                                   — planning mode, no commands
   ///   { "commands": {...} }                 — live mode commands
   ///   Any response may also include:
-  ///   { "syncIntervalSeconds": N }          — if the interval has changed, add-on must update
+  ///   { "syncIntervalSeconds": N }          — if the interval has changed
+  ///   { "registerMap": {...} }              — if the server model differs from currentModelId
   _i2.Future<String> ingest(
     String licenseKey,
     String deviceId,
@@ -563,6 +592,7 @@ class EndpointTelemetry extends _i1.EndpointRef {
     double pvPowerW,
     double loadPowerW,
     double batteryPowerW,
+    String? currentModelId,
   ) => caller.callServerEndpoint<String>(
     'telemetry',
     'ingest',
@@ -575,6 +605,7 @@ class EndpointTelemetry extends _i1.EndpointRef {
       'pvPowerW': pvPowerW,
       'loadPowerW': loadPowerW,
       'batteryPowerW': batteryPowerW,
+      'currentModelId': currentModelId,
     },
   );
 
@@ -588,10 +619,9 @@ class EndpointTelemetry extends _i1.EndpointRef {
       );
 
   /// Returns telemetry history for the authenticated user.
-  /// The window is capped server-side by tier:
-  ///   pro / beta_free → 90 days
-  ///   basic           → 30 days
-  /// [hours] is the client's requested window; the server enforces the cap.
+  /// The window is capped server-side using [TierSyncConfig.historyDurationDays]
+  /// for the user's active tier. [hours] is the client's requested window;
+  /// the server enforces the cap.
   _i2.Future<List<_i7.DeviceTelemetry>> getHistory(int hours) =>
       caller.callServerEndpoint<List<_i7.DeviceTelemetry>>(
         'telemetry',

@@ -39,6 +39,7 @@ abstract class AppConfig implements _i1.SerializableModel {
     required this.planningOnly,
     required this.pstrykEnabled,
     this.currency,
+    this.inverterModelId,
     this.baselineChargingEnabled,
     this.baselineSellingEnabled,
     this.baselineMaxBuyPrice,
@@ -72,6 +73,7 @@ abstract class AppConfig implements _i1.SerializableModel {
     required bool planningOnly,
     required bool pstrykEnabled,
     String? currency,
+    String? inverterModelId,
     bool? baselineChargingEnabled,
     bool? baselineSellingEnabled,
     double? baselineMaxBuyPrice,
@@ -131,6 +133,7 @@ abstract class AppConfig implements _i1.SerializableModel {
         jsonSerialization['pstrykEnabled'],
       ),
       currency: jsonSerialization['currency'] as String?,
+      inverterModelId: jsonSerialization['inverterModelId'] as String?,
       baselineChargingEnabled:
           jsonSerialization['baselineChargingEnabled'] == null
           ? null
@@ -204,6 +207,8 @@ abstract class AppConfig implements _i1.SerializableModel {
 
   String? currency;
 
+  String? inverterModelId;
+
   bool? baselineChargingEnabled;
 
   bool? baselineSellingEnabled;
@@ -243,6 +248,7 @@ abstract class AppConfig implements _i1.SerializableModel {
     bool? planningOnly,
     bool? pstrykEnabled,
     String? currency,
+    String? inverterModelId,
     bool? baselineChargingEnabled,
     bool? baselineSellingEnabled,
     double? baselineMaxBuyPrice,
@@ -280,6 +286,7 @@ abstract class AppConfig implements _i1.SerializableModel {
       'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
       if (currency != null) 'currency': currency,
+      if (inverterModelId != null) 'inverterModelId': inverterModelId,
       if (baselineChargingEnabled != null)
         'baselineChargingEnabled': baselineChargingEnabled,
       if (baselineSellingEnabled != null)
@@ -328,6 +335,7 @@ class _AppConfigImpl extends AppConfig {
     required bool planningOnly,
     required bool pstrykEnabled,
     String? currency,
+    String? inverterModelId,
     bool? baselineChargingEnabled,
     bool? baselineSellingEnabled,
     double? baselineMaxBuyPrice,
@@ -359,6 +367,7 @@ class _AppConfigImpl extends AppConfig {
          planningOnly: planningOnly,
          pstrykEnabled: pstrykEnabled,
          currency: currency,
+         inverterModelId: inverterModelId,
          baselineChargingEnabled: baselineChargingEnabled,
          baselineSellingEnabled: baselineSellingEnabled,
          baselineMaxBuyPrice: baselineMaxBuyPrice,
@@ -396,6 +405,7 @@ class _AppConfigImpl extends AppConfig {
     bool? planningOnly,
     bool? pstrykEnabled,
     Object? currency = _Undefined,
+    Object? inverterModelId = _Undefined,
     Object? baselineChargingEnabled = _Undefined,
     Object? baselineSellingEnabled = _Undefined,
     Object? baselineMaxBuyPrice = _Undefined,
@@ -449,6 +459,9 @@ class _AppConfigImpl extends AppConfig {
       planningOnly: planningOnly ?? this.planningOnly,
       pstrykEnabled: pstrykEnabled ?? this.pstrykEnabled,
       currency: currency is String? ? currency : this.currency,
+      inverterModelId: inverterModelId is String?
+          ? inverterModelId
+          : this.inverterModelId,
       baselineChargingEnabled: baselineChargingEnabled is bool?
           ? baselineChargingEnabled
           : this.baselineChargingEnabled,

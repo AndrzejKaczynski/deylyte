@@ -455,6 +455,35 @@ class Endpoints extends _i1.EndpointDispatch {
                 session,
               ),
         ),
+        'listModels': _i1.MethodConnector(
+          name: 'listModels',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['device'] as _i6.DeviceEndpoint).listModels(
+                session,
+              ),
+        ),
+        'setModel': _i1.MethodConnector(
+          name: 'setModel',
+          params: {
+            'modelId': _i1.ParameterDescription(
+              name: 'modelId',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['device'] as _i6.DeviceEndpoint).setModel(
+                session,
+                params['modelId'],
+              ),
+        ),
       },
     );
     connectors['example'] = _i1.EndpointConnector(
@@ -865,6 +894,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<double>(),
               nullable: false,
             ),
+            'currentModelId': _i1.ParameterDescription(
+              name: 'currentModelId',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -881,6 +915,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['pvPowerW'],
                     params['loadPowerW'],
                     params['batteryPowerW'],
+                    params['currentModelId'],
                   ),
         ),
         'getLatest': _i1.MethodConnector(

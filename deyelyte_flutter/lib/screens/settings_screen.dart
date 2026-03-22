@@ -1529,28 +1529,11 @@ class _ApiIntegrationsCardState extends ConsumerState<_ApiIntegrationsCard> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final addonAsync = ref.watch(addonStatusProvider);
-    final addonStatus = addonAsync.valueOrNull;
-    final connected = addonStatus?['connected'] == true;
-    final lastSeen = addonStatus?['lastSeenAt'] != null
-        ? fmtDateTime(addonStatus!['lastSeenAt'])
-        : null;
-    final addonDetail = connected
-        ? 'Add-on connected'
-        : (lastSeen != null ? 'Add-on offline' : 'Not configured');
-    final addonColor = connected
-        ? AppColors.secondary
-        : (lastSeen != null ? AppColors.tertiary : AppColors.onSurfaceVariant);
-
     return SurfaceCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SectionHeader(title: 'API Integrations'),
         const SizedBox(height: 16),
-        _AddonStatusRow(
-          detail: addonDetail,
-          dotColor: addonColor,
-          lastSeen: lastSeen,
-        ),
+        const _AddonStatusRow(),
         const SizedBox(height: 12),
         _IntegrationRow(
           icon: Icons.wb_sunny_rounded,
@@ -1595,58 +1578,268 @@ class _ApiIntegrationsCardState extends ConsumerState<_ApiIntegrationsCard> {
   }
 }
 
-class _AddonStatusRow extends StatelessWidget {
-  const _AddonStatusRow({
-    required this.detail,
-    required this.dotColor,
-    required this.lastSeen,
-  });
+class _AddonStatusRow extends ConsumerStatefulWidget {
+  const _AddonStatusRow();
 
-  final String detail;
-  final Color dotColor;
-  final String? lastSeen;
+  @override
+  ConsumerState<_AddonStatusRow> createState() => _AddonStatusRowState();
+}
+
+class _AddonStatusRowState extends ConsumerState<_AddonStatusRow> {
+  bool _settingModel = false;
+
+  Future<void> _pickModel(
+    BuildContext context,
+    List<Map<String, dynamic>> models,
+    String? currentModelId,
+  ) async {
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (_) => _InverterModelDialog(
+        models: models,
+        currentModelId: currentModelId,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _settingModel = true);
+    try {
+      await ref.read(deviceRepositoryProvider).setModel(picked);
+      ref.invalidate(addonStatusProvider);
+    } finally {
+      if (mounted) setState(() => _settingModel = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+
+    final addonStatus = ref.watch(addonStatusProvider).valueOrNull;
+    final connected = addonStatus?['connected'] == true;
+    final lastSeen = addonStatus?['lastSeenAt'] != null
+        ? fmtDateTime(addonStatus!['lastSeenAt'] as String)
+        : null;
+    final dotColor = connected
+        ? AppColors.secondary
+        : (lastSeen != null ? AppColors.tertiary : AppColors.onSurfaceVariant);
+    final connectionDetail = connected
+        ? 'Add-on connected'
+        : (lastSeen != null ? 'Add-on offline' : 'Not configured');
+
+    final modelId = addonStatus?['inverterModelId'] as String?;
+    final modelName = addonStatus?['inverterModelName'] as String?;
+    final validationStatus = addonStatus?['modelValidationStatus'] as String?;
+
+    final models = ref.watch(inverterModelsProvider).valueOrNull ?? [];
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
         borderRadius: AppRadius.radiusMd,
       ),
-      child: Row(children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: dotColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(Icons.developer_board_rounded,
-              size: 18, color: dotColor),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Local Inverter (SolarmanV5)',
-                style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-            Text(detail, style: tt.bodySmall),
-            if (lastSeen != null)
-              Text('Last seen: $lastSeen',
-                  style: tt.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceVariant, fontSize: 11)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Connection status row ──────────────────────────────────────
+          Row(children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: dotColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.developer_board_rounded, size: 18, color: dotColor),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Local Inverter (SolarmanV5)',
+                    style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(connectionDetail, style: tt.bodySmall),
+                if (lastSeen != null)
+                  Text('Last seen: $lastSeen',
+                      style: tt.bodySmall?.copyWith(
+                          color: AppColors.onSurfaceVariant, fontSize: 11)),
+              ]),
+            ),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: dotColor),
+            ),
           ]),
+
+          // ── Model selection + validation ───────────────────────────────
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: AppColors.outlineVariant),
+          const SizedBox(height: 10),
+          Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Inverter Model',
+                    style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  modelName ?? 'No model selected — tap to configure',
+                  style: tt.bodySmall?.copyWith(
+                    color: modelName != null
+                        ? AppColors.onSurface
+                        : AppColors.onSurfaceVariant,
+                  ),
+                ),
+                if (validationStatus != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: _ValidationBadge(status: validationStatus),
+                  ),
+              ]),
+            ),
+            const SizedBox(width: 8),
+            _settingModel
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: AppColors.primary,
+                    ),
+                    onPressed: models.isEmpty
+                        ? null
+                        : () => _pickModel(context, models, modelId),
+                    child: Text(modelId == null ? 'Select' : 'Change',
+                        style: tt.bodySmall?.copyWith(color: AppColors.primary)),
+                  ),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValidationBadge extends StatelessWidget {
+  const _ValidationBadge({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return switch (status) {
+      'ok' => Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.check_circle_outline_rounded,
+              size: 12, color: AppColors.secondary),
+          const SizedBox(width: 4),
+          Text('Model verified', style: tt.bodySmall?.copyWith(
+              color: AppColors.secondary, fontSize: 11)),
+        ]),
+      'pending' => Row(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(
+              width: 10, height: 10,
+              child: CircularProgressIndicator(strokeWidth: 1.5)),
+          const SizedBox(width: 4),
+          Text('Verifying…', style: tt.bodySmall?.copyWith(
+              color: AppColors.onSurfaceVariant, fontSize: 11)),
+        ]),
+      'failed' => Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.warning_amber_rounded,
+              size: 12, color: AppColors.tertiary),
+          const SizedBox(width: 4),
+          Text('Model mismatch — check your selection',
+              style: tt.bodySmall?.copyWith(
+                  color: AppColors.tertiary, fontSize: 11)),
+        ]),
+      _ => const SizedBox.shrink(),
+    };
+  }
+}
+
+class _InverterModelDialog extends StatefulWidget {
+  const _InverterModelDialog({
+    required this.models,
+    required this.currentModelId,
+  });
+
+  final List<Map<String, dynamic>> models;
+  final String? currentModelId;
+
+  @override
+  State<_InverterModelDialog> createState() => _InverterModelDialogState();
+}
+
+class _InverterModelDialogState extends State<_InverterModelDialog> {
+  late String? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.currentModelId;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return AlertDialog(
+      backgroundColor: AppColors.surfaceContainer,
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusXl),
+      title: const Text('Select Inverter Model',
+          style: TextStyle(
+              color: AppColors.onSurface, fontWeight: FontWeight.w600)),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Choose the model that matches your inverter. '
+              'The app will verify the connection automatically after you save.',
+              style: tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            RadioGroup<String>(
+              groupValue: _selected,
+              onChanged: (v) => setState(() => _selected = v),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: widget.models.map((m) {
+                  final id = m['modelId'] as String;
+                  final name = m['displayName'] as String;
+                  return RadioListTile<String>(
+                    value: id,
+                    title: Text(name, style: tt.bodySmall),
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
         ),
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: dotColor,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel',
+              style: TextStyle(color: AppColors.onSurfaceVariant)),
+        ),
+        FilledButton(
+          onPressed: _selected == null
+              ? null
+              : () => Navigator.of(context).pop(_selected),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primaryContainer,
+            foregroundColor: AppColors.onPrimary,
+            disabledBackgroundColor: AppColors.surfaceContainerHigh,
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
           ),
+          child: const Text('Save'),
         ),
-      ]),
+      ],
     );
   }
 }

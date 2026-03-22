@@ -93,9 +93,61 @@ void run(List<String> args) async {
 
   await pod.start();
 
+  // Seed static reference data (idempotent — skipped if already present).
+  await _seedInverterModels(pod);
+
   // Bootstrap recurring calls after start so the DB session is available.
   // Ensures polls resume if the server restarts while users are configured.
   await _bootstrapRecurringCalls(pod);
+}
+
+/// Inverter model catalogue — add new models here as they are verified.
+/// registerMapJson uses Modbus holding-register (FC3) addresses.
+const _inverterModels = [
+  (
+    modelId: 'deye_sg04lp3',
+    displayName: 'Deye SG04LP3',
+    registerMapJson: '{'
+        '"batterySoc":588,'
+        '"batteryPower":590,'
+        '"gridPower":625,'
+        '"loadPower":653,'
+        '"pv1Power":672,'
+        '"pv2Power":673,'
+        '"pv3Power":674,'
+        '"chargeCmd":240,'
+        '"sellCmd":243'
+        '}',
+  ),
+];
+
+/// Inserts any missing inverter model rows. Safe to call on every startup —
+/// existing rows are left untouched; only absent ones are inserted.
+Future<void> _seedInverterModels(Serverpod pod) async {
+  final session = await pod.createSession();
+  try {
+    for (final m in _inverterModels) {
+      final exists = await InverterModel.db.findFirstRow(
+        session,
+        where: (t) => t.modelId.equals(m.modelId),
+      );
+      if (exists == null) {
+        await InverterModel.db.insertRow(
+          session,
+          InverterModel(
+            modelId: m.modelId,
+            displayName: m.displayName,
+            registerMapJson: m.registerMapJson,
+          ),
+        );
+        print('Seeded inverter model: ${m.displayName}');
+      }
+    }
+  } catch (e) {
+    print('Seed inverter models error: $e');
+  } finally {
+    await session.close();
+  }
 }
 
 Future<void> _bootstrapRecurringCalls(Serverpod pod) async {

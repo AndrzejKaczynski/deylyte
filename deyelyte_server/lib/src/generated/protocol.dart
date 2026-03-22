@@ -21,16 +21,17 @@ import 'energy_price.dart' as _i8;
 import 'example.dart' as _i9;
 import 'integration_credentials.dart' as _i10;
 import 'inverter_data.dart' as _i11;
-import 'license_key.dart' as _i12;
-import 'optimization_frame.dart' as _i13;
-import 'outage_reserve.dart' as _i14;
-import 'price_time_range.dart' as _i15;
-import 'pv_forecast.dart' as _i16;
-import 'tier_sync_config.dart' as _i17;
-import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i18;
-import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i19;
-import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i20;
-import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i21;
+import 'inverter_model.dart' as _i12;
+import 'license_key.dart' as _i13;
+import 'optimization_frame.dart' as _i14;
+import 'outage_reserve.dart' as _i15;
+import 'price_time_range.dart' as _i16;
+import 'pv_forecast.dart' as _i17;
+import 'tier_sync_config.dart' as _i18;
+import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i19;
+import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i20;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i21;
+import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i22;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'device.dart';
@@ -39,6 +40,7 @@ export 'energy_price.dart';
 export 'example.dart';
 export 'integration_credentials.dart';
 export 'inverter_data.dart';
+export 'inverter_model.dart';
 export 'license_key.dart';
 export 'optimization_frame.dart';
 export 'outage_reserve.dart';
@@ -263,6 +265,12 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'String?',
         ),
         _i2.ColumnDefinition(
+          name: 'inverterModelId',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
           name: 'baselineChargingEnabled',
           columnType: _i2.ColumnType.boolean,
           isNullable: true,
@@ -473,6 +481,18 @@ class Protocol extends _i1.SerializationManagerServer {
           columnType: _i2.ColumnType.bigint,
           isNullable: true,
           dartType: 'int?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'modelValidationStatus',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'modelValidationAttempts',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
         ),
         _i2.ColumnDefinition(
           name: 'createdAt',
@@ -755,6 +775,69 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'timestamp',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'inverter_models',
+      dartName: 'InverterModel',
+      schema: 'public',
+      module: 'deyelyte',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'inverter_models_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'modelId',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'displayName',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'registerMapJson',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'inverter_models_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'inverter_models_model_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'modelId',
             ),
           ],
           type: 'btree',
@@ -1300,23 +1383,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i11.InverterData) {
       return _i11.InverterData.fromJson(data) as T;
     }
-    if (t == _i12.LicenseKey) {
-      return _i12.LicenseKey.fromJson(data) as T;
+    if (t == _i12.InverterModel) {
+      return _i12.InverterModel.fromJson(data) as T;
     }
-    if (t == _i13.OptimizationFrame) {
-      return _i13.OptimizationFrame.fromJson(data) as T;
+    if (t == _i13.LicenseKey) {
+      return _i13.LicenseKey.fromJson(data) as T;
     }
-    if (t == _i14.OutageReserve) {
-      return _i14.OutageReserve.fromJson(data) as T;
+    if (t == _i14.OptimizationFrame) {
+      return _i14.OptimizationFrame.fromJson(data) as T;
     }
-    if (t == _i15.PriceTimeRange) {
-      return _i15.PriceTimeRange.fromJson(data) as T;
+    if (t == _i15.OutageReserve) {
+      return _i15.OutageReserve.fromJson(data) as T;
     }
-    if (t == _i16.PvForecast) {
-      return _i16.PvForecast.fromJson(data) as T;
+    if (t == _i16.PriceTimeRange) {
+      return _i16.PriceTimeRange.fromJson(data) as T;
     }
-    if (t == _i17.TierSyncConfig) {
-      return _i17.TierSyncConfig.fromJson(data) as T;
+    if (t == _i17.PvForecast) {
+      return _i17.PvForecast.fromJson(data) as T;
+    }
+    if (t == _i18.TierSyncConfig) {
+      return _i18.TierSyncConfig.fromJson(data) as T;
     }
     if (t == _i1.getType<_i4.AdminUser?>()) {
       return (data != null ? _i4.AdminUser.fromJson(data) : null) as T;
@@ -1343,23 +1429,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i11.InverterData?>()) {
       return (data != null ? _i11.InverterData.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.LicenseKey?>()) {
-      return (data != null ? _i12.LicenseKey.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.InverterModel?>()) {
+      return (data != null ? _i12.InverterModel.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.OptimizationFrame?>()) {
-      return (data != null ? _i13.OptimizationFrame.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.LicenseKey?>()) {
+      return (data != null ? _i13.LicenseKey.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.OutageReserve?>()) {
-      return (data != null ? _i14.OutageReserve.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.OptimizationFrame?>()) {
+      return (data != null ? _i14.OptimizationFrame.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.PriceTimeRange?>()) {
-      return (data != null ? _i15.PriceTimeRange.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.OutageReserve?>()) {
+      return (data != null ? _i15.OutageReserve.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.PvForecast?>()) {
-      return (data != null ? _i16.PvForecast.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.PriceTimeRange?>()) {
+      return (data != null ? _i16.PriceTimeRange.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.TierSyncConfig?>()) {
-      return (data != null ? _i17.TierSyncConfig.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.PvForecast?>()) {
+      return (data != null ? _i17.PvForecast.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.TierSyncConfig?>()) {
+      return (data != null ? _i18.TierSyncConfig.fromJson(data) : null) as T;
     }
     if (t == Map<String, bool>) {
       return (data as Map).map(
@@ -1367,27 +1456,27 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == List<_i18.OptimizationFrame>) {
+    if (t == List<_i19.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i18.OptimizationFrame>(e))
+              .map((e) => deserialize<_i19.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i19.OutageReserve>) {
+    if (t == List<_i20.OutageReserve>) {
       return (data as List)
-              .map((e) => deserialize<_i19.OutageReserve>(e))
+              .map((e) => deserialize<_i20.OutageReserve>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.PriceTimeRange>) {
+    if (t == List<_i21.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i20.PriceTimeRange>(e))
+              .map((e) => deserialize<_i21.PriceTimeRange>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.DeviceTelemetry>) {
+    if (t == List<_i22.DeviceTelemetry>) {
       return (data as List)
-              .map((e) => deserialize<_i21.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i22.DeviceTelemetry>(e))
               .toList()
           as T;
     }
@@ -1410,12 +1499,13 @@ class Protocol extends _i1.SerializationManagerServer {
       _i9.Example => 'Example',
       _i10.IntegrationCredentials => 'IntegrationCredentials',
       _i11.InverterData => 'InverterData',
-      _i12.LicenseKey => 'LicenseKey',
-      _i13.OptimizationFrame => 'OptimizationFrame',
-      _i14.OutageReserve => 'OutageReserve',
-      _i15.PriceTimeRange => 'PriceTimeRange',
-      _i16.PvForecast => 'PvForecast',
-      _i17.TierSyncConfig => 'TierSyncConfig',
+      _i12.InverterModel => 'InverterModel',
+      _i13.LicenseKey => 'LicenseKey',
+      _i14.OptimizationFrame => 'OptimizationFrame',
+      _i15.OutageReserve => 'OutageReserve',
+      _i16.PriceTimeRange => 'PriceTimeRange',
+      _i17.PvForecast => 'PvForecast',
+      _i18.TierSyncConfig => 'TierSyncConfig',
       _ => null,
     };
   }
@@ -1446,17 +1536,19 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'IntegrationCredentials';
       case _i11.InverterData():
         return 'InverterData';
-      case _i12.LicenseKey():
+      case _i12.InverterModel():
+        return 'InverterModel';
+      case _i13.LicenseKey():
         return 'LicenseKey';
-      case _i13.OptimizationFrame():
+      case _i14.OptimizationFrame():
         return 'OptimizationFrame';
-      case _i14.OutageReserve():
+      case _i15.OutageReserve():
         return 'OutageReserve';
-      case _i15.PriceTimeRange():
+      case _i16.PriceTimeRange():
         return 'PriceTimeRange';
-      case _i16.PvForecast():
+      case _i17.PvForecast():
         return 'PvForecast';
-      case _i17.TierSyncConfig():
+      case _i18.TierSyncConfig():
         return 'TierSyncConfig';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1500,23 +1592,26 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'InverterData') {
       return deserialize<_i11.InverterData>(data['data']);
     }
+    if (dataClassName == 'InverterModel') {
+      return deserialize<_i12.InverterModel>(data['data']);
+    }
     if (dataClassName == 'LicenseKey') {
-      return deserialize<_i12.LicenseKey>(data['data']);
+      return deserialize<_i13.LicenseKey>(data['data']);
     }
     if (dataClassName == 'OptimizationFrame') {
-      return deserialize<_i13.OptimizationFrame>(data['data']);
+      return deserialize<_i14.OptimizationFrame>(data['data']);
     }
     if (dataClassName == 'OutageReserve') {
-      return deserialize<_i14.OutageReserve>(data['data']);
+      return deserialize<_i15.OutageReserve>(data['data']);
     }
     if (dataClassName == 'PriceTimeRange') {
-      return deserialize<_i15.PriceTimeRange>(data['data']);
+      return deserialize<_i16.PriceTimeRange>(data['data']);
     }
     if (dataClassName == 'PvForecast') {
-      return deserialize<_i16.PvForecast>(data['data']);
+      return deserialize<_i17.PvForecast>(data['data']);
     }
     if (dataClassName == 'TierSyncConfig') {
-      return deserialize<_i17.TierSyncConfig>(data['data']);
+      return deserialize<_i18.TierSyncConfig>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1558,18 +1653,20 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i10.IntegrationCredentials.t;
       case _i11.InverterData:
         return _i11.InverterData.t;
-      case _i12.LicenseKey:
-        return _i12.LicenseKey.t;
-      case _i13.OptimizationFrame:
-        return _i13.OptimizationFrame.t;
-      case _i14.OutageReserve:
-        return _i14.OutageReserve.t;
-      case _i15.PriceTimeRange:
-        return _i15.PriceTimeRange.t;
-      case _i16.PvForecast:
-        return _i16.PvForecast.t;
-      case _i17.TierSyncConfig:
-        return _i17.TierSyncConfig.t;
+      case _i12.InverterModel:
+        return _i12.InverterModel.t;
+      case _i13.LicenseKey:
+        return _i13.LicenseKey.t;
+      case _i14.OptimizationFrame:
+        return _i14.OptimizationFrame.t;
+      case _i15.OutageReserve:
+        return _i15.OutageReserve.t;
+      case _i16.PriceTimeRange:
+        return _i16.PriceTimeRange.t;
+      case _i17.PvForecast:
+        return _i17.PvForecast.t;
+      case _i18.TierSyncConfig:
+        return _i18.TierSyncConfig.t;
     }
     return null;
   }

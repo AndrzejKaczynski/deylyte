@@ -9,6 +9,13 @@ fields:
   lastSeenAt: DateTime?        # updated on every telemetry POST
   lastInverterOk: bool         # true if last telemetry had valid inverter state
   syncIntervalSeconds: int?    # server-assigned poll interval; null until first telemetry
+  # Inverter model validation:
+  #   null     — no model selected yet (user must pick one)
+  #   pending  — model selected, waiting for first telemetry to validate
+  #   ok       — telemetry passed sanity checks for this model
+  #   failed   — telemetry consistently fails checks; user should verify model choice
+  modelValidationStatus: String?
+  modelValidationAttempts: int  # consecutive failed validation attempts; resets to 0 on ok or new model
   createdAt: DateTime
 indexes:
   devices_user_idx:

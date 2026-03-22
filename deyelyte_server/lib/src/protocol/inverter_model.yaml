@@ -1,0 +1,23 @@
+# Inverter model catalogue — one row per supported hardware model.
+# Static reference data; seeded at server startup, never written by users.
+#
+# registerMapJson holds a JSON object with Modbus holding-register addresses:
+#   batterySoc    — battery state of charge (%)
+#   batteryPower  — battery power W, signed int16 (+ charging, − discharging)
+#   gridPower     — grid power W, signed int16 (+ import, − export)
+#   loadPower     — site load W
+#   pv1Power      — PV string 1 W
+#   pv2Power      — PV string 2 W
+#   pv3Power      — PV string 3 W (0 if absent)
+#   chargeCmd     — write 1 = charge from grid, 0 = disable
+#   sellCmd       — write 1 = sell to grid, 0 = disable
+class: InverterModel
+table: inverter_models
+fields:
+  modelId: String        # stable identifier, e.g. 'deye_sg04lp3'
+  displayName: String    # human-readable, shown in Flutter picker
+  registerMapJson: String
+indexes:
+  inverter_models_model_idx:
+    fields: modelId
+    unique: true

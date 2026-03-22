@@ -42,6 +42,9 @@ fields:
   pstrykEnabled: bool
   # Display currency for the Flutter UI. Default: 'PLN'.
   currency: String?
+  # Selected inverter model for the local SolarmanV5 add-on (FK → InverterModel.modelId).
+  # Null until the user picks a model in the Flutter settings.
+  inverterModelId: String?
   # ── Baseline snapshot (captured at first live-enable) ──────────────────────
   # Set once when planningOnly transitions true→false for the first time.
   # Used as restore point when reverting to planning mode.

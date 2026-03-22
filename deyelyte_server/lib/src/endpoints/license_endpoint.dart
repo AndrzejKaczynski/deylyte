@@ -6,7 +6,7 @@ import '../generated/protocol.dart';
 
 /// License key validation. Called during onboarding (user is authenticated
 /// but license not yet verified). Also called by the HA add-on on startup
-/// to obtain the server-assigned sync interval.
+/// to obtain the server-assigned sync interval and the inverter register map.
 class LicenseEndpoint extends Endpoint {
   @override
   bool get requireLogin => false;
@@ -17,6 +17,7 @@ class LicenseEndpoint extends Endpoint {
   ///   valid               — bool
   ///   tier                — String? ('beta_free' | 'basic' | 'pro') when valid
   ///   syncIntervalSeconds — int? server-assigned poll interval when valid
+  ///   registerMap         — Map? inverter register addresses when a model is selected
   ///   reason              — String? human-readable denial reason when invalid
   Future<String> validate(
     Session session,
@@ -56,10 +57,31 @@ class LicenseEndpoint extends Endpoint {
     );
     final syncIntervalSeconds = syncConfig?.syncIntervalSeconds ?? 300;
 
+    // Include the inverter register map if the user has selected a model.
+    // The add-on saves this to disk and uses it instead of built-in constants.
+    Map<String, dynamic>? registerMap;
+    if (row.userId != null) {
+      final config = await AppConfig.db.findFirstRow(
+        session,
+        where: (t) => t.userInfoId.equals(row.userId!),
+      );
+      if (config?.inverterModelId != null) {
+        final model = await InverterModel.db.findFirstRow(
+          session,
+          where: (t) => t.modelId.equals(config!.inverterModelId!),
+        );
+        if (model != null) {
+          final decoded = jsonDecode(model.registerMapJson) as Map<String, dynamic>;
+          registerMap = {'modelId': model.modelId, ...decoded};
+        }
+      }
+    }
+
     return jsonEncode({
       'valid': true,
       'tier': row.tier,
       'syncIntervalSeconds': syncIntervalSeconds,
+      if (registerMap != null) 'registerMap': registerMap,
     });
   }
 
