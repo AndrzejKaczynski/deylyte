@@ -15,9 +15,9 @@ class StrategySummaryCard extends ConsumerWidget {
     final config = ref.watch(appConfigProvider).valueOrNull;
 
     final activeStrategy = switch (settings.priceSource) {
-      'pstryk' || 'rce' => settings.pvOnlySelling ? 'Solar-first' : 'Price-optimized',
+      'pstryk' || 'rce' => settings.pvOnlySelling ? 'Solar-only selling' : 'Grid arbitrage allowed',
       'manual' || 'fixed' => 'Manual',
-      _ => 'Price-optimized',
+      _ => 'Grid arbitrage allowed',
     };
 
     final weatherInput = settings.solcast

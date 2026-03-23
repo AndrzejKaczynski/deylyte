@@ -342,33 +342,45 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _LayerChip(
-                  label: 'Solar Output',
-                  color: AppColors.tertiary,
-                  active: _layers.showPv,
-                  onTap: () =>
-                      setState(() => _layers.showPv = !_layers.showPv),
+                Tooltip(
+                  message: 'Measured solar intake for past hours;\nPV forecast for current and future hours',
+                  child: _LayerChip(
+                    label: 'Solar Output',
+                    color: AppColors.tertiary,
+                    active: _layers.showPv,
+                    onTap: () =>
+                        setState(() => _layers.showPv = !_layers.showPv),
+                  ),
                 ),
-                _LayerChip(
-                  label: 'Battery SoC',
-                  color: AppColors.primary,
-                  active: _layers.showSoc,
-                  onTap: () =>
-                      setState(() => _layers.showSoc = !_layers.showSoc),
+                Tooltip(
+                  message: 'Estimated battery state of charge\nat the start of each hour',
+                  child: _LayerChip(
+                    label: 'Battery SoC',
+                    color: AppColors.primary,
+                    active: _layers.showSoc,
+                    onTap: () =>
+                        setState(() => _layers.showSoc = !_layers.showSoc),
+                  ),
                 ),
-                _LayerChip(
-                  label: 'Price Tier',
-                  color: AppColors.secondary,
-                  active: _layers.showPrice,
-                  onTap: () => setState(
-                      () => _layers.showPrice = !_layers.showPrice),
+                Tooltip(
+                  message: 'Buy price per kWh — bars above the line are positive prices,\nbars below are zero or negative (grid pays you)',
+                  child: _LayerChip(
+                    label: 'Price Tier',
+                    color: AppColors.secondary,
+                    active: _layers.showPrice,
+                    onTap: () => setState(
+                        () => _layers.showPrice = !_layers.showPrice),
+                  ),
                 ),
-                _LayerChip(
-                  label: 'Charge Plan',
-                  color: AppColors.error,
-                  active: _layers.showPlan,
-                  onTap: () => setState(
-                      () => _layers.showPlan = !_layers.showPlan),
+                Tooltip(
+                  message: 'Optimizer command per hour:\ngreen = charge battery, red = discharge, grey = idle',
+                  child: _LayerChip(
+                    label: 'Charge Plan',
+                    color: AppColors.error,
+                    active: _layers.showPlan,
+                    onTap: () => setState(
+                        () => _layers.showPlan = !_layers.showPlan),
+                  ),
                 ),
               ],
             ),
