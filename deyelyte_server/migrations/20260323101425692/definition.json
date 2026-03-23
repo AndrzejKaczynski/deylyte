@@ -505,6 +505,13 @@
         },
         {
           "__className__": "serverpod.ColumnDefinition",
+          "name": "lastIngestAt",
+          "columnType": 4,
+          "isNullable": true,
+          "dartType": "DateTime?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
           "name": "createdAt",
           "columnType": 4,
           "isNullable": false,
@@ -3415,7 +3422,7 @@
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
       "module": "deyelyte",
-      "version": "20260322200247138"
+      "version": "20260323101425692"
     },
     {
       "__className__": "serverpod.DatabaseMigrationVersion",

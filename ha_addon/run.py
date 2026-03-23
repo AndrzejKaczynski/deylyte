@@ -23,6 +23,7 @@ Deye SG04LP3 addresses when no model has been selected yet.
 """
 
 import hashlib
+import hmac as _hmac
 import json
 import logging
 import os
@@ -118,6 +119,13 @@ def save_register_map(data: dict) -> None:
 
 
 # ── Jitter ────────────────────────────────────────────────────────────────────
+
+def compute_hmac(license_key: str, timestamp: int, device_id: str) -> str:
+    """HMAC-SHA256 of '{timestamp}.{license_key}.{device_id}' using the license key as secret."""
+    message = f"{timestamp}.{license_key}.{device_id}".encode("utf-8")
+    secret = license_key.encode("utf-8")
+    return _hmac.new(secret, message, hashlib.sha256).hexdigest()
+
 
 def startup_jitter(license_key: str, interval: int) -> int:
     """
@@ -223,12 +231,15 @@ def post_telemetry(
     current_model_id: str | None,
     telemetry: dict,
 ) -> dict | None:
+    hmac_ts = int(time.time())
     payload = {
         "method": "ingest",
         "licenseKey": license_key,
         "deviceId": device_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "currentModelId": current_model_id,
+        "hmacTimestamp": hmac_ts,
+        "hmacSignature": compute_hmac(license_key, hmac_ts, device_id),
         **telemetry,
     }
     try:
@@ -329,7 +340,14 @@ def main() -> None:
             telemetry,
         )
 
-        # 3. Handle stop signal — license expired or deactivated
+        # 3. Handle rate limit — server says we're calling too frequently
+        if (response or {}).get("rateLimited"):
+            retry_after = int((response or {}).get("retryAfterSeconds", interval))
+            log.warning("Rate limited by server — waiting %ds before next cycle", retry_after)
+            time.sleep(retry_after)
+            continue
+
+        # 4. Handle stop signal — license expired or deactivated
         if (response or {}).get("stop"):
             log.warning("Server signalled stop (license expired or deactivated). "
                         "Reverting inverter and halting telemetry.")
@@ -339,7 +357,7 @@ def main() -> None:
             while True:
                 time.sleep(3600)
 
-        # 4. Handle sync interval update from server
+        # 5. Handle sync interval update from server
         if response and "syncIntervalSeconds" in response:
             new_interval = int(response["syncIntervalSeconds"])
             if new_interval != interval:
@@ -347,7 +365,7 @@ def main() -> None:
                 interval = new_interval
                 save_sync_interval(interval)
 
-        # 5. Handle register map update from server (user changed model in Flutter app).
+        # 6. Handle register map update from server (user changed model in Flutter app).
         #    Takes effect immediately — baseline is not affected since it uses
         #    the same physical registers (chargeCmd/sellCmd) across all models.
         if response and "registerMap" in response:
@@ -358,7 +376,7 @@ def main() -> None:
                 save_register_map(new_map)
                 regs = new_map
 
-        # 6. Apply commands only if backend included them (live mode).
+        # 7. Apply commands only if backend included them (live mode).
         #    No commands in response = planning mode → do nothing.
         commands = (response or {}).get("commands")
         if commands:

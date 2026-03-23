@@ -23,6 +23,7 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     this.syncIntervalSeconds,
     this.modelValidationStatus,
     required this.modelValidationAttempts,
+    this.lastIngestAt,
     required this.createdAt,
   });
 
@@ -36,6 +37,7 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     int? syncIntervalSeconds,
     String? modelValidationStatus,
     required int modelValidationAttempts,
+    DateTime? lastIngestAt,
     required DateTime createdAt,
   }) = _DeviceImpl;
 
@@ -56,6 +58,11 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
           jsonSerialization['modelValidationStatus'] as String?,
       modelValidationAttempts:
           jsonSerialization['modelValidationAttempts'] as int,
+      lastIngestAt: jsonSerialization['lastIngestAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['lastIngestAt'],
+            ),
       createdAt: _i1.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
@@ -85,6 +92,8 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
 
   int modelValidationAttempts;
 
+  DateTime? lastIngestAt;
+
   DateTime createdAt;
 
   @override
@@ -103,6 +112,7 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
     int? syncIntervalSeconds,
     String? modelValidationStatus,
     int? modelValidationAttempts,
+    DateTime? lastIngestAt,
     DateTime? createdAt,
   });
   @override
@@ -120,6 +130,7 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       if (modelValidationStatus != null)
         'modelValidationStatus': modelValidationStatus,
       'modelValidationAttempts': modelValidationAttempts,
+      if (lastIngestAt != null) 'lastIngestAt': lastIngestAt?.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -139,6 +150,7 @@ abstract class Device implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
       if (modelValidationStatus != null)
         'modelValidationStatus': modelValidationStatus,
       'modelValidationAttempts': modelValidationAttempts,
+      if (lastIngestAt != null) 'lastIngestAt': lastIngestAt?.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -186,6 +198,7 @@ class _DeviceImpl extends Device {
     int? syncIntervalSeconds,
     String? modelValidationStatus,
     required int modelValidationAttempts,
+    DateTime? lastIngestAt,
     required DateTime createdAt,
   }) : super._(
          id: id,
@@ -197,6 +210,7 @@ class _DeviceImpl extends Device {
          syncIntervalSeconds: syncIntervalSeconds,
          modelValidationStatus: modelValidationStatus,
          modelValidationAttempts: modelValidationAttempts,
+         lastIngestAt: lastIngestAt,
          createdAt: createdAt,
        );
 
@@ -214,6 +228,7 @@ class _DeviceImpl extends Device {
     Object? syncIntervalSeconds = _Undefined,
     Object? modelValidationStatus = _Undefined,
     int? modelValidationAttempts,
+    Object? lastIngestAt = _Undefined,
     DateTime? createdAt,
   }) {
     return Device(
@@ -231,6 +246,9 @@ class _DeviceImpl extends Device {
           : this.modelValidationStatus,
       modelValidationAttempts:
           modelValidationAttempts ?? this.modelValidationAttempts,
+      lastIngestAt: lastIngestAt is DateTime?
+          ? lastIngestAt
+          : this.lastIngestAt,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -282,6 +300,12 @@ class DeviceUpdateTable extends _i1.UpdateTable<DeviceTable> {
         value,
       );
 
+  _i1.ColumnValue<DateTime, DateTime> lastIngestAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.lastIngestAt,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -324,6 +348,10 @@ class DeviceTable extends _i1.Table<int?> {
       'modelValidationAttempts',
       this,
     );
+    lastIngestAt = _i1.ColumnDateTime(
+      'lastIngestAt',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -348,6 +376,8 @@ class DeviceTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt modelValidationAttempts;
 
+  late final _i1.ColumnDateTime lastIngestAt;
+
   late final _i1.ColumnDateTime createdAt;
 
   @override
@@ -361,6 +391,7 @@ class DeviceTable extends _i1.Table<int?> {
     syncIntervalSeconds,
     modelValidationStatus,
     modelValidationAttempts,
+    lastIngestAt,
     createdAt,
   ];
 }

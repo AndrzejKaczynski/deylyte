@@ -519,6 +519,13 @@
           },
           {
             "__className__": "serverpod.ColumnDefinition",
+            "name": "lastIngestAt",
+            "columnType": 4,
+            "isNullable": true,
+            "dartType": "DateTime?"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
             "name": "createdAt",
             "columnType": 4,
             "isNullable": false,
@@ -892,6 +899,13 @@
             "columnType": 0,
             "isNullable": false,
             "dartType": "String"
+          },
+          {
+            "__className__": "serverpod.ColumnDefinition",
+            "name": "measurePointsFingerprintJson",
+            "columnType": 0,
+            "isNullable": true,
+            "dartType": "String?"
           }
         ],
         "foreignKeys": [],

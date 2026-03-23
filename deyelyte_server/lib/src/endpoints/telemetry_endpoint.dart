@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:serverpod/serverpod.dart';
 
 import '../generated/protocol.dart';
@@ -41,6 +42,8 @@ class TelemetryEndpoint extends Endpoint {
     double loadPowerW,
     double batteryPowerW,
     String? currentModelId,
+    int hmacTimestamp,
+    String hmacSignature,
   ) async {
     final license = await LicenseKey.db.findFirstRow(
       session,
@@ -56,6 +59,13 @@ class TelemetryEndpoint extends Endpoint {
         license.expiresAt != null && license.expiresAt!.isBefore(now);
     if (!license.isActive || expired) {
       return jsonEncode({'stop': true});
+    }
+
+    // Verify request freshness (±60 s clock-skew tolerance) and HMAC signature.
+    final nowUnix = now.millisecondsSinceEpoch ~/ 1000;
+    if ((nowUnix - hmacTimestamp).abs() > 60) return jsonEncode({});
+    if (_computeHmac(licenseKey, hmacTimestamp, deviceId) != hmacSignature) {
+      return jsonEncode({});
     }
 
     // Look up this tier's configured sync interval.
@@ -91,6 +101,17 @@ class TelemetryEndpoint extends Endpoint {
       where: (t) => t.hashedSerial.equals(deviceId),
     );
 
+    // Rate limiting: enforce minimum interval between ingests (85 % of the
+    // tier-assigned sync interval, measured in server time).
+    if (existing?.lastIngestAt != null) {
+      final elapsed = now.difference(existing!.lastIngestAt!).inSeconds;
+      final minInterval = (expectedInterval * 0.85).floor();
+      if (elapsed < minInterval) {
+        final retryAfter = minInterval - elapsed;
+        return jsonEncode({'rateLimited': true, 'retryAfterSeconds': retryAfter});
+      }
+    }
+
     final intervalChanged = existing?.syncIntervalSeconds != expectedInterval;
 
     // Run model validation when status is 'pending'.
@@ -121,6 +142,7 @@ class TelemetryEndpoint extends Endpoint {
           syncIntervalSeconds: expectedInterval,
           modelValidationStatus: serverModelId != null ? 'pending' : null,
           modelValidationAttempts: 0,
+          lastIngestAt: now,
           createdAt: DateTime.now().toUtc(),
         ),
       );
@@ -133,6 +155,7 @@ class TelemetryEndpoint extends Endpoint {
           syncIntervalSeconds: expectedInterval,
           modelValidationStatus: newValidationStatus,
           modelValidationAttempts: newAttempts,
+          lastIngestAt: now,
         ),
       );
     }
@@ -179,6 +202,18 @@ class TelemetryEndpoint extends Endpoint {
       },
       ...extra,
     });
+  }
+
+  /// Computes HMAC-SHA256 of `"$timestamp.$licenseKey.$deviceId"` using the
+  /// license key as the secret. Used to verify add-on requests.
+  static String _computeHmac(
+    String licenseKey,
+    int timestamp,
+    String deviceId,
+  ) {
+    final key = utf8.encode(licenseKey);
+    final message = utf8.encode('$timestamp.$licenseKey.$deviceId');
+    return Hmac(sha256, key).convert(message).toString();
   }
 
   /// Returns true when all telemetry values are within physically plausible

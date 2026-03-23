@@ -899,6 +899,16 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'hmacTimestamp': _i1.ParameterDescription(
+              name: 'hmacTimestamp',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'hmacSignature': _i1.ParameterDescription(
+              name: 'hmacSignature',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
           },
           call:
               (
@@ -916,6 +926,8 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['loadPowerW'],
                     params['batteryPowerW'],
                     params['currentModelId'],
+                    params['hmacTimestamp'],
+                    params['hmacSignature'],
                   ),
         ),
         'getLatest': _i1.MethodConnector(

@@ -593,6 +593,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
     double loadPowerW,
     double batteryPowerW,
     String? currentModelId,
+    int hmacTimestamp,
+    String hmacSignature,
   ) => caller.callServerEndpoint<String>(
     'telemetry',
     'ingest',
@@ -606,6 +608,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
       'loadPowerW': loadPowerW,
       'batteryPowerW': batteryPowerW,
       'currentModelId': currentModelId,
+      'hmacTimestamp': hmacTimestamp,
+      'hmacSignature': hmacSignature,
     },
   );
 

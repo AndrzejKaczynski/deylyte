@@ -16,6 +16,7 @@ fields:
   #   failed   — telemetry consistently fails checks; user should verify model choice
   modelValidationStatus: String?
   modelValidationAttempts: int  # consecutive failed validation attempts; resets to 0 on ok or new model
+  lastIngestAt: DateTime?      # server time of last accepted telemetry (for rate limiting)
   createdAt: DateTime
 indexes:
   devices_user_idx:
