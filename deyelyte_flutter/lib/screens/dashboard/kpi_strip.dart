@@ -15,6 +15,20 @@ class KpiStrip extends ConsumerWidget {
     final grid = telemetry?.gridPowerW;
     final dailyKwh = ref.watch(dailySolarYieldProvider).valueOrNull;
 
+    // Sum today's PV forecast periods (each 30-min → ×0.5/1000 for kWh).
+    final forecastRows = ref.watch(pvForecastProvider).valueOrNull ?? [];
+    final todayStart = DateTime.now().toLocal();
+    final todayMidnight =
+        DateTime(todayStart.year, todayStart.month, todayStart.day);
+    final tomorrowMidnight = todayMidnight.add(const Duration(days: 1));
+    final todayForecastKwh = forecastRows.fold(0.0, (sum, r) {
+      final t = r.timestamp.toLocal();
+      if (t.isBefore(todayMidnight) || !t.isBefore(tomorrowMidnight)) {
+        return sum;
+      }
+      return sum + r.expectedYieldWatts * 0.5 / 1000;
+    });
+
     final socPct = soc != null ? '${soc.toStringAsFixed(0)}%' : '--';
     final socSub = soc != null
         ? (telemetry!.batteryPowerW < 0 ? '⚡ Charging' : '↓ Discharging')
@@ -40,9 +54,9 @@ class KpiStrip extends ConsumerWidget {
           child: _BatterySocBar(soc: (soc ?? 0) / 100),
         ),
         const _KpiItem(
-          title: 'Net Balance',
+          title: 'Today\'s Estimate',
           value: '--',
-          subtitle: 'Today',
+          subtitle: 'Based on schedule',
           icon: Icons.trending_up_rounded,
           iconColor: AppColors.secondary,
         ),
@@ -67,8 +81,17 @@ class KpiStrip extends ConsumerWidget {
           value: dailyKwh != null
               ? '${dailyKwh.toStringAsFixed(1)} kWh'
               : '--',
-          subtitle: 'Today',
+          subtitle: 'Measured',
           icon: Icons.solar_power_rounded,
+          iconColor: AppColors.tertiary,
+        ),
+        _KpiItem(
+          title: 'PV Forecast',
+          value: forecastRows.isEmpty
+              ? '--'
+              : '${todayForecastKwh.toStringAsFixed(1)} kWh',
+          subtitle: 'Today estimate',
+          icon: Icons.wb_cloudy_outlined,
           iconColor: AppColors.tertiary,
         ),
       ];

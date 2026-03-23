@@ -133,7 +133,6 @@ class HardwareCard extends StatelessWidget {
             child: _NumericField(
               label: 'Rated Cycles',
               controller: lifecyclesCtrl,
-              hint: '6000',
               optional: true,
             ),
           ),
@@ -148,14 +147,12 @@ class _NumericField extends StatelessWidget {
     required this.label,
     required this.controller,
     this.suffix,
-    this.hint,
     this.optional = false,
   });
 
   final String label;
   final TextEditingController controller;
   final String? suffix;
-  final String? hint;
   final bool optional;
 
   @override
@@ -187,7 +184,6 @@ class _NumericField extends StatelessWidget {
             const TextInputType.numberWithOptions(decimal: true),
         style: tt.bodyMedium,
         decoration: InputDecoration(
-          hintText: hint,
           suffixText: suffix,
           filled: true,
           fillColor: AppColors.surfaceContainerLow,
