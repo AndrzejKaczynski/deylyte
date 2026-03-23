@@ -58,6 +58,21 @@ class ForecastEndpoint extends Endpoint {
     await PvEstimator.estimateAndStore(session, userInfoId, lat, lon);
   }
 
+  /// Returns the next 48 hours of PV forecast for the authenticated user,
+  /// ordered by timestamp ascending.
+  Future<List<PvForecast>> getForecast(Session session) async {
+    final userInfoId = _requireUserInfoId(session);
+    final now = DateTime.now().toUtc();
+    final until = now.add(const Duration(hours: 48));
+    return PvForecast.db.find(
+      session,
+      where: (t) =>
+          t.userInfoId.equals(userInfoId) &
+          t.timestamp.between(now, until),
+      orderBy: (t) => t.timestamp,
+    );
+  }
+
   int _requireUserInfoId(Session session) {
     final authInfo = session.authenticated;
     if (authInfo == null) throw Exception('Not authenticated');

@@ -28,6 +28,7 @@ example:
   - hello:
 forecast:
   - updateForecast:
+  - getForecast:
 history:
   - getSummary:
   - getEvents:

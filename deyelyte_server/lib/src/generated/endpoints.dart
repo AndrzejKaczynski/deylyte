@@ -524,6 +524,16 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['forecast'] as _i8.ForecastEndpoint)
                   .updateForecast(session),
         ),
+        'getForecast': _i1.MethodConnector(
+          name: 'getForecast',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['forecast'] as _i8.ForecastEndpoint)
+                  .getForecast(session),
+        ),
       },
     );
     connectors['history'] = _i1.EndpointConnector(

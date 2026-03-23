@@ -13,12 +13,13 @@
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
 import 'package:deyelyte_client/src/protocol/app_config.dart' as _i3;
-import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i4;
-import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i5;
-import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i6;
-import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i7;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i8;
-import 'protocol.dart' as _i9;
+import 'package:deyelyte_client/src/protocol/pv_forecast.dart' as _i4;
+import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i5;
+import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i6;
+import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i7;
+import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i8;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i9;
+import 'protocol.dart' as _i10;
 
 /// All methods require the caller to be an authenticated admin.
 /// Admin rows are created exclusively via direct SQL — no endpoint can
@@ -300,6 +301,15 @@ class EndpointForecast extends _i1.EndpointRef {
     'updateForecast',
     {},
   );
+
+  /// Returns the next 48 hours of PV forecast for the authenticated user,
+  /// ordered by timestamp ascending.
+  _i2.Future<List<_i4.PvForecast>> getForecast() =>
+      caller.callServerEndpoint<List<_i4.PvForecast>>(
+        'forecast',
+        'getForecast',
+        {},
+      );
 }
 
 /// Returns historical energy summaries and events for the Flutter history screen.
@@ -386,16 +396,16 @@ class EndpointOptimizer extends _i1.EndpointRef {
   /// Run the optimizer for the authenticated user, persist the 24-frame plan,
   /// and return it. Upserts by (userInfoId, hour) so repeated calls refresh
   /// the plan in place.
-  _i2.Future<List<_i4.OptimizationFrame>> calculateAndStore() =>
-      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+  _i2.Future<List<_i5.OptimizationFrame>> calculateAndStore() =>
+      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
         'optimizer',
         'calculateAndStore',
         {},
       );
 
   /// Return the stored 24-hour plan for the authenticated user, ordered by hour.
-  _i2.Future<List<_i4.OptimizationFrame>> getSchedule() =>
-      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+  _i2.Future<List<_i5.OptimizationFrame>> getSchedule() =>
+      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
         'optimizer',
         'getSchedule',
         {},
@@ -439,8 +449,8 @@ class EndpointOptimizer extends _i1.EndpointRef {
       );
 
   /// List all upcoming outage-reserve dates for the authenticated user.
-  _i2.Future<List<_i5.OutageReserve>> getOutageReserves() =>
-      caller.callServerEndpoint<List<_i5.OutageReserve>>(
+  _i2.Future<List<_i6.OutageReserve>> getOutageReserves() =>
+      caller.callServerEndpoint<List<_i6.OutageReserve>>(
         'optimizer',
         'getOutageReserves',
         {},
@@ -475,15 +485,15 @@ class EndpointPriceTimeRanges extends _i1.EndpointRef {
   String get name => 'priceTimeRanges';
 
   /// Returns all time ranges for the authenticated user.
-  _i2.Future<List<_i6.PriceTimeRange>> getTimeRanges() =>
-      caller.callServerEndpoint<List<_i6.PriceTimeRange>>(
+  _i2.Future<List<_i7.PriceTimeRange>> getTimeRanges() =>
+      caller.callServerEndpoint<List<_i7.PriceTimeRange>>(
         'priceTimeRanges',
         'getTimeRanges',
         {},
       );
 
   /// Replaces all time ranges for the authenticated user.
-  _i2.Future<void> saveTimeRanges(List<_i6.PriceTimeRange> ranges) =>
+  _i2.Future<void> saveTimeRanges(List<_i7.PriceTimeRange> ranges) =>
       caller.callServerEndpoint<void>(
         'priceTimeRanges',
         'saveTimeRanges',
@@ -500,16 +510,16 @@ class EndpointSchedule extends _i1.EndpointRef {
   String get name => 'schedule';
 
   /// Returns the OptimizationFrame for the current hour, or null.
-  _i2.Future<_i4.OptimizationFrame?> getCurrent() =>
-      caller.callServerEndpoint<_i4.OptimizationFrame?>(
+  _i2.Future<_i5.OptimizationFrame?> getCurrent() =>
+      caller.callServerEndpoint<_i5.OptimizationFrame?>(
         'schedule',
         'getCurrent',
         {},
       );
 
   /// Returns all upcoming OptimizationFrames (current hour onwards).
-  _i2.Future<List<_i4.OptimizationFrame>> getForecast() =>
-      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+  _i2.Future<List<_i5.OptimizationFrame>> getForecast() =>
+      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
         'schedule',
         'getForecast',
         {},
@@ -525,8 +535,8 @@ class EndpointSchedule extends _i1.EndpointRef {
 
   /// Returns upcoming OptimizationFrames for the user associated with
   /// [licenseKey]. Returns an empty list on invalid license.
-  _i2.Future<List<_i4.OptimizationFrame>> getSchedule(String licenseKey) =>
-      caller.callServerEndpoint<List<_i4.OptimizationFrame>>(
+  _i2.Future<List<_i5.OptimizationFrame>> getSchedule(String licenseKey) =>
+      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
         'schedule',
         'getSchedule',
         {'licenseKey': licenseKey},
@@ -615,8 +625,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
 
   /// Returns the most recent telemetry snapshot for the authenticated user.
   /// Returns null when no telemetry has been received yet.
-  _i2.Future<_i7.DeviceTelemetry?> getLatest() =>
-      caller.callServerEndpoint<_i7.DeviceTelemetry?>(
+  _i2.Future<_i8.DeviceTelemetry?> getLatest() =>
+      caller.callServerEndpoint<_i8.DeviceTelemetry?>(
         'telemetry',
         'getLatest',
         {},
@@ -626,8 +636,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
   /// The window is capped server-side using [TierSyncConfig.historyDurationDays]
   /// for the user's active tier. [hours] is the client's requested window;
   /// the server enforces the cap.
-  _i2.Future<List<_i7.DeviceTelemetry>> getHistory(int hours) =>
-      caller.callServerEndpoint<List<_i7.DeviceTelemetry>>(
+  _i2.Future<List<_i8.DeviceTelemetry>> getHistory(int hours) =>
+      caller.callServerEndpoint<List<_i8.DeviceTelemetry>>(
         'telemetry',
         'getHistory',
         {'hours': hours},
@@ -636,10 +646,10 @@ class EndpointTelemetry extends _i1.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    auth = _i8.Caller(client);
+    auth = _i9.Caller(client);
   }
 
-  late final _i8.Caller auth;
+  late final _i9.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -662,7 +672,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i9.Protocol(),
+         _i10.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

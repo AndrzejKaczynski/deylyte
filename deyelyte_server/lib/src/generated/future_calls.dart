@@ -12,10 +12,11 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'dart:async' as _i2;
-import '../future_calls/init_user_call.dart' as _i3;
-import '../future_calls/poll_energy_prices_call.dart' as _i4;
-import '../future_calls/poll_inverter_call.dart' as _i5;
-import '../future_calls/run_optimizer_call.dart' as _i6;
+import '../future_calls/fetch_forecast_call.dart' as _i3;
+import '../future_calls/init_user_call.dart' as _i4;
+import '../future_calls/poll_energy_prices_call.dart' as _i5;
+import '../future_calls/poll_inverter_call.dart' as _i6;
+import '../future_calls/run_optimizer_call.dart' as _i7;
 
 /// Invokes a future call.
 typedef _InvokeFutureCall =
@@ -59,6 +60,7 @@ class FutureCalls extends _i1.FutureCallDispatch<_FutureCallRef> {
     String serverId,
   ) {
     var registeredFutureCalls = <String, _i1.FutureCall>{
+      'FetchForecastCallInvokeFutureCall': FetchForecastCallInvokeFutureCall(),
       'InitUserCallInvokeFutureCall': InitUserCallInvokeFutureCall(),
       'PollEnergyPricesCallInvokeFutureCall':
           PollEnergyPricesCallInvokeFutureCall(),
@@ -119,6 +121,10 @@ class _FutureCallRef {
 
   final _InvokeFutureCall _invokeFutureCall;
 
+  late final fetchForecastCall = _FetchForecastCallFutureCallDispatcher(
+    _invokeFutureCall,
+  );
+
   late final initUserCall = _InitUserCallFutureCallDispatcher(
     _invokeFutureCall,
   );
@@ -134,6 +140,19 @@ class _FutureCallRef {
   late final runOptimizerCall = _RunOptimizerCallFutureCallDispatcher(
     _invokeFutureCall,
   );
+}
+
+class _FetchForecastCallFutureCallDispatcher {
+  _FetchForecastCallFutureCallDispatcher(this._invokeFutureCall);
+
+  final _InvokeFutureCall _invokeFutureCall;
+
+  Future<void> invoke(_i1.SerializableModel? object) {
+    return _invokeFutureCall(
+      'FetchForecastCallInvokeFutureCall',
+      object,
+    );
+  }
 }
 
 class _InitUserCallFutureCallDispatcher {
@@ -188,6 +207,20 @@ class _RunOptimizerCallFutureCallDispatcher {
   }
 }
 
+class FetchForecastCallInvokeFutureCall
+    extends _i1.FutureCall<_i1.SerializableModel> {
+  @override
+  _i2.Future<void> invoke(
+    _i1.Session session,
+    _i1.SerializableModel? object,
+  ) async {
+    await _i3.FetchForecastCall().invoke(
+      session,
+      object,
+    );
+  }
+}
+
 class InitUserCallInvokeFutureCall
     extends _i1.FutureCall<_i1.SerializableModel> {
   @override
@@ -195,7 +228,7 @@ class InitUserCallInvokeFutureCall
     _i1.Session session,
     _i1.SerializableModel? object,
   ) async {
-    await _i3.InitUserCall().invoke(
+    await _i4.InitUserCall().invoke(
       session,
       object,
     );
@@ -209,7 +242,7 @@ class PollEnergyPricesCallInvokeFutureCall
     _i1.Session session,
     _i1.SerializableModel? object,
   ) async {
-    await _i4.PollEnergyPricesCall().invoke(
+    await _i5.PollEnergyPricesCall().invoke(
       session,
       object,
     );
@@ -223,7 +256,7 @@ class PollInverterCallInvokeFutureCall
     _i1.Session session,
     _i1.SerializableModel? object,
   ) async {
-    await _i5.PollInverterCall().invoke(
+    await _i6.PollInverterCall().invoke(
       session,
       object,
     );
@@ -237,7 +270,7 @@ class RunOptimizerCallInvokeFutureCall
     _i1.Session session,
     _i1.SerializableModel? object,
   ) async {
-    await _i6.RunOptimizerCall().invoke(
+    await _i7.RunOptimizerCall().invoke(
       session,
       object,
     );

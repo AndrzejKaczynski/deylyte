@@ -28,10 +28,11 @@ import 'outage_reserve.dart' as _i15;
 import 'price_time_range.dart' as _i16;
 import 'pv_forecast.dart' as _i17;
 import 'tier_sync_config.dart' as _i18;
-import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i19;
-import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i20;
-import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i21;
-import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i22;
+import 'package:deyelyte_server/src/generated/pv_forecast.dart' as _i19;
+import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i20;
+import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i21;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i22;
+import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i23;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'device.dart';
@@ -1468,27 +1469,31 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == List<_i19.OptimizationFrame>) {
+    if (t == List<_i19.PvForecast>) {
+      return (data as List).map((e) => deserialize<_i19.PvForecast>(e)).toList()
+          as T;
+    }
+    if (t == List<_i20.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i19.OptimizationFrame>(e))
+              .map((e) => deserialize<_i20.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.OutageReserve>) {
+    if (t == List<_i21.OutageReserve>) {
       return (data as List)
-              .map((e) => deserialize<_i20.OutageReserve>(e))
+              .map((e) => deserialize<_i21.OutageReserve>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.PriceTimeRange>) {
+    if (t == List<_i22.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i21.PriceTimeRange>(e))
+              .map((e) => deserialize<_i22.PriceTimeRange>(e))
               .toList()
           as T;
     }
-    if (t == List<_i22.DeviceTelemetry>) {
+    if (t == List<_i23.DeviceTelemetry>) {
       return (data as List)
-              .map((e) => deserialize<_i22.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i23.DeviceTelemetry>(e))
               .toList()
           as T;
     }

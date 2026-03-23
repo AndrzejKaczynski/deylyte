@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../../theme/theme.dart';
 import '../../components/components.dart';
+import '../../components/solcast_credentials_dialog.dart';
 import '../../providers/app_providers.dart';
 import '../../utils/date_format.dart';
 
@@ -30,6 +31,44 @@ class ApiIntegrationsCard extends ConsumerStatefulWidget {
 }
 
 class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
+  bool _solcastBusy = false;
+
+  Future<void> _onSolcastToggle(bool enable) async {
+    if (_solcastBusy) return;
+    if (enable) {
+      bool saved = false;
+      await SolcastCredentialsDialog.show(
+        context,
+        onSave: (apiKey, siteId) async {
+          await ref.read(clientProvider).credentials.saveSolcast(apiKey, siteId);
+          try {
+            // Live verification: fetch a real forecast with the new credentials.
+            await ref.read(clientProvider).forecast.updateForecast();
+          } catch (e) {
+            // Credentials stored but invalid — roll back so the user can retry.
+            await ref.read(clientProvider).credentials.removeSolcast();
+            throw Exception('Could not connect to Solcast: $e');
+          }
+          saved = true;
+        },
+      );
+      if (!saved || !mounted) return;
+      widget.onSolcastChanged(true);
+      ref.invalidate(integrationStatusProvider);
+    } else {
+      setState(() => _solcastBusy = true);
+      try {
+        await ref.read(clientProvider).credentials.removeSolcast();
+        if (mounted) {
+          widget.onSolcastChanged(false);
+          ref.invalidate(integrationStatusProvider);
+        }
+      } finally {
+        if (mounted) setState(() => _solcastBusy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
@@ -44,7 +83,7 @@ class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
           label: 'Solcast Forecasting',
           detail: widget.solcast ? 'PV forecast active' : 'Not configured',
           enabled: widget.solcast,
-          onChanged: widget.onSolcastChanged,
+          onChanged: _solcastBusy ? null : _onSolcastToggle,
           color: AppColors.tertiary,
         ),
         const SizedBox(height: 12),

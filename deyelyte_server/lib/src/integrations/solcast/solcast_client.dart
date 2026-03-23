@@ -20,8 +20,14 @@ class SolcastClient {
 
     final response = await http.get(uri, headers: headers);
     if (response.statusCode != 200) {
-      session.log('Failed to fetch Solcast forecast: ${response.statusCode}');
-      return;
+      final message = switch (response.statusCode) {
+        401 => 'Invalid Solcast API key.',
+        404 => 'Solcast site ID not found.',
+        429 => 'Solcast API rate limit exceeded — try again later.',
+        _ => 'Solcast API error ${response.statusCode}.',
+      };
+      session.log('Solcast forecast failed: $message');
+      throw Exception(message);
     }
 
     final data = jsonDecode(response.body);

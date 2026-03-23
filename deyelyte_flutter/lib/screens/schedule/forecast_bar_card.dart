@@ -1,59 +1,104 @@
+import 'package:deyelyte_client/deyelyte_client.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/theme.dart';
 import '../../components/components.dart';
+import '../../providers/app_providers.dart';
 
-class ForecastBarCard extends StatelessWidget {
+class ForecastBarCard extends ConsumerWidget {
   const ForecastBarCard({super.key});
 
-  static const _priceTiers = [
-    0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2,
-    2, 2, 1, 1, 2, 2, 2, 1, 1, 0, 0, 0,
-  ];
-  static const _soc = [
-    0.5, 0.55, 0.62, 0.70, 0.75, 0.80, 0.82, 0.84, 0.84, 0.80, 0.75, 0.70,
-    0.65, 0.60, 0.55, 0.52, 0.48, 0.44, 0.40, 0.45, 0.50, 0.55, 0.52, 0.50,
-  ];
-  static const _colors = [
-    AppColors.secondary,
-    AppColors.tertiary,
-    AppColors.error,
-  ];
+  /// Aggregates 30-min PvForecast rows into hourly average kW values.
+  /// Returns a list of 24 entries, one per hour starting from the current hour.
+  static List<double> _toHourlyKw(List<PvForecast> rows) {
+    final now = DateTime.now();
+    final startHour = DateTime(now.year, now.month, now.day, now.hour);
+    final hours = List.generate(24, (i) => startHour.add(Duration(hours: i)));
+
+    return hours.map((h) {
+      final end = h.add(const Duration(hours: 1));
+      final inHour = rows.where((r) {
+        final t = r.timestamp.toLocal();
+        return !t.isBefore(h) && t.isBefore(end);
+      }).toList();
+      if (inHour.isEmpty) return 0.0;
+      final avgW = inHour.map((r) => r.expectedYieldWatts).reduce((a, b) => a + b) /
+          inHour.length;
+      return avgW / 1000.0; // W → kW
+    }).toList();
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final forecastAsync = ref.watch(pvForecastProvider);
+
     return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionHeader(
-            title: '24-Hour Forecast',
-            subtitle: 'Price tiers & battery SoC projection',
+            title: 'PV Generation Forecast',
+            subtitle: 'Expected solar output — next 24 hours',
           ),
-          const SizedBox(height: 8),
-          const Row(children: [
-            _Legend(color: AppColors.secondary, label: 'Off-peak (charge)'),
-            SizedBox(width: 16),
-            _Legend(color: AppColors.tertiary, label: 'Mid'),
-            SizedBox(width: 16),
-            _Legend(color: AppColors.error, label: 'Peak (discharge)'),
-          ]),
           const SizedBox(height: 20),
-          const SizedBox(
-            height: 160,
-            child: CustomPaint(
-              painter: _ForecastPainter(_priceTiers, _soc, _colors),
-              size: Size.infinite,
+          forecastAsync.when(
+            loading: () => const SizedBox(
+              height: 140,
+              child: Center(child: CircularProgressIndicator()),
             ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(7, (i) {
-              final h = i * 4;
-              return Text('${h.toString().padLeft(2, '0')}:00',
-                  style: tt.labelSmall);
-            }),
+            error: (_, __) => const SizedBox(
+              height: 140,
+              child: Center(
+                child: Text('Could not load forecast',
+                    style: TextStyle(color: AppColors.onSurfaceVariant)),
+              ),
+            ),
+            data: (rows) {
+              final hourlyKw = _toHourlyKw(rows);
+              final peak = hourlyKw.fold(0.0, (m, v) => v > m ? v : m);
+              if (peak == 0) {
+                return const SizedBox(
+                  height: 140,
+                  child: Center(
+                    child: Text('No forecast data yet',
+                        style: TextStyle(color: AppColors.onSurfaceVariant)),
+                  ),
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 120,
+                    child: CustomPaint(
+                      painter: _PvBarPainter(hourlyKw, peak),
+                      size: Size.infinite,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(7, (i) {
+                      final h = (DateTime.now().hour + i * 4) % 24;
+                      return Text(
+                        '${h.toString().padLeft(2, '0')}:00',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Text(
+                      'Peak  ${peak.toStringAsFixed(1)} kW',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: AppColors.tertiary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ]),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -61,91 +106,41 @@ class ForecastBarCard extends StatelessWidget {
   }
 }
 
-class _Legend extends StatelessWidget {
-  const _Legend({required this.color, required this.label});
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 10, height: 10,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-      ),
-      const SizedBox(width: 4),
-      Text(label, style: Theme.of(context).textTheme.labelSmall),
-    ]);
-  }
-}
-
-class _ForecastPainter extends CustomPainter {
-  const _ForecastPainter(this.tiers, this.soc, this.colors);
-  final List<int> tiers;
-  final List<double> soc;
-  final List<Color> colors;
+class _PvBarPainter extends CustomPainter {
+  const _PvBarPainter(this.hourlyKw, this.peak);
+  final List<double> hourlyKw;
+  final double peak;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final n = tiers.length;
+    final n = hourlyKw.length;
     final barW = size.width / n;
-    const barMaxH = 100.0;
-    const barY = 10.0;
-    final gridPaint = Paint()
-      ..color = AppColors.outlineVariant.withValues(alpha: 0.10)
-      ..strokeWidth = 1;
+    const barPad = 2.0;
 
-    for (var i = 1; i <= 4; i++) {
-      final y = barY + barMaxH / 4 * (4 - i);
+    final gridPaint = Paint()
+      ..color = AppColors.outlineVariant.withValues(alpha: 0.12)
+      ..strokeWidth = 1;
+    for (var i = 1; i <= 3; i++) {
+      final y = size.height * (1 - i / 4);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
     for (var i = 0; i < n; i++) {
-      final tier = tiers[i];
-      const barH = 80.0;
+      final ratio = peak > 0 ? (hourlyKw[i] / peak).clamp(0.0, 1.0) : 0.0;
+      if (ratio == 0) continue;
+      final barH = ratio * size.height;
       final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(i * barW + 2, barY + barMaxH - barH + (2 - tier) * 22,
-            barW - 4, barH - (2 - tier) * 22),
-        const Radius.circular(4),
+        Rect.fromLTWH(
+            i * barW + barPad, size.height - barH, barW - barPad * 2, barH),
+        const Radius.circular(3),
       );
-      canvas.drawRRect(rect, Paint()..color = colors[tier].withValues(alpha: 0.30));
+      canvas.drawRRect(
+        rect,
+        Paint()..color = AppColors.tertiary.withValues(alpha: 0.70),
+      );
     }
-
-    final socPath = Path();
-    for (var i = 0; i < soc.length; i++) {
-      final x = (i + 0.5) * barW;
-      final y = barY + barMaxH - soc[i] * barMaxH;
-      i == 0 ? socPath.moveTo(x, y) : socPath.lineTo(x, y);
-    }
-    canvas.drawPath(
-      socPath,
-      Paint()
-        ..color = AppColors.primary.withValues(alpha: 0.3)
-        ..strokeWidth = 4
-        ..style = PaintingStyle.stroke
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
-    canvas.drawPath(
-      socPath,
-      Paint()
-        ..color = AppColors.primary
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-
-    const top = barY;
-    final textPainter = TextPainter(
-      text: const TextSpan(
-        text: '── Battery SoC',
-        style: TextStyle(fontSize: 10, color: AppColors.primary, fontFamily: 'Inter'),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    textPainter.paint(canvas, const Offset(4, top));
   }
 
   @override
-  bool shouldRepaint(_ForecastPainter old) => false;
+  bool shouldRepaint(_PvBarPainter old) => old.hourlyKw != hourlyKw;
 }

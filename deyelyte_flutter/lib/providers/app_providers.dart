@@ -145,6 +145,13 @@ final userLicenseTierProvider = FutureProvider<String?>((ref) async {
   }
 });
 
+// ── Forecast ──────────────────────────────────────────────────────────────────
+
+/// Next 48 h of PV forecast rows, ordered by timestamp ascending.
+final pvForecastProvider = FutureProvider<List<PvForecast>>((ref) {
+  return ref.read(clientProvider).forecast.getForecast();
+});
+
 // ── Schedule ──────────────────────────────────────────────────────────────────
 
 /// OptimizationFrame for the current hour. Null when no schedule exists yet.

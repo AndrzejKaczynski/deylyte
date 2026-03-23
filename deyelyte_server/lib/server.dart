@@ -228,10 +228,11 @@ Future<void> _seedInverterModels(Serverpod pod) async {
 Future<void> _bootstrapRecurringCalls(Serverpod pod) async {
   final session = await pod.createSession();
   try {
-    // Price polling runs for any user with an AppConfig, regardless of Deye.
+    // Price polling and forecast refresh run for any user with an AppConfig.
     final anyConfig = await AppConfig.db.findFirstRow(session);
     if (anyConfig != null) {
       await pod.futureCalls.callWithDelay(Duration.zero).pollEnergyPricesCall.invoke(null);
+      await pod.futureCalls.callWithDelay(Duration.zero).fetchForecastCall.invoke(null);
     }
 
     // Inverter polling and optimizer only run once Deye is set up.
