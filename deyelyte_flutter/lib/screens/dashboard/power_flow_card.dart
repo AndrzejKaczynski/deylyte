@@ -209,7 +209,8 @@ class _FlowNode extends StatelessWidget {
     final circle = Container(
       width: 52, height: 52,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        // Opaque blend so the icon covers line endpoints drawn behind it.
+        color: Color.alphaBlend(color.withValues(alpha: 0.15), AppColors.surface),
         shape: BoxShape.circle,
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
@@ -367,8 +368,8 @@ class _FlowPainter extends CustomPainter {
       if (!c.active) continue;
       const numParticles = 3;
       for (int i = 0; i < numParticles; i++) {
-        final t = (animValue * c.speedMultiplier + i / numParticles) % 1.0;
-        final pos = Offset.lerp(c.from, c.to, t)!;
+        final tVal = (animValue * c.speedMultiplier + i / numParticles) % 1.0;
+        final pos = Offset.lerp(c.from, c.to, tVal)!;
         // Glow
         canvas.drawCircle(
           pos, 4,
