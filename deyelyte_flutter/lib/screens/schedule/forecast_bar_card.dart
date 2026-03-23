@@ -11,13 +11,15 @@ class _HourData {
   const _HourData({
     required this.hour,
     required this.pvKw,
+    required this.pvIsActual,
     this.buyPrice,
     this.sellPrice,
     this.socPct,
     this.command,
   });
   final int hour; // 0-23 local time
-  final double pvKw; // kW average for the hour
+  final double pvKw; // kW — actual measurement for past hours, forecast for future
+  final bool pvIsActual; // true = measured telemetry, false = forecast estimate
   final double? buyPrice; // PLN/kWh
   final double? sellPrice;
   final double? socPct; // 0-100
@@ -52,17 +54,32 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     List<PvForecast> forecast,
     List<EnergyPrice> prices,
     List<OptimizationFrame> frames,
+    List<DeviceTelemetry> telemetry,
   ) {
     final now = DateTime.now().toLocal();
+    final nowHour = now.hour;
 
-    // PV: average watts per local hour (for today's date only)
-    final pvSum = List<double>.filled(24, 0);
-    final pvCount = List<int>.filled(24, 0);
+    // Actual PV from telemetry: average pvPowerW per local hour for today.
+    // Used for completed hours (h < nowHour).
+    final actualPvSum = List<double>.filled(24, 0);
+    final actualPvCount = List<int>.filled(24, 0);
+    for (final t in telemetry) {
+      final lt = t.timestamp.toLocal();
+      if (lt.year == now.year && lt.month == now.month && lt.day == now.day) {
+        actualPvSum[lt.hour] += t.pvPowerW;
+        actualPvCount[lt.hour]++;
+      }
+    }
+
+    // Forecast PV: average W per local hour for today.
+    // Used for current + future hours (h >= nowHour).
+    final forecastPvSum = List<double>.filled(24, 0);
+    final forecastPvCount = List<int>.filled(24, 0);
     for (final r in forecast) {
       final t = r.timestamp.toLocal();
       if (t.year == now.year && t.month == now.month && t.day == now.day) {
-        pvSum[t.hour] += r.expectedYieldWatts;
-        pvCount[t.hour]++;
+        forecastPvSum[t.hour] += r.expectedYieldWatts;
+        forecastPvCount[t.hour]++;
       }
     }
 
@@ -79,13 +96,21 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     }
 
     return List.generate(24, (h) {
-      final pvKw =
-          pvCount[h] > 0 ? pvSum[h] / pvCount[h] / 1000.0 : 0.0;
+      final isActual = h < nowHour;
+      final double pvKw;
+      if (isActual && actualPvCount[h] > 0) {
+        pvKw = (actualPvSum[h] / actualPvCount[h] / 1000.0).clamp(0.0, double.infinity);
+      } else if (!isActual && forecastPvCount[h] > 0) {
+        pvKw = forecastPvSum[h] / forecastPvCount[h] / 1000.0;
+      } else {
+        pvKw = 0.0;
+      }
       final price = priceByHour[h];
       final frame = frameByHour[h];
       return _HourData(
         hour: h,
         pvKw: pvKw,
+        pvIsActual: isActual,
         buyPrice: price?.buyPrice,
         sellPrice: price?.sellPrice,
         socPct: frame?.estimatedSocAtStart,
@@ -101,6 +126,7 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     final forecastAsync = ref.watch(pvForecastProvider);
     final pricesAsync = ref.watch(todayPricesProvider);
     final framesAsync = ref.watch(todayScheduleProvider);
+    final telemetryAsync = ref.watch(telemetryHistory24hProvider);
     final tt = Theme.of(context).textTheme;
 
     final isLoading = forecastAsync.isLoading ||
@@ -113,8 +139,9 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     final forecast = forecastAsync.valueOrNull ?? [];
     final prices = pricesAsync.valueOrNull ?? [];
     final frames = framesAsync.valueOrNull ?? [];
+    final telemetry = telemetryAsync.valueOrNull ?? [];
 
-    final hours = _buildHours(forecast, prices, frames);
+    final hours = _buildHours(forecast, prices, frames, telemetry);
     final peak = hours.fold(0.0, (m, h) => h.pvKw > m ? h.pvKw : m);
 
     // Price quantiles for background colouring
@@ -289,8 +316,10 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
                             ),
                             if (_layers.showPv)
                               _TipChip(
-                                label:
-                                    '${hoveredData.pvKw.toStringAsFixed(2)} kW solar',
+                                label: hoveredData.pvKw > 0
+                                    ? '${hoveredData.pvKw.toStringAsFixed(2)} kW '
+                                        '${hoveredData.pvIsActual ? 'solar (actual)' : 'solar (est.)'}'
+                                    : 'No solar',
                                 color: AppColors.tertiary,
                               ),
                             if (_layers.showPrice &&
@@ -522,10 +551,10 @@ class _DailyPlanPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // 4 ── PV bars (amber)
+    // 4 ── PV bars: solid amber = actual telemetry, lighter = forecast
     if (layers.showPv && peak > 0) {
-      final barPaint = Paint()
-        ..color = AppColors.tertiary.withValues(alpha: 0.80);
+      final actualPaint = Paint()..color = AppColors.tertiary.withValues(alpha: 0.90);
+      final forecastPaint = Paint()..color = AppColors.tertiary.withValues(alpha: 0.45);
       for (var i = 0; i < _n; i++) {
         final kw = hours[i].pvKw;
         if (kw <= 0) continue;
@@ -535,7 +564,7 @@ class _DailyPlanPainter extends CustomPainter {
             Rect.fromLTWH(i * colW + 2, chartH - barH, colW - 4, barH),
             const Radius.circular(3),
           ),
-          barPaint,
+          hours[i].pvIsActual ? actualPaint : forecastPaint,
         );
       }
     }

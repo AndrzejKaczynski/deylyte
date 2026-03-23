@@ -90,8 +90,17 @@ class KpiStrip extends ConsumerWidget {
           value: forecastRows.isEmpty
               ? '--'
               : '${todayForecastKwh.toStringAsFixed(1)} kWh',
-          subtitle: 'Today estimate',
+          subtitle: 'Remaining today',
           icon: Icons.wb_cloudy_outlined,
+          iconColor: AppColors.tertiary,
+        ),
+        _KpiItem(
+          title: 'Solar Total',
+          value: (dailyKwh == null && forecastRows.isEmpty)
+              ? '--'
+              : '${((dailyKwh ?? 0) + todayForecastKwh).toStringAsFixed(1)} kWh',
+          subtitle: 'Actual + forecast',
+          icon: Icons.sunny_snowing,
           iconColor: AppColors.tertiary,
         ),
       ];
