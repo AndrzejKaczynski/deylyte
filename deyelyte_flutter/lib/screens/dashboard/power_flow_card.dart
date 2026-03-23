@@ -13,6 +13,7 @@ class PowerFlowCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final telemetry = ref.watch(latestTelemetryProvider).valueOrNull;
+    final gridConnectionKw = ref.watch(appConfigProvider).valueOrNull?.gridConnectionKw;
 
     final pvKw = (telemetry?.pvPowerW ?? 0.0) / 1000.0;
     final loadKw = (telemetry?.loadPowerW ?? 0.0) / 1000.0;
@@ -46,6 +47,7 @@ class PowerFlowCard extends ConsumerWidget {
             gridStatus: gridStatus,
             batteryStatus: batteryStatus,
             hasData: telemetry != null,
+            gridConnectionKw: gridConnectionKw,
           ),
         ],
       ),
@@ -65,6 +67,7 @@ class _PowerFlowDiagram extends StatefulWidget {
     required this.gridStatus,
     required this.batteryStatus,
     required this.hasData,
+    this.gridConnectionKw,
   });
 
   final double pvKw;
@@ -75,6 +78,7 @@ class _PowerFlowDiagram extends StatefulWidget {
   final String gridStatus;
   final String batteryStatus;
   final bool hasData;
+  final double? gridConnectionKw;
 
   @override
   State<_PowerFlowDiagram> createState() => _PowerFlowDiagramState();
@@ -122,6 +126,7 @@ class _PowerFlowDiagramState extends State<_PowerFlowDiagram>
             loadKw: widget.loadKw,
             gridKw: widget.gridKw,
             batteryKw: widget.batteryKw,
+            gridConnectionKw: widget.gridConnectionKw,
           ),
           child: Stack(
             children: [
@@ -143,6 +148,7 @@ class _PowerFlowDiagramState extends State<_PowerFlowDiagram>
                   value: gridLabel,
                   color: AppColors.onSurfaceVariant,
                   badge: widget.gridStatus,
+                  textAbove: true,
                 ),
               ),
               // ── Consumers / holders (right) ──────────────────────
@@ -163,6 +169,7 @@ class _PowerFlowDiagramState extends State<_PowerFlowDiagram>
                   label: 'Home Load',
                   value: loadLabel,
                   color: AppColors.primary,
+                  textAbove: true,
                 ),
               ),
             ],
@@ -182,6 +189,7 @@ class _FlowNode extends StatelessWidget {
     required this.value,
     required this.color,
     this.badge,
+    this.textAbove = false,
   });
 
   final IconData icon;
@@ -189,23 +197,29 @@ class _FlowNode extends StatelessWidget {
   final String value;
   final Color color;
   final String? badge;
+  /// When true, text renders above the circle (for bottom-positioned nodes so
+  /// the circle bottom aligns with the Positioned anchor and the painter's
+  /// node-centre calculation stays consistent).
+  final bool textAbove;
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Column(
+
+    final circle = Container(
+      width: 52, height: 52,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Icon(icon, color: color, size: 22),
+    );
+
+    final texts = Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 52, height: 52,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-            border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        const SizedBox(height: 6),
         Text(label, style: tt.labelSmall),
         Text(
           value,
@@ -226,6 +240,13 @@ class _FlowNode extends StatelessWidget {
           ),
       ],
     );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: textAbove
+          ? [texts, const SizedBox(height: 6), circle]
+          : [circle, const SizedBox(height: 6), texts],
+    );
   }
 }
 
@@ -237,11 +258,15 @@ class _Connection {
     required this.to,
     required this.color,
     required this.active,
+    this.speedMultiplier = 1.0,
   });
   final Offset from;
   final Offset to;
   final Color color;
   final bool active;
+  /// Multiplier applied to animValue for this connection's particles.
+  /// 1.0 = default speed. Higher = faster (more power).
+  final double speedMultiplier;
 }
 
 // ─── Painter ──────────────────────────────────────────────────────────────────
@@ -253,6 +278,7 @@ class _FlowPainter extends CustomPainter {
     required this.loadKw,
     required this.gridKw,
     required this.batteryKw,
+    this.gridConnectionKw,
   });
 
   final double animValue;
@@ -260,11 +286,23 @@ class _FlowPainter extends CustomPainter {
   final double loadKw;
   final double gridKw;
   final double batteryKw;
+  /// When provided, particle speed scales with power / connection ratio.
+  /// Without it, all active connections use speed 1.0 (default).
+  final double? gridConnectionKw;
 
   // Node circle radius is 26 (52/2); positioned at left/right:20, top/bottom:8
   // → centre of icon at x=46, y=34 from respective corners
   static const _nx = 46.0; // horizontal distance from edge to node centre
   static const _ny = 34.0; // vertical distance from edge to node centre
+
+  /// Returns a particle speed multiplier based on the power ratio to the grid
+  /// connection capacity. 50% load → 1.0 (default), 100% → 2.0, ~0% → 0.2.
+  /// Falls back to 1.0 when no connection capacity is configured.
+  double _speedFor(double powerKw) {
+    final cap = gridConnectionKw;
+    if (cap == null || cap <= 0) return 1.0;
+    return (powerKw.abs() / cap * 2.0).clamp(0.2, 2.0);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -288,12 +326,14 @@ class _FlowPainter extends CustomPainter {
         from: solar, to: hub,
         color: AppColors.tertiary,
         active: pvKw > 0.05,
+        speedMultiplier: _speedFor(pvKw),
       ),
       _Connection(
         from: gridKw > 0.1 ? grid : hub,
         to:   gridKw > 0.1 ? hub  : grid,
         color: AppColors.primary,
         active: gridKw.abs() > 0.05,
+        speedMultiplier: _speedFor(gridKw),
       ),
       _Connection(
         // batteryKw < 0 = charging (hub→battery), > 0 = discharging (battery→hub)
@@ -301,11 +341,13 @@ class _FlowPainter extends CustomPainter {
         to:   batteryKw > 0.05 ? hub     : battery,
         color: AppColors.secondary,
         active: batteryKw.abs() > 0.05,
+        speedMultiplier: _speedFor(batteryKw),
       ),
       _Connection(
         from: hub, to: load,
         color: AppColors.primary,
         active: loadKw > 0.05,
+        speedMultiplier: _speedFor(loadKw),
       ),
     ];
 
@@ -325,7 +367,7 @@ class _FlowPainter extends CustomPainter {
       if (!c.active) continue;
       const numParticles = 3;
       for (int i = 0; i < numParticles; i++) {
-        final t = (animValue + i / numParticles) % 1.0;
+        final t = (animValue * c.speedMultiplier + i / numParticles) % 1.0;
         final pos = Offset.lerp(c.from, c.to, t)!;
         // Glow
         canvas.drawCircle(
@@ -369,5 +411,6 @@ class _FlowPainter extends CustomPainter {
       old.pvKw != pvKw ||
       old.loadKw != loadKw ||
       old.gridKw != gridKw ||
-      old.batteryKw != batteryKw;
+      old.batteryKw != batteryKw ||
+      old.gridConnectionKw != gridConnectionKw;
 }
