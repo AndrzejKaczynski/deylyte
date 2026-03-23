@@ -5,9 +5,7 @@ import '../../components/components.dart';
 import '../../providers/settings_provider.dart';
 import 'schedule_header.dart';
 import 'forecast_bar_card.dart';
-import 'power_allocation_card.dart';
 import 'strategy_summary_card.dart';
-import 'upcoming_events_card.dart';
 
 class ScheduleScreen extends ConsumerWidget {
   const ScheduleScreen({super.key});
@@ -35,20 +33,8 @@ class ScheduleScreen extends ConsumerWidget {
                 primaryFlex: 7,
                 sidebarFlex: 3,
                 gap: AppSpacing.sp4,
-                primary: Column(
-                  children: [
-                    ForecastBarCard(),
-                    SizedBox(height: AppSpacing.sp4),
-                    PowerAllocationCard(),
-                  ],
-                ),
-                sidebar: Column(
-                  children: [
-                    StrategySummaryCard(),
-                    SizedBox(height: AppSpacing.sp4),
-                    UpcomingEventsCard(),
-                  ],
-                ),
+                primary: ForecastBarCard(),
+                sidebar: StrategySummaryCard(),
               ),
             ],
           ),

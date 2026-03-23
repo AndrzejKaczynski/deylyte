@@ -29,9 +29,10 @@ import 'tier_sync_config.dart' as _i16;
 import 'package:deyelyte_client/src/protocol/pv_forecast.dart' as _i17;
 import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i18;
 import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i19;
-import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i20;
-import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i21;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i22;
+import 'package:deyelyte_client/src/protocol/energy_price.dart' as _i20;
+import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i21;
+import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i22;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i23;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'device.dart';
@@ -196,20 +197,26 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
-    if (t == List<_i20.PriceTimeRange>) {
+    if (t == List<_i20.EnergyPrice>) {
       return (data as List)
-              .map((e) => deserialize<_i20.PriceTimeRange>(e))
+              .map((e) => deserialize<_i20.EnergyPrice>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.DeviceTelemetry>) {
+    if (t == List<_i21.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i21.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i21.PriceTimeRange>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i22.DeviceTelemetry>) {
+      return (data as List)
+              .map((e) => deserialize<_i22.DeviceTelemetry>(e))
               .toList()
           as T;
     }
     try {
-      return _i22.Protocol().deserialize<T>(data, t);
+      return _i23.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -276,7 +283,7 @@ class Protocol extends _i1.SerializationManager {
       case _i16.TierSyncConfig():
         return 'TierSyncConfig';
     }
-    className = _i22.Protocol().getClassNameForObject(data);
+    className = _i23.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
@@ -336,7 +343,7 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i22.Protocol().deserializeByClassName(data);
+      return _i23.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -351,7 +358,7 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i22.Protocol().mapRecordToJson(record);
+      return _i23.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

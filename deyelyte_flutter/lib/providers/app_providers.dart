@@ -152,11 +152,23 @@ final pvForecastProvider = FutureProvider<List<PvForecast>>((ref) {
   return ref.read(clientProvider).forecast.getForecast();
 });
 
+// ── Prices ────────────────────────────────────────────────────────────────────
+
+/// Today's energy prices (UTC day), ordered by timestamp ascending.
+final todayPricesProvider = FutureProvider<List<EnergyPrice>>((ref) {
+  return ref.read(clientProvider).price.getTodayPrices();
+});
+
 // ── Schedule ──────────────────────────────────────────────────────────────────
 
 /// OptimizationFrame for the current hour. Null when no schedule exists yet.
 final currentScheduleProvider = FutureProvider<OptimizationFrame?>((ref) {
   return ref.read(scheduleRepositoryProvider).getCurrent();
+});
+
+/// Today's OptimizationFrames (UTC day), ordered by hour ascending.
+final todayScheduleProvider = FutureProvider<List<OptimizationFrame>>((ref) {
+  return ref.read(clientProvider).schedule.getTodayFrames();
 });
 
 /// All upcoming OptimizationFrames (today onwards).

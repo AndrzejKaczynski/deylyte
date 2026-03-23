@@ -16,10 +16,11 @@ import 'package:deyelyte_client/src/protocol/app_config.dart' as _i3;
 import 'package:deyelyte_client/src/protocol/pv_forecast.dart' as _i4;
 import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i5;
 import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i6;
-import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i7;
-import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i8;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i9;
-import 'protocol.dart' as _i10;
+import 'package:deyelyte_client/src/protocol/energy_price.dart' as _i7;
+import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i8;
+import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i9;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i10;
+import 'protocol.dart' as _i11;
 
 /// All methods require the caller to be an authenticated admin.
 /// Admin rows are created exclusively via direct SQL — no endpoint can
@@ -475,6 +476,14 @@ class EndpointPrice extends _i1.EndpointRef {
       'userInfoId': userInfoId,
     },
   );
+
+  /// Returns today's energy prices (UTC day boundary) for the authenticated user.
+  _i2.Future<List<_i7.EnergyPrice>> getTodayPrices() =>
+      caller.callServerEndpoint<List<_i7.EnergyPrice>>(
+        'price',
+        'getTodayPrices',
+        {},
+      );
 }
 
 /// {@category Endpoint}
@@ -485,15 +494,15 @@ class EndpointPriceTimeRanges extends _i1.EndpointRef {
   String get name => 'priceTimeRanges';
 
   /// Returns all time ranges for the authenticated user.
-  _i2.Future<List<_i7.PriceTimeRange>> getTimeRanges() =>
-      caller.callServerEndpoint<List<_i7.PriceTimeRange>>(
+  _i2.Future<List<_i8.PriceTimeRange>> getTimeRanges() =>
+      caller.callServerEndpoint<List<_i8.PriceTimeRange>>(
         'priceTimeRanges',
         'getTimeRanges',
         {},
       );
 
   /// Replaces all time ranges for the authenticated user.
-  _i2.Future<void> saveTimeRanges(List<_i7.PriceTimeRange> ranges) =>
+  _i2.Future<void> saveTimeRanges(List<_i8.PriceTimeRange> ranges) =>
       caller.callServerEndpoint<void>(
         'priceTimeRanges',
         'saveTimeRanges',
@@ -522,6 +531,14 @@ class EndpointSchedule extends _i1.EndpointRef {
       caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
         'schedule',
         'getForecast',
+        {},
+      );
+
+  /// Returns OptimizationFrames for today (UTC day boundary).
+  _i2.Future<List<_i5.OptimizationFrame>> getTodayFrames() =>
+      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+        'schedule',
+        'getTodayFrames',
         {},
       );
 
@@ -625,8 +642,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
 
   /// Returns the most recent telemetry snapshot for the authenticated user.
   /// Returns null when no telemetry has been received yet.
-  _i2.Future<_i8.DeviceTelemetry?> getLatest() =>
-      caller.callServerEndpoint<_i8.DeviceTelemetry?>(
+  _i2.Future<_i9.DeviceTelemetry?> getLatest() =>
+      caller.callServerEndpoint<_i9.DeviceTelemetry?>(
         'telemetry',
         'getLatest',
         {},
@@ -636,8 +653,8 @@ class EndpointTelemetry extends _i1.EndpointRef {
   /// The window is capped server-side using [TierSyncConfig.historyDurationDays]
   /// for the user's active tier. [hours] is the client's requested window;
   /// the server enforces the cap.
-  _i2.Future<List<_i8.DeviceTelemetry>> getHistory(int hours) =>
-      caller.callServerEndpoint<List<_i8.DeviceTelemetry>>(
+  _i2.Future<List<_i9.DeviceTelemetry>> getHistory(int hours) =>
+      caller.callServerEndpoint<List<_i9.DeviceTelemetry>>(
         'telemetry',
         'getHistory',
         {'hours': hours},
@@ -646,10 +663,10 @@ class EndpointTelemetry extends _i1.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    auth = _i9.Caller(client);
+    auth = _i10.Caller(client);
   }
 
-  late final _i9.Caller auth;
+  late final _i10.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -672,7 +689,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i10.Protocol(),
+         _i11.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

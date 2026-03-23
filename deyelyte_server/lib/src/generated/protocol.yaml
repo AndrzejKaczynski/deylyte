@@ -45,12 +45,14 @@ optimizer:
   - getOutageReserves:
 price:
   - updatePrices:
+  - getTodayPrices:
 priceTimeRanges:
   - getTimeRanges:
   - saveTimeRanges:
 schedule:
   - getCurrent:
   - getForecast:
+  - getTodayFrames:
   - getEvents:
   - getSchedule:
   - getScheduleWithFallback:

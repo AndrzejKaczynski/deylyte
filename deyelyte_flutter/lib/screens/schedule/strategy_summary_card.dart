@@ -66,6 +66,32 @@ class StrategySummaryCard extends ConsumerWidget {
           color: AppColors.primary,
         ),
         const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: AppRadius.radiusMd,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'How decisions are made',
+                style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'The optimizer combines hourly energy buy/sell prices, '
+                'the solar generation forecast, and your historical load '
+                'baseline to schedule battery charge and discharge cycles '
+                'that minimise grid cost and maximise feed-in revenue.',
+                style: tt.bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceVariant, height: 1.5),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         Text('Est. Net Profit Today',
             style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),

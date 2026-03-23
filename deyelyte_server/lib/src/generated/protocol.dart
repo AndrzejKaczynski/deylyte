@@ -31,8 +31,9 @@ import 'tier_sync_config.dart' as _i18;
 import 'package:deyelyte_server/src/generated/pv_forecast.dart' as _i19;
 import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i20;
 import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i21;
-import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i22;
-import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i23;
+import 'package:deyelyte_server/src/generated/energy_price.dart' as _i22;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i23;
+import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i24;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'device.dart';
@@ -1485,15 +1486,21 @@ class Protocol extends _i1.SerializationManagerServer {
               .toList()
           as T;
     }
-    if (t == List<_i22.PriceTimeRange>) {
+    if (t == List<_i22.EnergyPrice>) {
       return (data as List)
-              .map((e) => deserialize<_i22.PriceTimeRange>(e))
+              .map((e) => deserialize<_i22.EnergyPrice>(e))
               .toList()
           as T;
     }
-    if (t == List<_i23.DeviceTelemetry>) {
+    if (t == List<_i23.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i23.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i23.PriceTimeRange>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i24.DeviceTelemetry>) {
+      return (data as List)
+              .map((e) => deserialize<_i24.DeviceTelemetry>(e))
               .toList()
           as T;
     }

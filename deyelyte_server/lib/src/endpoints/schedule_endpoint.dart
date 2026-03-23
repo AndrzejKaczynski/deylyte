@@ -42,6 +42,22 @@ class ScheduleEndpoint extends Endpoint {
     );
   }
 
+  /// Returns OptimizationFrames for today (UTC day boundary).
+  Future<List<OptimizationFrame>> getTodayFrames(Session session) async {
+    final uid = _uid(session);
+    if (uid == null) return [];
+    final now = DateTime.now().toUtc();
+    final dayStart = DateTime.utc(now.year, now.month, now.day);
+    final dayEnd = dayStart.add(const Duration(hours: 24));
+    return OptimizationFrame.db.find(
+      session,
+      where: (t) =>
+          t.userInfoId.equals(uid) &
+          t.hour.between(dayStart, dayEnd),
+      orderBy: (t) => t.hour,
+    );
+  }
+
   /// Returns schedule events as a list of maps for the Flutter schedule screen.
   /// Stub: returns empty list until optimization engine is wired.
   Future<String> getEvents(Session session) async => jsonEncode([]);
