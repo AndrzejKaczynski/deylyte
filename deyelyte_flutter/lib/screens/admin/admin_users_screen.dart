@@ -121,7 +121,7 @@ class _UsersTable extends ConsumerWidget {
       List<Map<String, dynamic>> userKeys, TextTheme tt) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(user['email'] ?? 'User #${user['id']}'),
         content: SizedBox(
           width: 480,
@@ -182,7 +182,7 @@ class _UsersTable extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
           ),
         ],
