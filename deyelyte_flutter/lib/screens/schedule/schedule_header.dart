@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
-import '../../components/components.dart';
 
 class ScheduleHeader extends StatelessWidget {
   const ScheduleHeader({super.key});
@@ -31,10 +30,6 @@ class ScheduleHeader extends StatelessWidget {
               }),
             ],
           ),
-        ),
-        const ProfitBadge(
-          label: 'Est. Net Profit · Varies \$0.08–\$0.42',
-          icon: Icons.trending_up_rounded,
         ),
       ],
     );

@@ -91,15 +91,6 @@ class StrategySummaryCard extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        Text('Est. Net Profit Today',
-            style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        const HeroMetric(
-          value: '--',
-          size: HeroMetricSize.small,
-          valueColor: AppColors.onSurfaceVariant,
-        ),
       ]),
     );
   }
