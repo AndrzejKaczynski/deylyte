@@ -75,6 +75,7 @@ class AppConfigNotifier extends AsyncNotifier<AppConfig?> {
 
   Future<void> save(AppConfig config) async {
     await ref.read(clientProvider).appConfig.saveConfig(config);
+    state = AsyncData(config);
   }
 }
 
