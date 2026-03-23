@@ -17,8 +17,14 @@ class RceClient {
 
   final int userInfoId;
   final List<PriceTimeRange> timeRanges;
+  /// VAT rate applied to RCE spot price (e.g. 0.23 for 23%). Default 0.23.
+  final double vatRate;
 
-  RceClient({required this.userInfoId, required this.timeRanges});
+  RceClient({
+    required this.userInfoId,
+    required this.timeRanges,
+    double? vatRate,
+  }) : vatRate = vatRate ?? 0.23;
 
   /// Returns the distribution charge (PLN/kWh) for a given UTC hour (0–23).
   /// Finds the first matching range; defaults to 0.0 if none covers the hour.
@@ -73,7 +79,7 @@ class RceClient {
       final hour = periodId - 1; // 0–23
       final timestamp = DateTime.utc(date.year, date.month, date.day, hour);
 
-      final buyPrice = rceKwh + _distributionForHour(hour);
+      final buyPrice = rceKwh * (1 + vatRate) + _distributionForHour(hour);
       final sellPrice = rceKwh; // prosumer settlement at RCE, no distribution
 
       final existing = await EnergyPrice.db.findFirstRow(

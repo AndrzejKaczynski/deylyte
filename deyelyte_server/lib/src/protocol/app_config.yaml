@@ -33,6 +33,9 @@ fields:
   # Fixed rate (used when priceSource = 'fixed')
   fixedBuyRatePln: double?
   fixedSellRatePln: double?
+  # VAT rate applied to RCE spot price before adding distribution (default 0.23 = 23%).
+  # Not used for Pstryk (price_gross already includes all fees).
+  energyVatRate: double?
   # When true: optimizer generates the full schedule but the add-on does NOT
   # send any commands to the inverter. Defaults to true — the user must
   # explicitly disable this to enable live inverter control.

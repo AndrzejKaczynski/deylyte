@@ -144,21 +144,6 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     final hours = _buildHours(forecast, prices, frames, telemetry);
     final peak = hours.fold(0.0, (m, h) => h.pvKw > m ? h.pvKw : m);
 
-    // Price quantiles for background colouring
-    final sortedPrices = hours
-        .where((h) => h.buyPrice != null)
-        .map((h) => h.buyPrice!)
-        .toList()
-      ..sort();
-    double priceP33 = double.infinity;
-    double priceP67 = double.infinity;
-    if (sortedPrices.isNotEmpty) {
-      priceP33 = sortedPrices[
-          (sortedPrices.length * 0.33).floor().clamp(0, sortedPrices.length - 1)];
-      priceP67 = sortedPrices[
-          (sortedPrices.length * 0.67).floor().clamp(0, sortedPrices.length - 1)];
-    }
-
     // Today's total PV estimate (kWh) across all 30-min periods
     final now = DateTime.now().toLocal();
     final todayMidnight = DateTime(now.year, now.month, now.day);
@@ -257,14 +242,12 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
                         _hoveredHour = _hoveredHour == h ? null : h);
                   },
                   child: SizedBox(
-                    height: 200,
+                    height: 220,
                     width: double.infinity,
                     child: CustomPaint(
                       painter: _DailyPlanPainter(
                         hours: hours,
                         peak: peak,
-                        priceP33: priceP33,
-                        priceP67: priceP67,
                         hoveredHour: _hoveredHour,
                         nowHour: nowHour,
                         layers: _layers,
@@ -327,11 +310,7 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
                               _TipChip(
                                 label:
                                     'Buy ${hoveredData.buyPrice!.toStringAsFixed(2)} PLN/kWh',
-                                color: hoveredData.buyPrice! < priceP33
-                                    ? AppColors.secondary
-                                    : hoveredData.buyPrice! > priceP67
-                                        ? AppColors.error
-                                        : AppColors.onSurfaceVariant,
+                                color: _priceColor(hoveredData.buyPrice!),
                               ),
                             if (_layers.showSoc &&
                                 hoveredData.socPct != null)
@@ -484,14 +463,21 @@ class _LayerChip extends StatelessWidget {
   }
 }
 
+// ─── Price colour helper ──────────────────────────────────────────────────────
+
+Color _priceColor(double price) {
+  if (price <= 0) return AppColors.secondary;
+  if (price < 0.7) return AppColors.primary;
+  if (price < 1.0) return AppColors.tertiary;
+  return AppColors.error;
+}
+
 // ─── Painter ─────────────────────────────────────────────────────────────────
 
 class _DailyPlanPainter extends CustomPainter {
   const _DailyPlanPainter({
     required this.hours,
     required this.peak,
-    required this.priceP33,
-    required this.priceP67,
     required this.hoveredHour,
     required this.nowHour,
     required this.layers,
@@ -499,8 +485,6 @@ class _DailyPlanPainter extends CustomPainter {
 
   final List<_HourData> hours;
   final double peak;
-  final double priceP33;
-  final double priceP67;
   final int? hoveredHour;
   final int nowHour;
   final _Layers layers;
@@ -508,28 +492,40 @@ class _DailyPlanPainter extends CustomPainter {
   static const _n = 24;
   static const _stripH = 10.0;
   static const _stripGap = 4.0;
+  static const _priceH = 40.0;
+  static const _priceHalf = 20.0;
+  static const _maxPriceRef = 1.5; // PLN/kWh — full-bar reference
 
   @override
   void paint(Canvas canvas, Size size) {
     final colW = size.width / _n;
-    final chartH = size.height - _stripH - _stripGap;
+    // Layout: [chartH] [priceH=40] [stripGap=4] [stripH=10]
+    final chartH = size.height - _priceH - _stripGap - _stripH;
+    final priceZeroY = chartH + _priceHalf;
 
-    // 1 ── Price background bands
+    // 1 ── Price sub-chart
     if (layers.showPrice) {
+      // Zero baseline
+      canvas.drawLine(
+        Offset(0, priceZeroY),
+        Offset(size.width, priceZeroY),
+        Paint()
+          ..color = AppColors.outlineVariant
+          ..strokeWidth = 1,
+      );
       for (var i = 0; i < _n; i++) {
         final price = hours[i].buyPrice;
         if (price == null) continue;
-        final Color bg;
-        if (price < priceP33) {
-          bg = AppColors.secondary.withValues(alpha: 0.10);
-        } else if (price > priceP67) {
-          bg = AppColors.error.withValues(alpha: 0.10);
-        } else {
-          continue;
-        }
-        canvas.drawRect(
-          Rect.fromLTWH(i * colW, 0, colW, chartH),
-          Paint()..color = bg,
+        final barH = (price.abs() / _maxPriceRef).clamp(0.0, 1.0) * _priceHalf;
+        final color = _priceColor(price);
+        final rect = price <= 0
+            // Negative / free: bar goes downward from baseline
+            ? Rect.fromLTWH(i * colW + 2, priceZeroY, colW - 4, barH)
+            // Positive: bar goes upward from baseline
+            : Rect.fromLTWH(i * colW + 2, priceZeroY - barH, colW - 4, barH);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(2)),
+          Paint()..color = color.withValues(alpha: 0.75),
         );
       }
     }
@@ -537,7 +533,7 @@ class _DailyPlanPainter extends CustomPainter {
     // 2 ── Hover column highlight
     if (hoveredHour != null) {
       canvas.drawRect(
-        Rect.fromLTWH(hoveredHour! * colW, 0, colW, chartH),
+        Rect.fromLTWH(hoveredHour! * colW, 0, colW, chartH + _priceH),
         Paint()..color = AppColors.primary.withValues(alpha: 0.08),
       );
     }
@@ -617,7 +613,7 @@ class _DailyPlanPainter extends CustomPainter {
 
     // 6 ── Command strip
     if (layers.showPlan) {
-      final stripTop = chartH + _stripGap;
+      final stripTop = chartH + _priceH + _stripGap;
       for (var i = 0; i < _n; i++) {
         final cmd = hours[i].command;
         final Color c;
@@ -656,6 +652,7 @@ class _DailyPlanPainter extends CustomPainter {
       old.hours != hours ||
       old.hoveredHour != hoveredHour ||
       old.peak != peak ||
+      old.nowHour != nowHour ||
       old.layers.showPv != layers.showPv ||
       old.layers.showSoc != layers.showSoc ||
       old.layers.showPrice != layers.showPrice ||

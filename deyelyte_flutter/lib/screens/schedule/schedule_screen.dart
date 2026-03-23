@@ -4,6 +4,7 @@ import '../../theme/theme.dart';
 import '../../components/components.dart';
 import '../../providers/settings_provider.dart';
 import 'schedule_header.dart';
+import 'schedule_kpi_strip.dart';
 import 'forecast_bar_card.dart';
 import 'strategy_summary_card.dart';
 
@@ -28,6 +29,8 @@ class ScheduleScreen extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.sp3),
                 const PlanningModeBanner(),
               ],
+              const SizedBox(height: AppSpacing.sp4),
+              const ScheduleKpiStrip(),
               const SizedBox(height: AppSpacing.sp4),
               const AsymmetricGrid(
                 primaryFlex: 7,

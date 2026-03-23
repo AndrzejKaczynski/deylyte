@@ -14,20 +14,8 @@ class KpiStrip extends ConsumerWidget {
     final pv = telemetry?.pvPowerW;
     final grid = telemetry?.gridPowerW;
     final dailyKwh = ref.watch(dailySolarYieldProvider).valueOrNull;
-
-    // Sum today's PV forecast periods (each 30-min → ×0.5/1000 for kWh).
-    final forecastRows = ref.watch(pvForecastProvider).valueOrNull ?? [];
-    final todayStart = DateTime.now().toLocal();
-    final todayMidnight =
-        DateTime(todayStart.year, todayStart.month, todayStart.day);
-    final tomorrowMidnight = todayMidnight.add(const Duration(days: 1));
-    final todayForecastKwh = forecastRows.fold(0.0, (sum, r) {
-      final t = r.timestamp.toLocal();
-      if (t.isBefore(todayMidnight) || !t.isBefore(tomorrowMidnight)) {
-        return sum;
-      }
-      return sum + r.expectedYieldWatts * 0.5 / 1000;
-    });
+    final gridImport = ref.watch(dailyGridImportProvider).valueOrNull;
+    final gridExport = ref.watch(dailyGridExportProvider).valueOrNull;
 
     final socPct = soc != null ? '${soc.toStringAsFixed(0)}%' : '--';
     final socSub = soc != null
@@ -53,28 +41,21 @@ class KpiStrip extends ConsumerWidget {
           iconColor: AppColors.secondary,
           child: _BatterySocBar(soc: (soc ?? 0) / 100),
         ),
-        const _KpiItem(
-          title: 'Today\'s Estimate',
-          value: '--',
-          subtitle: 'Based on schedule',
-          icon: Icons.trending_up_rounded,
-          iconColor: AppColors.secondary,
-        ),
-        _KpiItem(
-          title: 'Grid Status',
-          value: gridStatus,
-          subtitle: grid != null
-              ? '${(grid.abs() / 1000).toStringAsFixed(1)} kW'
-              : '--',
-          icon: Icons.bolt_rounded,
-          iconColor: AppColors.primary,
-        ),
         _KpiItem(
           title: 'Solar Power',
           value: pvKw,
           subtitle: 'Now',
           icon: Icons.wb_sunny_rounded,
           iconColor: AppColors.tertiary,
+        ),
+        _KpiItem(
+          title: 'Grid',
+          value: gridStatus,
+          subtitle: grid != null
+              ? '${(grid.abs() / 1000).toStringAsFixed(1)} kW'
+              : '--',
+          icon: Icons.bolt_rounded,
+          iconColor: AppColors.primary,
         ),
         _KpiItem(
           title: 'Solar Today',
@@ -86,22 +67,22 @@ class KpiStrip extends ConsumerWidget {
           iconColor: AppColors.tertiary,
         ),
         _KpiItem(
-          title: 'PV Forecast',
-          value: forecastRows.isEmpty
-              ? '--'
-              : '${todayForecastKwh.toStringAsFixed(1)} kWh',
-          subtitle: 'Remaining today',
-          icon: Icons.wb_cloudy_outlined,
-          iconColor: AppColors.tertiary,
+          title: 'Grid Import',
+          value: gridImport != null
+              ? '${gridImport.toStringAsFixed(1)} kWh'
+              : '--',
+          subtitle: 'Today',
+          icon: Icons.download_rounded,
+          iconColor: AppColors.primary,
         ),
         _KpiItem(
-          title: 'Solar Total',
-          value: (dailyKwh == null && forecastRows.isEmpty)
-              ? '--'
-              : '${((dailyKwh ?? 0) + todayForecastKwh).toStringAsFixed(1)} kWh',
-          subtitle: 'Actual + forecast',
-          icon: Icons.sunny_snowing,
-          iconColor: AppColors.tertiary,
+          title: 'Grid Export',
+          value: gridExport != null
+              ? '${gridExport.toStringAsFixed(1)} kWh'
+              : '--',
+          subtitle: 'Today',
+          icon: Icons.upload_rounded,
+          iconColor: AppColors.secondary,
         ),
       ];
 

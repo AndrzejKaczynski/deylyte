@@ -39,8 +39,11 @@ class PollEnergyPricesCall extends FutureCall {
             session,
             where: (t) => t.userInfoId.equals(userInfoId),
           );
-          final client =
-              RceClient(userInfoId: userInfoId, timeRanges: ranges);
+          final client = RceClient(
+            userInfoId: userInfoId,
+            timeRanges: ranges,
+            vatRate: config.energyVatRate,
+          );
           await client.fetchAndStorePrices(session);
 
         case 'fixed':

@@ -222,6 +222,13 @@
         },
         {
           "__className__": "serverpod.ColumnDefinition",
+          "name": "energyVatRate",
+          "columnType": 3,
+          "isNullable": true,
+          "dartType": "double?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
           "name": "planningOnly",
           "columnType": 1,
           "isNullable": false,

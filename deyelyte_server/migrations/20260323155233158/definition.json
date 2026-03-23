@@ -222,6 +222,13 @@
         },
         {
           "__className__": "serverpod.ColumnDefinition",
+          "name": "energyVatRate",
+          "columnType": 3,
+          "isNullable": true,
+          "dartType": "double?"
+        },
+        {
+          "__className__": "serverpod.ColumnDefinition",
           "name": "planningOnly",
           "columnType": 1,
           "isNullable": false,
@@ -3422,7 +3429,7 @@
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
       "module": "deyelyte",
-      "version": "20260323101425692"
+      "version": "20260323155233158"
     },
     {
       "__className__": "serverpod.DatabaseMigrationVersion",

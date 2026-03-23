@@ -37,6 +37,7 @@ abstract class AppConfig
     this.priceSource,
     this.fixedBuyRatePln,
     this.fixedSellRatePln,
+    this.energyVatRate,
     required this.planningOnly,
     required this.pstrykEnabled,
     this.currency,
@@ -71,6 +72,7 @@ abstract class AppConfig
     String? priceSource,
     double? fixedBuyRatePln,
     double? fixedSellRatePln,
+    double? energyVatRate,
     required bool planningOnly,
     required bool pstrykEnabled,
     String? currency,
@@ -127,6 +129,7 @@ abstract class AppConfig
           ?.toDouble(),
       fixedSellRatePln: (jsonSerialization['fixedSellRatePln'] as num?)
           ?.toDouble(),
+      energyVatRate: (jsonSerialization['energyVatRate'] as num?)?.toDouble(),
       planningOnly: _i1.BoolJsonExtension.fromJson(
         jsonSerialization['planningOnly'],
       ),
@@ -204,6 +207,8 @@ abstract class AppConfig
 
   double? fixedSellRatePln;
 
+  double? energyVatRate;
+
   bool planningOnly;
 
   bool pstrykEnabled;
@@ -251,6 +256,7 @@ abstract class AppConfig
     String? priceSource,
     double? fixedBuyRatePln,
     double? fixedSellRatePln,
+    double? energyVatRate,
     bool? planningOnly,
     bool? pstrykEnabled,
     String? currency,
@@ -289,6 +295,7 @@ abstract class AppConfig
       if (priceSource != null) 'priceSource': priceSource,
       if (fixedBuyRatePln != null) 'fixedBuyRatePln': fixedBuyRatePln,
       if (fixedSellRatePln != null) 'fixedSellRatePln': fixedSellRatePln,
+      if (energyVatRate != null) 'energyVatRate': energyVatRate,
       'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
       if (currency != null) 'currency': currency,
@@ -334,6 +341,7 @@ abstract class AppConfig
       if (priceSource != null) 'priceSource': priceSource,
       if (fixedBuyRatePln != null) 'fixedBuyRatePln': fixedBuyRatePln,
       if (fixedSellRatePln != null) 'fixedSellRatePln': fixedSellRatePln,
+      if (energyVatRate != null) 'energyVatRate': energyVatRate,
       'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
       if (currency != null) 'currency': currency,
@@ -407,6 +415,7 @@ class _AppConfigImpl extends AppConfig {
     String? priceSource,
     double? fixedBuyRatePln,
     double? fixedSellRatePln,
+    double? energyVatRate,
     required bool planningOnly,
     required bool pstrykEnabled,
     String? currency,
@@ -439,6 +448,7 @@ class _AppConfigImpl extends AppConfig {
          priceSource: priceSource,
          fixedBuyRatePln: fixedBuyRatePln,
          fixedSellRatePln: fixedSellRatePln,
+         energyVatRate: energyVatRate,
          planningOnly: planningOnly,
          pstrykEnabled: pstrykEnabled,
          currency: currency,
@@ -477,6 +487,7 @@ class _AppConfigImpl extends AppConfig {
     Object? priceSource = _Undefined,
     Object? fixedBuyRatePln = _Undefined,
     Object? fixedSellRatePln = _Undefined,
+    Object? energyVatRate = _Undefined,
     bool? planningOnly,
     bool? pstrykEnabled,
     Object? currency = _Undefined,
@@ -531,6 +542,9 @@ class _AppConfigImpl extends AppConfig {
       fixedSellRatePln: fixedSellRatePln is double?
           ? fixedSellRatePln
           : this.fixedSellRatePln,
+      energyVatRate: energyVatRate is double?
+          ? energyVatRate
+          : this.energyVatRate,
       planningOnly: planningOnly ?? this.planningOnly,
       pstrykEnabled: pstrykEnabled ?? this.pstrykEnabled,
       currency: currency is String? ? currency : this.currency,
@@ -674,6 +688,12 @@ class AppConfigUpdateTable extends _i1.UpdateTable<AppConfigTable> {
         value,
       );
 
+  _i1.ColumnValue<double, double> energyVatRate(double? value) =>
+      _i1.ColumnValue(
+        table.energyVatRate,
+        value,
+      );
+
   _i1.ColumnValue<bool, bool> planningOnly(bool value) => _i1.ColumnValue(
     table.planningOnly,
     value,
@@ -813,6 +833,10 @@ class AppConfigTable extends _i1.Table<int?> {
       'fixedSellRatePln',
       this,
     );
+    energyVatRate = _i1.ColumnDouble(
+      'energyVatRate',
+      this,
+    );
     planningOnly = _i1.ColumnBool(
       'planningOnly',
       this,
@@ -895,6 +919,8 @@ class AppConfigTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDouble fixedSellRatePln;
 
+  late final _i1.ColumnDouble energyVatRate;
+
   late final _i1.ColumnBool planningOnly;
 
   late final _i1.ColumnBool pstrykEnabled;
@@ -937,6 +963,7 @@ class AppConfigTable extends _i1.Table<int?> {
     priceSource,
     fixedBuyRatePln,
     fixedSellRatePln,
+    energyVatRate,
     planningOnly,
     pstrykEnabled,
     currency,

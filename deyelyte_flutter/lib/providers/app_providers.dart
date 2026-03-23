@@ -134,6 +134,40 @@ final dailySolarYieldProvider = FutureProvider<double?>((ref) async {
   return kwh < 0 ? 0 : kwh;
 });
 
+/// Grid energy drawn FROM the grid today (kWh). gridPowerW > 0 = importing.
+final dailyGridImportProvider = FutureProvider<double?>((ref) async {
+  final samples = await ref.watch(telemetryHistory24hProvider.future);
+  if (samples.isEmpty) return null;
+  final now = DateTime.now();
+  final midnight = DateTime(now.year, now.month, now.day);
+  final today = samples.where((s) => s.timestamp.toLocal().isAfter(midnight)).toList();
+  if (today.length < 2) return null;
+  double kwh = 0;
+  for (int i = 1; i < today.length; i++) {
+    final dt = today[i].timestamp.difference(today[i - 1].timestamp).inSeconds / 3600.0;
+    final avgW = (today[i].gridPowerW + today[i - 1].gridPowerW) / 2;
+    if (avgW > 0) kwh += avgW * dt / 1000.0;
+  }
+  return kwh;
+});
+
+/// Grid energy fed TO the grid today (kWh). gridPowerW < 0 = exporting.
+final dailyGridExportProvider = FutureProvider<double?>((ref) async {
+  final samples = await ref.watch(telemetryHistory24hProvider.future);
+  if (samples.isEmpty) return null;
+  final now = DateTime.now();
+  final midnight = DateTime(now.year, now.month, now.day);
+  final today = samples.where((s) => s.timestamp.toLocal().isAfter(midnight)).toList();
+  if (today.length < 2) return null;
+  double kwh = 0;
+  for (int i = 1; i < today.length; i++) {
+    final dt = today[i].timestamp.difference(today[i - 1].timestamp).inSeconds / 3600.0;
+    final avgW = (today[i].gridPowerW + today[i - 1].gridPowerW) / 2;
+    if (avgW < 0) kwh += avgW.abs() * dt / 1000.0;
+  }
+  return kwh;
+});
+
 /// The authenticated user's active license tier ('beta_free' | 'basic' | 'pro' | null).
 final userLicenseTierProvider = FutureProvider<String?>((ref) async {
   try {
