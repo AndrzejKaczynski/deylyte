@@ -33,6 +33,45 @@ class ApiIntegrationsCard extends ConsumerStatefulWidget {
 class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
   bool _solcastBusy = false;
 
+  /// Shows a confirmation dialog before disabling an integration.
+  /// Returns true if the user confirmed, false if they cancelled.
+  static Future<bool> _confirmDisable(
+      BuildContext context, String integrationName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainer,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusXl),
+        title: Text('Disable $integrationName?',
+            style: const TextStyle(
+                color: AppColors.onSurface, fontWeight: FontWeight.w600)),
+        content: Text(
+          'This will remove your $integrationName credentials. '
+          'You can reconnect at any time.',
+          style: const TextStyle(color: AppColors.onSurfaceVariant),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppColors.onSurfaceVariant)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.radiusMd),
+            ),
+            child: const Text('Disable'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
   Future<void> _onSolcastToggle(bool enable) async {
     if (_solcastBusy) return;
     if (enable) {
@@ -56,6 +95,9 @@ class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
       widget.onSolcastChanged(true);
       ref.invalidate(integrationStatusProvider);
     } else {
+      if (!mounted) return;
+      final confirmed = await _confirmDisable(context, 'Solcast');
+      if (!confirmed || !mounted) return;
       setState(() => _solcastBusy = true);
       try {
         await ref.read(clientProvider).credentials.removeSolcast();
