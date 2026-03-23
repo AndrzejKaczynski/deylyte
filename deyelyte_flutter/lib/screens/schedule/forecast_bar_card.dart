@@ -343,7 +343,7 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
               runSpacing: 8,
               children: [
                 _LayerChip(
-                  label: 'PV Forecast',
+                  label: 'Solar Output',
                   color: AppColors.tertiary,
                   active: _layers.showPv,
                   onTap: () =>
