@@ -7,7 +7,6 @@ import '../../providers/app_providers.dart';
 import 'dashboard_header.dart';
 import 'kpi_strip.dart';
 import 'power_flow_card.dart';
-import 'consumption_chart_card.dart';
 import 'ems_status_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -73,18 +72,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   primaryFlex: 7,
                   sidebarFlex: 3,
                   gap: AppSpacing.sp4,
-                  primary: Column(
-                    children: [
-                      PowerFlowCard(),
-                      SizedBox(height: AppSpacing.sp4),
-                      ConsumptionChartCard(),
-                    ],
-                  ),
-                  sidebar: Column(
-                    children: [
-                      EmsStatusCard(),
-                    ],
-                  ),
+                  primary: PowerFlowCard(),
+                  sidebar: EmsStatusCard(),
                 ),
               ],
             ),

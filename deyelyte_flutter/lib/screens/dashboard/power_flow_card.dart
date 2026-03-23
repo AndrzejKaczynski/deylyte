@@ -14,11 +14,11 @@ class PowerFlowCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final telemetry = ref.watch(latestTelemetryProvider).valueOrNull;
 
-    final pvKw = (telemetry?.pvPowerW ?? 0) / 1000;
-    final loadKw = (telemetry?.loadPowerW ?? 0) / 1000;
-    final gridKw = (telemetry?.gridPowerW ?? 0) / 1000;
+    final pvKw = (telemetry?.pvPowerW ?? 0.0) / 1000.0;
+    final loadKw = (telemetry?.loadPowerW ?? 0.0) / 1000.0;
+    final gridKw = (telemetry?.gridPowerW ?? 0.0) / 1000.0;
     // batteryPowerW < 0 = charging, > 0 = discharging
-    final batteryKw = (telemetry?.batteryPowerW ?? 0) / 1000;
+    final batteryKw = (telemetry?.batteryPowerW ?? 0.0) / 1000.0;
     final soc = telemetry?.batterySOC ?? 0.0;
 
     final gridStatus = gridKw > 0.1

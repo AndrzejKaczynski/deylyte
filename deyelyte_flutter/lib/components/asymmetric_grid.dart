@@ -17,6 +17,7 @@ class AsymmetricGrid extends StatelessWidget {
     this.sidebarFlex = 3,
     this.gap = AppSpacing.sp4,
     this.mobileBreakpoint = 900,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
   });
 
   final Widget primary;
@@ -25,6 +26,7 @@ class AsymmetricGrid extends StatelessWidget {
   final int sidebarFlex;
   final double gap;
   final double mobileBreakpoint;
+  final CrossAxisAlignment crossAxisAlignment;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class AsymmetricGrid extends StatelessWidget {
 
     if (isDesktop) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: crossAxisAlignment,
         children: [
           Expanded(flex: primaryFlex, child: primary),
           SizedBox(width: gap),
