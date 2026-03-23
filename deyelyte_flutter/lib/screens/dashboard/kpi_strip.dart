@@ -49,11 +49,11 @@ class KpiStrip extends ConsumerWidget {
           iconColor: AppColors.tertiary,
         ),
         _KpiItem(
-          title: 'Grid',
-          value: gridStatus,
-          subtitle: grid != null
+          title: grid != null ? 'Grid $gridStatus' : 'Grid',
+          value: grid != null
               ? '${(grid.abs() / 1000).toStringAsFixed(1)} kW'
               : '--',
+          subtitle: 'Now',
           icon: Icons.bolt_rounded,
           iconColor: AppColors.primary,
         ),
