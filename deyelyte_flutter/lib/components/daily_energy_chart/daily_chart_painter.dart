@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart' hide Path;
 import 'package:flutter/material.dart' as material show Path;
 import '../../theme/theme.dart';
@@ -21,28 +22,67 @@ Color sellPriceColor(double price) {
 
 // ─── Path helpers ─────────────────────────────────────────────────────────────
 
-/// Builds a smooth catmull-rom spline path through [points].
-material.Path catmullRomPath(List<Offset> points) {
+/// Monotone cubic interpolation (Fritsch–Carlson). Smooth curves that never
+/// overshoot between data points — ideal for noisy data like home load.
+material.Path monotoneCubicPath(List<Offset> points) {
   if (points.isEmpty) return material.Path();
   if (points.length == 1) return material.Path()..moveTo(points[0].dx, points[0].dy);
+  if (points.length == 2) {
+    return material.Path()
+      ..moveTo(points[0].dx, points[0].dy)
+      ..lineTo(points[1].dx, points[1].dy);
+  }
 
+  final n = points.length;
+
+  // 1. Compute slopes of secant lines.
+  final dx = List<double>.filled(n - 1, 0);
+  final dy = List<double>.filled(n - 1, 0);
+  final slopes = List<double>.filled(n - 1, 0);
+  for (var i = 0; i < n - 1; i++) {
+    dx[i] = points[i + 1].dx - points[i].dx;
+    dy[i] = points[i + 1].dy - points[i].dy;
+    slopes[i] = dx[i] == 0 ? 0 : dy[i] / dx[i];
+  }
+
+  // 2. Compute tangent slopes at each point.
+  final m = List<double>.filled(n, 0);
+  m[0] = slopes[0];
+  m[n - 1] = slopes[n - 2];
+  for (var i = 1; i < n - 1; i++) {
+    if (slopes[i - 1].sign != slopes[i].sign) {
+      m[i] = 0;
+    } else {
+      m[i] = (slopes[i - 1] + slopes[i]) / 2;
+    }
+  }
+
+  // 3. Fritsch–Carlson monotonicity correction.
+  for (var i = 0; i < n - 1; i++) {
+    if (slopes[i] == 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+    } else {
+      final alpha = m[i] / slopes[i];
+      final beta = m[i + 1] / slopes[i];
+      final s = alpha * alpha + beta * beta;
+      if (s > 9) {
+        final t = 3.0 / math.sqrt(s);
+        m[i] = t * alpha * slopes[i];
+        m[i + 1] = t * beta * slopes[i];
+      }
+    }
+  }
+
+  // 4. Build cubic bezier segments from Hermite tangents.
   final path = material.Path()..moveTo(points[0].dx, points[0].dy);
-
-  for (var i = 0; i < points.length - 1; i++) {
-    final p0 = points[i == 0 ? 0 : i - 1];
-    final p1 = points[i];
-    final p2 = points[i + 1];
-    final p3 = points[i + 2 < points.length ? i + 2 : i + 1];
-
-    final cp1 = Offset(
-      p1.dx + (p2.dx - p0.dx) / 6,
-      p1.dy + (p2.dy - p0.dy) / 6,
+  for (var i = 0; i < n - 1; i++) {
+    final third = dx[i] / 3;
+    path.cubicTo(
+      points[i].dx + third, points[i].dy + m[i] * third,
+      points[i + 1].dx - third, points[i + 1].dy - m[i + 1] * third,
+      points[i + 1].dx, points[i + 1].dy,
     );
-    final cp2 = Offset(
-      p2.dx - (p3.dx - p1.dx) / 6,
-      p2.dy - (p3.dy - p1.dy) / 6,
-    );
-    path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, p2.dx, p2.dy);
   }
   return path;
 }
@@ -184,7 +224,7 @@ class DailyPlanPainter extends CustomPainter {
           loadPoints.add(Offset(i * colW + colW / 2, y));
         }
         if (loadPoints.isNotEmpty) {
-          final loadCurve = catmullRomPath(loadPoints);
+          final loadCurve = monotoneCubicPath(loadPoints);
           final loadArea = material.Path.from(loadCurve)
             ..lineTo(loadPoints.last.dx, chartBottom)
             ..lineTo(loadPoints.first.dx, chartBottom)
@@ -206,7 +246,7 @@ class DailyPlanPainter extends CustomPainter {
           final y = chartBottom - (kw / peak).clamp(0.0, 1.0) * chartH;
           estPoints.add(Offset(i * colW + colW / 2, y));
         }
-        final estCurve = catmullRomPath(estPoints);
+        final estCurve = monotoneCubicPath(estPoints);
         drawDashedPath(
           canvas,
           estCurve,
@@ -232,7 +272,7 @@ class DailyPlanPainter extends CustomPainter {
           intakePoints.add(Offset(i * colW + colW / 2, y));
         }
         if (intakePoints.isNotEmpty) {
-          final intakeCurve = catmullRomPath(intakePoints);
+          final intakeCurve = monotoneCubicPath(intakePoints);
           final intakeArea = material.Path.from(intakeCurve)
             ..lineTo(intakePoints.last.dx, chartBottom)
             ..lineTo(intakePoints.first.dx, chartBottom)
@@ -247,8 +287,6 @@ class DailyPlanPainter extends CustomPainter {
 
     // 7 ── Battery SoC line with glow
     if (layers.showSoc) {
-      final path = material.Path();
-      bool started = false;
       final dots = <Offset>[];
       for (var i = 0; i < columnCount; i++) {
         final soc = hours[i].socPct;
@@ -256,14 +294,9 @@ class DailyPlanPainter extends CustomPainter {
         final x = i * colW + colW / 2;
         final y = chartTop + chartH * (1 - soc.clamp(0.0, 100.0) / 100.0);
         dots.add(Offset(x, y));
-        if (!started) {
-          path.moveTo(x, y);
-          started = true;
-        } else {
-          path.lineTo(x, y);
-        }
       }
-      if (started) {
+      if (dots.isNotEmpty) {
+        final path = monotoneCubicPath(dots);
         canvas.drawPath(
           path,
           Paint()
