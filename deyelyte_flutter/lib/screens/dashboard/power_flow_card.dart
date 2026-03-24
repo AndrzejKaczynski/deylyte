@@ -112,7 +112,10 @@ class _PowerFlowDiagramState extends State<_PowerFlowDiagram>
     final gridLabel = widget.hasData
         ? '${widget.gridKw.abs().toStringAsFixed(1)} kW'
         : '--';
-    final batteryLabel =
+    final batteryPowerLabel = widget.hasData
+        ? '${widget.batteryKw.abs().toStringAsFixed(1)} kW'
+        : '--';
+    final batterySocLabel =
         widget.hasData ? '${widget.soc.toStringAsFixed(0)}% SoC' : '--';
 
     return SizedBox(
@@ -157,7 +160,8 @@ class _PowerFlowDiagramState extends State<_PowerFlowDiagram>
                 child: _FlowNode(
                   icon: Icons.battery_charging_full_rounded,
                   label: 'Battery',
-                  value: batteryLabel,
+                  value: batteryPowerLabel,
+                  subValue: batterySocLabel,
                   color: AppColors.secondary,
                   badge: widget.batteryStatus,
                 ),
@@ -188,6 +192,7 @@ class _FlowNode extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    this.subValue,
     this.badge,
     this.textAbove = false,
   });
@@ -196,6 +201,7 @@ class _FlowNode extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final String? subValue;
   final String? badge;
   /// When true, text renders above the circle (for bottom-positioned nodes so
   /// the circle bottom aligns with the Positioned anchor and the painter's
@@ -229,6 +235,11 @@ class _FlowNode extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
+        if (subValue != null)
+          Text(
+            subValue!,
+            style: tt.labelSmall?.copyWith(color: color.withValues(alpha: 0.7)),
+          ),
         if (badge != null)
           Container(
             margin: const EdgeInsets.only(top: 2),
