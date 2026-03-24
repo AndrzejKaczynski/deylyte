@@ -754,6 +754,25 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['price'] as _i12.PriceEndpoint)
                   .triggerFetch(session),
         ),
+        'getPricesForPeriod': _i1.MethodConnector(
+          name: 'getPricesForPeriod',
+          params: {
+            'days': _i1.ParameterDescription(
+              name: 'days',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['price'] as _i12.PriceEndpoint).getPricesForPeriod(
+                    session,
+                    params['days'],
+                  ),
+        ),
         'getTodayPrices': _i1.MethodConnector(
           name: 'getTodayPrices',
           params: {},
@@ -836,6 +855,25 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['schedule'] as _i14.ScheduleEndpoint)
                   .getTodayFrames(session),
+        ),
+        'getFramesForPeriod': _i1.MethodConnector(
+          name: 'getFramesForPeriod',
+          params: {
+            'days': _i1.ParameterDescription(
+              name: 'days',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['schedule'] as _i14.ScheduleEndpoint)
+                  .getFramesForPeriod(
+                    session,
+                    params['days'],
+                  ),
         ),
         'getEvents': _i1.MethodConnector(
           name: 'getEvents',

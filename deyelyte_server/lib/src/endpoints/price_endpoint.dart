@@ -26,6 +26,19 @@ class PriceEndpoint extends Endpoint {
     await client.fetchAndStorePrices(session);
   }
 
+  /// Returns energy prices for the last [days] days (for the history screen).
+  Future<List<EnergyPrice>> getPricesForPeriod(Session session, int days) async {
+    final auth = session.authenticated;
+    if (auth == null) throw Exception('Not authenticated');
+    final uid = int.parse(auth.userIdentifier);
+    final cutoff = DateTime.now().toUtc().subtract(Duration(days: days));
+    return EnergyPrice.db.find(
+      session,
+      where: (t) => t.userInfoId.equals(uid) & (t.timestamp >= cutoff),
+      orderBy: (t) => t.timestamp,
+    );
+  }
+
   /// Returns today's energy prices (UTC day boundary) for the authenticated user.
   Future<List<EnergyPrice>> getTodayPrices(Session session) async {
     final auth = session.authenticated;

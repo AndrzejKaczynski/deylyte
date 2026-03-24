@@ -46,6 +46,7 @@ optimizer:
 price:
   - updatePrices:
   - triggerFetch:
+  - getPricesForPeriod:
   - getTodayPrices:
 priceTimeRanges:
   - getTimeRanges:
@@ -54,6 +55,7 @@ schedule:
   - getCurrent:
   - getForecast:
   - getTodayFrames:
+  - getFramesForPeriod:
   - getEvents:
   - getSchedule:
   - getScheduleWithFallback:

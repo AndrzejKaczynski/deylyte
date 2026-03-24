@@ -63,8 +63,16 @@ final licenseRepositoryProvider = Provider<LicenseRepository>((ref) {
 
 // ── Data providers ────────────────────────────────────────────────────────────
 
-/// Selected date range index for HistoryScreen (0=7d, 1=30d, 2=90d).
-final historyRangeProvider = StateProvider<int>((ref) => 1);
+/// Selected date range index for HistoryScreen (0=1d, 1=7d, 2=30d, 3=60d, 4=90d).
+final historyRangeProvider = StateProvider<int>((ref) => 0);
+
+/// The rightmost date of the currently visible history window.
+/// For 1-day mode this is the single day shown; for multi-day it is the last (most recent) day.
+/// Defaults to yesterday.
+final historyWindowEndProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now().toLocal();
+  return DateTime(now.year, now.month, now.day - 1);
+});
 
 /// Loads the user's AppConfig from the server. Null if the user has no config yet.
 class AppConfigNotifier extends AsyncNotifier<AppConfig?> {
@@ -219,8 +227,12 @@ final scheduleEventsProvider =
 
 // ── History ───────────────────────────────────────────────────────────────────
 
-/// Helper to map historyRangeProvider index to days.
-int rangeDays(int index) => const [7, 30, 60, 90][index];
+/// Maps historyRangeProvider index → days.
+int rangeDays(int index) => const [1, 7, 30, 60, 90][index];
+
+/// How many columns to show in the aggregated chart for the given range index.
+/// Multi-day views are capped at 30 columns for readability.
+int windowSize(int rangeIndex) => rangeIndex == 0 ? 1 : rangeDays(rangeIndex).clamp(1, 30);
 
 /// Maximum history days the current user's tier allows.
 /// Falls back to 7 if the tier config has not been loaded yet.
@@ -244,4 +256,22 @@ final historySummaryProvider =
 final historyEventsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, int>((ref, days) {
   return ref.read(historyRepositoryProvider).getEvents(days);
+});
+
+/// All telemetry for the last [days] days — used by the history chart.
+final historyPeriodTelemetryProvider =
+    FutureProvider.family<List<DeviceTelemetry>, int>((ref, days) {
+  return ref.read(telemetryRepositoryProvider).getHistory(days * 24);
+});
+
+/// All energy prices for the last [days] days — used by the history chart.
+final historyPeriodPricesProvider =
+    FutureProvider.family<List<EnergyPrice>, int>((ref, days) {
+  return ref.read(clientProvider).price.getPricesForPeriod(days);
+});
+
+/// All optimization frames for the last [days] days — used by the history chart.
+final historyPeriodFramesProvider =
+    FutureProvider.family<List<OptimizationFrame>, int>((ref, days) {
+  return ref.read(clientProvider).schedule.getFramesForPeriod(days);
 });

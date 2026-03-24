@@ -31,6 +31,8 @@ class DailyEnergyChart extends StatefulWidget {
     this.hasError = false,
     this.showEstimateLayer = true,
     this.commandStripLabel = 'PLANNED BATTERY ACTION',
+    this.columnCount = 24,
+    this.axisLabels,
   });
 
   final String title;
@@ -52,6 +54,12 @@ class DailyEnergyChart extends StatefulWidget {
 
   /// Label shown above the command strip.
   final String commandStripLabel;
+
+  /// Number of columns. 24 = hourly day view. N = N-day aggregated view.
+  final int columnCount;
+
+  /// 7 axis labels shown at the bottom. Null = default hour labels (00:00…20:00).
+  final List<String>? axisLabels;
 
   @override
   State<DailyEnergyChart> createState() => _DailyEnergyChartState();
@@ -136,17 +144,18 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
                             nowHour: widget.nowHour,
                             nowMinute: widget.nowMinute,
                             layers: _layers,
+                            columnCount: widget.columnCount,
                           ),
                         ),
                       ),
                       if (hoveredData != null)
                         Positioned(
                           top: 20,
-                          left: _hoveredHour! < 12
+                          left: _hoveredHour! < widget.columnCount ~/ 2
                               ? (_hoveredHour! * colW + colW + 6)
                               : null,
-                          right: _hoveredHour! >= 12
-                              ? ((23 - _hoveredHour!) * colW + colW + 6)
+                          right: _hoveredHour! >= widget.columnCount ~/ 2
+                              ? ((widget.columnCount - 1 - _hoveredHour!) * colW + colW + 6)
                               : null,
                           child: HoverCard(
                             data: hoveredData,
@@ -162,16 +171,19 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
 
             const SizedBox(height: 4),
 
-            // ── Hour labels ────────────────────────────────────────────────
+            // ── Axis labels ────────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(7, (i) {
-                final h = (i * 4) % 24;
-                return Text(
-                  '${h.toString().padLeft(2, '0')}:00',
-                  style: tt.labelSmall?.copyWith(color: AppColors.onSurfaceVariant),
-                );
-              }),
+              children: (widget.axisLabels ??
+                      List.generate(7, (i) {
+                        final h = (i * 4) % 24;
+                        return '${h.toString().padLeft(2, '0')}:00';
+                      }))
+                  .map((l) => Text(
+                        l,
+                        style: tt.labelSmall?.copyWith(color: AppColors.onSurfaceVariant),
+                      ))
+                  .toList(),
             ),
 
             const SizedBox(height: 12),

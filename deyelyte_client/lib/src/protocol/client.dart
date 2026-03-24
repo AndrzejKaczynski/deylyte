@@ -485,6 +485,14 @@ class EndpointPrice extends _i1.EndpointRef {
     {},
   );
 
+  /// Returns energy prices for the last [days] days (for the history screen).
+  _i2.Future<List<_i7.EnergyPrice>> getPricesForPeriod(int days) =>
+      caller.callServerEndpoint<List<_i7.EnergyPrice>>(
+        'price',
+        'getPricesForPeriod',
+        {'days': days},
+      );
+
   /// Returns today's energy prices (UTC day boundary) for the authenticated user.
   _i2.Future<List<_i7.EnergyPrice>> getTodayPrices() =>
       caller.callServerEndpoint<List<_i7.EnergyPrice>>(
@@ -548,6 +556,14 @@ class EndpointSchedule extends _i1.EndpointRef {
         'schedule',
         'getTodayFrames',
         {},
+      );
+
+  /// Returns OptimizationFrames for the last [days] days (for the history screen).
+  _i2.Future<List<_i5.OptimizationFrame>> getFramesForPeriod(int days) =>
+      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+        'schedule',
+        'getFramesForPeriod',
+        {'days': days},
       );
 
   /// Returns schedule events as a list of maps for the Flutter schedule screen.

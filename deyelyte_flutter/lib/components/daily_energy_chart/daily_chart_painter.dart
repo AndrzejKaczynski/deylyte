@@ -82,6 +82,7 @@ class DailyPlanPainter extends CustomPainter {
     required this.layers,
     this.nowHour,
     this.nowMinute,
+    this.columnCount = 24,
   });
 
   final List<HourData> hours;
@@ -91,8 +92,9 @@ class DailyPlanPainter extends CustomPainter {
   /// When null the chart is in history mode: no NOW pill, all hours treated as actual.
   final int? nowHour;
   final int? nowMinute;
+  /// Number of columns to render. 24 for a single-day view, N for an N-day aggregated view.
+  final int columnCount;
 
-  static const _n = 24;
   static const _topPad = 24.0;
   static const _priceGap = 8.0;
   static const _priceH = 58.0;
@@ -101,7 +103,7 @@ class DailyPlanPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final colW = size.width / _n;
+    final colW = size.width / columnCount;
     const chartTop = _topPad;
     final chartH = size.height - _topPad - _priceH;
     final chartBottom = chartTop + chartH;
@@ -123,7 +125,7 @@ class DailyPlanPainter extends CustomPainter {
         ..strokeWidth = 1,
     );
     if (layers.showBuyPrice || layers.showSellPrice) {
-      for (var i = 0; i < _n; i++) {
+      for (var i = 0; i < columnCount; i++) {
         if (layers.showBuyPrice) {
           final price = hours[i].buyPrice;
           if (price != null) {
@@ -175,7 +177,7 @@ class DailyPlanPainter extends CustomPainter {
       // 4 ── Home Load area
       if (layers.showLoad) {
         final loadPoints = <Offset>[];
-        for (var i = 0; i < _n; i++) {
+        for (var i = 0; i < columnCount; i++) {
           final kw = hours[i].loadKw;
           if (kw == null) continue;
           final y = chartBottom - (kw / peak).clamp(0.0, 1.0) * chartH;
@@ -197,7 +199,7 @@ class DailyPlanPainter extends CustomPainter {
       // 5 ── PV Estimate dashed curve (schedule mode only — skipped when nowHour is null)
       if (layers.showPvEstimate && nowHour != null) {
         final estPoints = <Offset>[];
-        for (var i = 0; i < _n; i++) {
+        for (var i = 0; i < columnCount; i++) {
           final kw = (i == nowHour && hours[i].pvActualKw != null)
               ? hours[i].pvActualKw!
               : hours[i].pvKw;
@@ -248,7 +250,7 @@ class DailyPlanPainter extends CustomPainter {
       final path = material.Path();
       bool started = false;
       final dots = <Offset>[];
-      for (var i = 0; i < _n; i++) {
+      for (var i = 0; i < columnCount; i++) {
         final soc = hours[i].socPct;
         if (soc == null) continue;
         final x = i * colW + colW / 2;
@@ -329,6 +331,7 @@ class DailyPlanPainter extends CustomPainter {
       old.peak != peak ||
       old.nowHour != nowHour ||
       old.nowMinute != nowMinute ||
+      old.columnCount != columnCount ||
       old.layers.showPvIntake != layers.showPvIntake ||
       old.layers.showPvEstimate != layers.showPvEstimate ||
       old.layers.showLoad != layers.showLoad ||

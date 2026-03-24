@@ -138,6 +138,101 @@ class HourData {
     });
   }
 
+  /// Builds one [HourData] per day for the inclusive range [from]..[to],
+  /// aggregating telemetry to daily averages (kW) and prices to daily averages.
+  /// [hour] field = column index (0 = [from], last = [to]).
+  static List<HourData> buildForDateRange(
+    DateTime from,
+    DateTime to,
+    List<EnergyPrice> prices,
+    List<OptimizationFrame> frames,
+    List<DeviceTelemetry> telemetry,
+  ) {
+    final fromDate = DateTime(from.year, from.month, from.day);
+    final toDate = DateTime(to.year, to.month, to.day);
+    final days = toDate.difference(fromDate).inDays + 1;
+
+    return List.generate(days, (i) {
+      final date = fromDate.add(Duration(days: i));
+
+      final dayTelemetry = telemetry.where((t) {
+        final lt = t.timestamp.toLocal();
+        return lt.year == date.year && lt.month == date.month && lt.day == date.day;
+      }).toList();
+
+      final count = dayTelemetry.length;
+      final pvAvg = count == 0
+          ? 0.0
+          : (dayTelemetry.fold(0.0, (s, t) => s + t.pvPowerW) / count / 1000.0)
+              .clamp(0.0, double.infinity);
+      final loadAvg = count == 0
+          ? null
+          : dayTelemetry.fold(0.0, (s, t) => s + t.loadPowerW) / count / 1000.0;
+      final gridAvg = count == 0
+          ? null
+          : dayTelemetry.fold(0.0, (s, t) => s + t.gridPowerW) / count / 1000.0;
+      final battAvg = count == 0
+          ? null
+          : dayTelemetry.fold(0.0, (s, t) => s + t.batteryPowerW) / count / 1000.0;
+      final socAvg = count == 0
+          ? null
+          : dayTelemetry.fold(0.0, (s, t) => s + t.batterySOC) / count;
+
+      final dayPrices = prices.where((p) {
+        final lt = p.timestamp.toLocal();
+        return lt.year == date.year && lt.month == date.month && lt.day == date.day;
+      }).toList();
+      final pCount = dayPrices.length;
+      final buyAvg = pCount == 0
+          ? null
+          : dayPrices.fold(0.0, (s, p) => s + p.buyPrice) / pCount;
+      final sellAvg = pCount == 0
+          ? null
+          : dayPrices.fold(0.0, (s, p) => s + p.sellPrice) / pCount;
+
+      final dayFrames = frames.where((f) {
+        final lt = f.hour.toLocal();
+        return lt.year == date.year && lt.month == date.month && lt.day == date.day;
+      }).toList();
+      final cmdCounts = <String, int>{};
+      for (final f in dayFrames) {
+        cmdCounts[f.command] = (cmdCounts[f.command] ?? 0) + 1;
+      }
+      final dominantCmd = cmdCounts.isEmpty
+          ? null
+          : cmdCounts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+
+      return HourData(
+        hour: i,
+        pvKw: pvAvg,
+        pvIsActual: true,
+        loadKw: loadAvg,
+        gridKw: gridAvg,
+        batteryKw: battAvg,
+        socPct: socAvg,
+        buyPrice: buyAvg,
+        sellPrice: sellAvg,
+        command: dominantCmd,
+      );
+    });
+  }
+
+  /// Returns 7 evenly-spaced axis labels (e.g. "18 Mar") for a date range.
+  static List<String> buildPeriodAxisLabels(DateTime from, DateTime to) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final fromDate = DateTime(from.year, from.month, from.day);
+    final toDate = DateTime(to.year, to.month, to.day);
+    final days = toDate.difference(fromDate).inDays;
+    return List.generate(7, (i) {
+      final offset = (i * days / 6).round();
+      final d = fromDate.add(Duration(days: offset));
+      return '${d.day} ${months[d.month - 1]}';
+    });
+  }
+
   /// Builds 24 [HourData] entries for a specific past [date].
   /// All hours use actual telemetry only — no forecast, no estimates.
   static List<HourData> buildForDate(
