@@ -1,0 +1,9 @@
+# Bundled response for weekly/monthly history views.
+# No table: serialization only.
+class: HistoryPeriodData
+fields:
+  fromDate: DateTime                      # inclusive start (UTC midnight)
+  toDate: DateTime                        # inclusive end (UTC midnight)
+  aggregates: List<DailyEnergyAggregate>  # one row per calendar day
+  dailyAvgPrices: List<DailyAvgPrice>    # one row per calendar day
+  frames: List<OptimizationFrame>        # raw frames for the period

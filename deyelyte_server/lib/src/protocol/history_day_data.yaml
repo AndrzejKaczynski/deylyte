@@ -1,0 +1,8 @@
+# Bundled response for a single-day history view.
+# No table: serialization only.
+class: HistoryDayData
+fields:
+  date: DateTime                          # the requested day (UTC midnight)
+  telemetry: List<DeviceTelemetry>        # raw samples for this day
+  prices: List<EnergyPrice>              # hourly prices for this day
+  frames: List<OptimizationFrame>        # optimizer frames for this day

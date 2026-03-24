@@ -1,0 +1,7 @@
+# Daily average energy prices — computed server-side via GROUP BY.
+# No table: serialization only (bundled in HistoryPeriodData).
+class: DailyAvgPrice
+fields:
+  date: DateTime               # UTC midnight for this day
+  avgBuyPrice: double          # average buy price for the day
+  avgSellPrice: double         # average sell price for the day
