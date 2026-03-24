@@ -17,10 +17,14 @@ class PstrykClient {
 
   Future<void> fetchAndStorePrices(Session session) async {
     final now = DateTime.now().toUtc();
-    // 48h window: today + tomorrow (UTC). Warsaw is UTC+1/+2, so this covers
-    // all Warsaw hours for both days. for_tz cannot be used with hourly resolution.
-    final windowStart = DateTime.utc(now.year, now.month, now.day);
-    final windowEnd = windowStart.add(const Duration(hours: 48));
+    // Warsaw is UTC+1 (CET) or UTC+2 (CEST). Subtract 2h from UTC midnight so
+    // window_start is always <= Warsaw 00:00 regardless of DST. The extra hours
+    // fetched from yesterday are harmless — they just update existing records.
+    // NOTE: for_tz is forbidden with resolution=hour (API returns 400), so UTC
+    // window adjustment is the only option.
+    final windowStart = DateTime.utc(now.year, now.month, now.day)
+        .subtract(const Duration(hours: 2));
+    final windowEnd = windowStart.add(const Duration(hours: 50));
 
     final uri = Uri.parse(
       '$_baseUrl/meter-data/unified-metrics/'

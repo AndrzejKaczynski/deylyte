@@ -26,6 +26,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _statusLoaded = false;
   bool _rangesLoaded = false; // ignore: unused_field
   bool _saving = false;
+  bool _populatingControllers = false;
 
   // Hardware spec controllers — owned here and read at save time.
   final _capacityCtrl = TextEditingController();
@@ -35,13 +36,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _costCtrl = TextEditingController();
   final _lifecyclesCtrl = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    for (final ctrl in [
+      _capacityCtrl,
+      _gridConnectionCtrl,
+      _chargeRateCtrl,
+      _dischargeRateCtrl,
+      _costCtrl,
+      _lifecyclesCtrl,
+    ]) {
+      ctrl.addListener(_onHardwareChanged);
+    }
+  }
+
+  void _onHardwareChanged() {
+    if (_populatingControllers) return;
+    ref.read(settingsProvider.notifier).markDirty();
+  }
+
   void _populateHardwareControllers(AppConfig c) {
+    _populatingControllers = true;
     _capacityCtrl.text = c.batteryCapacityKwh?.toStringAsFixed(1) ?? '';
     _gridConnectionCtrl.text = c.gridConnectionKw?.toStringAsFixed(1) ?? '';
     _chargeRateCtrl.text = c.maxChargeRateKw?.toStringAsFixed(1) ?? '';
     _dischargeRateCtrl.text = c.maxDischargeRateKw?.toStringAsFixed(1) ?? '';
     _costCtrl.text = c.batteryCost?.toStringAsFixed(0) ?? '';
     _lifecyclesCtrl.text = c.batteryLifecycles?.toString() ?? '';
+    _populatingControllers = false;
   }
 
   @override
@@ -91,7 +114,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final ranges = next.valueOrNull;
       if (ranges != null) {
         _rangesLoaded = true;
-        ref.read(settingsProvider.notifier).setPriceTimeRanges(ranges);
+        ref.read(settingsProvider.notifier).loadPriceTimeRanges(ranges);
       } else if (next is AsyncData) {
         _rangesLoaded = true;
       }
@@ -135,21 +158,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
     }
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _saving ? null : _save,
-        icon: _saving
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
-              )
-            : const Icon(Icons.save_rounded),
-        label: const Text('Save'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: AnimatedOpacity(
+        opacity: settings.isDirty ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 200),
+        child: IgnorePointer(
+          ignoring: !settings.isDirty,
+          child: SizedBox(
+            width: screenWidth,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Expanded(child: _UnsavedChangesBanner()),
+                  const SizedBox(width: 12),
+                  FloatingActionButton.extended(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.save_rounded),
+                    label: const Text('Save'),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -243,7 +288,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const DangerZoneCard(),
                 ]),
               ),
-              // Extra bottom padding so FAB doesn't overlap last card.
               const SizedBox(height: 80),
             ],
           ),
@@ -270,6 +314,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           'Your inverter continues operating normally during this period.';
     }
     return null;
+  }
+
+  void _showToast(String message, {required bool success}) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _ToastNotification(
+        message: message,
+        success: success,
+        onDone: () => entry.remove(),
+      ),
+    );
+    overlay.insert(entry);
   }
 
   Future<void> _save() async {
@@ -306,17 +363,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           .read(clientProvider)
           .priceTimeRanges
           .saveTimeRanges(s.priceTimeRanges);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings saved')),
-        );
-      }
+      ref.read(settingsProvider.notifier).markClean();
+      if (mounted) _showToast('Settings saved', success: true);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
-      }
+      if (mounted) _showToast('Failed to save: $e', success: false);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -335,6 +385,123 @@ class _SettingsHeader extends StatelessWidget {
         style: tt.bodySmall,
       ),
     ]);
+  }
+}
+
+class _ToastNotification extends StatefulWidget {
+  const _ToastNotification({
+    required this.message,
+    required this.success,
+    required this.onDone,
+  });
+
+  final String message;
+  final bool success;
+  final VoidCallback onDone;
+
+  @override
+  State<_ToastNotification> createState() => _ToastNotificationState();
+}
+
+class _ToastNotificationState extends State<_ToastNotification>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _ctrl.forward();
+    Future.delayed(const Duration(seconds: 5), _dismiss);
+  }
+
+  Future<void> _dismiss() async {
+    if (!mounted) return;
+    await _ctrl.reverse();
+    widget.onDone();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final color = widget.success ? AppColors.secondary : AppColors.error;
+    final top = MediaQuery.paddingOf(context).top + 12;
+    return Positioned(
+      top: top,
+      right: 16,
+      child: FadeTransition(
+        opacity: _opacity,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: AppRadius.radiusMd,
+              border: Border.all(color: color.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.success
+                      ? Icons.check_circle_outline_rounded
+                      : Icons.error_outline_rounded,
+                  size: 16,
+                  color: color,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.message,
+                  style: tt.bodySmall?.copyWith(color: color),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnsavedChangesBanner extends StatelessWidget {
+  const _UnsavedChangesBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.errorContainer.withValues(alpha: 0.35),
+        borderRadius: AppRadius.radiusMd,
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              size: 20, color: AppColors.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'You have unsaved changes.',
+              style: tt.bodyMedium?.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

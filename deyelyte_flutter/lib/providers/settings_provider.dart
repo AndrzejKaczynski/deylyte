@@ -21,6 +21,7 @@ class SettingsState {
     this.baselineMaxBuyPrice,
     this.baselineMinSellPrice,
     this.baselinePriceSource,
+    this.isDirty = false,
   });
 
   final double minSoc;
@@ -70,6 +71,9 @@ class SettingsState {
   final double? baselineMinSellPrice;
   final String? baselinePriceSource;
 
+  /// True when local state differs from the last saved/loaded server config.
+  final bool isDirty;
+
   /// Whether a baseline has been captured (i.e. user has gone live at least once).
   bool get hasBaseline => baselineChargingEnabled != null;
 
@@ -108,6 +112,7 @@ class SettingsState {
     Object? baselineMaxBuyPrice = _sentinel,
     Object? baselineMinSellPrice = _sentinel,
     Object? baselinePriceSource = _sentinel,
+    bool? isDirty,
   }) =>
       SettingsState(
         minSoc: minSoc ?? this.minSoc,
@@ -142,6 +147,7 @@ class SettingsState {
         baselinePriceSource: baselinePriceSource == _sentinel
             ? this.baselinePriceSource
             : baselinePriceSource as String?,
+        isDirty: isDirty ?? this.isDirty,
       );
 }
 
@@ -152,21 +158,31 @@ class SettingsNotifier extends Notifier<SettingsState> {
   @override
   SettingsState build() => const SettingsState();
 
-  void setMinSoc(double v) => state = state.copyWith(minSoc: v);
-  void setChargingEnabled(bool v) => state = state.copyWith(chargingEnabled: v);
-  void setSellingEnabled(bool v) => state = state.copyWith(sellingEnabled: v);
-  void setPvOnlySelling(bool v) => state = state.copyWith(pvOnlySelling: v);
-  void setMaxBuyPrice(double v) => state = state.copyWith(maxBuyPrice: v);
-  void setMinSellPrice(double? v) => state = state.copyWith(minSellPrice: v);
-  void setPlanningOnly(bool v) => state = state.copyWith(planningOnly: v);
-  void setSolcast(bool v) => state = state.copyWith(solcast: v);
-  void setPstryk(bool v) => state = state.copyWith(pstryk: v);
-  void setCityName(String? v) => state = state.copyWith(cityName: v);
-  void setPriceSource(String v) => state = state.copyWith(priceSource: v);
+  void setMinSoc(double v) => state = state.copyWith(minSoc: v, isDirty: true);
+  void setChargingEnabled(bool v) => state = state.copyWith(chargingEnabled: v, isDirty: true);
+  void setSellingEnabled(bool v) => state = state.copyWith(sellingEnabled: v, isDirty: true);
+  void setPvOnlySelling(bool v) => state = state.copyWith(pvOnlySelling: v, isDirty: true);
+  void setMaxBuyPrice(double v) => state = state.copyWith(maxBuyPrice: v, isDirty: true);
+  void setMinSellPrice(double? v) => state = state.copyWith(minSellPrice: v, isDirty: true);
+  void setPlanningOnly(bool v) => state = state.copyWith(planningOnly: v, isDirty: true);
+  void setSolcast(bool v) => state = state.copyWith(solcast: v, isDirty: true);
+  void setPstryk(bool v) => state = state.copyWith(pstryk: v, isDirty: true);
+  void setCityName(String? v) => state = state.copyWith(cityName: v, isDirty: true);
+  void setPriceSource(String v) => state = state.copyWith(priceSource: v, isDirty: true);
   void setFixedBuyRatePln(double? v) =>
-      state = state.copyWith(fixedBuyRatePln: v);
+      state = state.copyWith(fixedBuyRatePln: v, isDirty: true);
   void setPriceTimeRanges(List<PriceTimeRange> v) =>
+      state = state.copyWith(priceTimeRanges: v, isDirty: true);
+
+  /// Load ranges from server on initial fetch — does not mark dirty.
+  void loadPriceTimeRanges(List<PriceTimeRange> v) =>
       state = state.copyWith(priceTimeRanges: v);
+
+  /// Set dirty flag (e.g. from hardware text controllers not tracked in state).
+  void markDirty() => state = state.copyWith(isDirty: true);
+
+  /// Reset dirty flag after a successful save.
+  void markClean() => state = state.copyWith(isDirty: false);
 
   void loadIntegrationStatus(Map<String, bool> status) =>
       state = state.copyWith(
@@ -187,7 +203,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
         fixedBuyRatePln: c.fixedBuyRatePln,
         priceTimeRanges: state.priceTimeRanges,
         solcast: state.solcast, // managed separately via loadIntegrationStatus
-        pstryk: c.pstrykEnabled,
+        pstryk: state.pstryk,  // managed separately via loadIntegrationStatus
         baselineChargingEnabled: c.baselineChargingEnabled,
         baselineSellingEnabled: c.baselineSellingEnabled,
         baselineMaxBuyPrice: c.baselineMaxBuyPrice,
