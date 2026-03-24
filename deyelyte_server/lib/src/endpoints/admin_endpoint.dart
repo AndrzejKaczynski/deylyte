@@ -190,7 +190,6 @@ class AdminEndpoint extends Endpoint {
               'id': c.id,
               'tier': c.tier,
               'syncIntervalSeconds': c.syncIntervalSeconds,
-              'historyDurationDays': c.historyDurationDays,
             })
         .toList());
   }
@@ -201,12 +200,10 @@ class AdminEndpoint extends Endpoint {
     Session session, {
     required String tier,
     required int syncIntervalSeconds,
-    required int historyDurationDays,
   }) async {
     await _requireAdmin(session);
 
     final clampedInterval = syncIntervalSeconds < 300 ? 300 : syncIntervalSeconds;
-    final clampedHistory = historyDurationDays < 1 ? 1 : historyDurationDays;
     final existing = await TierSyncConfig.db.findFirstRow(
       session,
       where: (t) => t.tier.equals(tier),
@@ -217,7 +214,6 @@ class AdminEndpoint extends Endpoint {
         TierSyncConfig(
           tier: tier,
           syncIntervalSeconds: clampedInterval,
-          historyDurationDays: clampedHistory,
         ),
       );
     } else {
@@ -225,7 +221,6 @@ class AdminEndpoint extends Endpoint {
         session,
         existing.copyWith(
           syncIntervalSeconds: clampedInterval,
-          historyDurationDays: clampedHistory,
         ),
       );
     }

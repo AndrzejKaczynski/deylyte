@@ -18,14 +18,12 @@ abstract class TierSyncConfig
     this.id,
     required this.tier,
     required this.syncIntervalSeconds,
-    required this.historyDurationDays,
   });
 
   factory TierSyncConfig({
     int? id,
     required String tier,
     required int syncIntervalSeconds,
-    required int historyDurationDays,
   }) = _TierSyncConfigImpl;
 
   factory TierSyncConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -33,7 +31,6 @@ abstract class TierSyncConfig
       id: jsonSerialization['id'] as int?,
       tier: jsonSerialization['tier'] as String,
       syncIntervalSeconds: jsonSerialization['syncIntervalSeconds'] as int,
-      historyDurationDays: jsonSerialization['historyDurationDays'] as int,
     );
   }
 
@@ -48,8 +45,6 @@ abstract class TierSyncConfig
 
   int syncIntervalSeconds;
 
-  int historyDurationDays;
-
   @override
   _i1.Table<int?> get table => t;
 
@@ -60,7 +55,6 @@ abstract class TierSyncConfig
     int? id,
     String? tier,
     int? syncIntervalSeconds,
-    int? historyDurationDays,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -69,7 +63,6 @@ abstract class TierSyncConfig
       if (id != null) 'id': id,
       'tier': tier,
       'syncIntervalSeconds': syncIntervalSeconds,
-      'historyDurationDays': historyDurationDays,
     };
   }
 
@@ -80,7 +73,6 @@ abstract class TierSyncConfig
       if (id != null) 'id': id,
       'tier': tier,
       'syncIntervalSeconds': syncIntervalSeconds,
-      'historyDurationDays': historyDurationDays,
     };
   }
 
@@ -121,12 +113,10 @@ class _TierSyncConfigImpl extends TierSyncConfig {
     int? id,
     required String tier,
     required int syncIntervalSeconds,
-    required int historyDurationDays,
   }) : super._(
          id: id,
          tier: tier,
          syncIntervalSeconds: syncIntervalSeconds,
-         historyDurationDays: historyDurationDays,
        );
 
   /// Returns a shallow copy of this [TierSyncConfig]
@@ -137,13 +127,11 @@ class _TierSyncConfigImpl extends TierSyncConfig {
     Object? id = _Undefined,
     String? tier,
     int? syncIntervalSeconds,
-    int? historyDurationDays,
   }) {
     return TierSyncConfig(
       id: id is int? ? id : this.id,
       tier: tier ?? this.tier,
       syncIntervalSeconds: syncIntervalSeconds ?? this.syncIntervalSeconds,
-      historyDurationDays: historyDurationDays ?? this.historyDurationDays,
     );
   }
 }
@@ -160,11 +148,6 @@ class TierSyncConfigUpdateTable extends _i1.UpdateTable<TierSyncConfigTable> {
     table.syncIntervalSeconds,
     value,
   );
-
-  _i1.ColumnValue<int, int> historyDurationDays(int value) => _i1.ColumnValue(
-    table.historyDurationDays,
-    value,
-  );
 }
 
 class TierSyncConfigTable extends _i1.Table<int?> {
@@ -179,10 +162,6 @@ class TierSyncConfigTable extends _i1.Table<int?> {
       'syncIntervalSeconds',
       this,
     );
-    historyDurationDays = _i1.ColumnInt(
-      'historyDurationDays',
-      this,
-    );
   }
 
   late final TierSyncConfigUpdateTable updateTable;
@@ -191,14 +170,11 @@ class TierSyncConfigTable extends _i1.Table<int?> {
 
   late final _i1.ColumnInt syncIntervalSeconds;
 
-  late final _i1.ColumnInt historyDurationDays;
-
   @override
   List<_i1.Column> get columns => [
     id,
     tier,
     syncIntervalSeconds,
-    historyDurationDays,
   ];
 }
 

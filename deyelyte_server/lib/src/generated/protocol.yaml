@@ -30,6 +30,8 @@ forecast:
   - updateForecast:
   - getForecast:
 history:
+  - getDayData:
+  - getPeriodData:
   - getSummary:
   - getEvents:
 license:
@@ -46,7 +48,6 @@ optimizer:
 price:
   - updatePrices:
   - triggerFetch:
-  - getPricesForPeriod:
   - getTodayPrices:
 priceTimeRanges:
   - getTimeRanges:
@@ -55,7 +56,6 @@ schedule:
   - getCurrent:
   - getForecast:
   - getTodayFrames:
-  - getFramesForPeriod:
   - getEvents:
   - getSchedule:
   - getScheduleWithFallback:
@@ -63,5 +63,3 @@ telemetry:
   - ingest:
   - getLatest:
   - getHistory:
-  - getDailyAggregates:
-  - getTelemetryForDate:

@@ -14,15 +14,15 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
 import 'package:deyelyte_client/src/protocol/app_config.dart' as _i3;
 import 'package:deyelyte_client/src/protocol/pv_forecast.dart' as _i4;
-import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i5;
-import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i6;
-import 'package:deyelyte_client/src/protocol/energy_price.dart' as _i7;
-import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i8;
-import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i9;
-import 'package:deyelyte_client/src/protocol/daily_energy_aggregate.dart'
-    as _i10;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i11;
-import 'protocol.dart' as _i12;
+import 'package:deyelyte_client/src/protocol/history_day_data.dart' as _i5;
+import 'package:deyelyte_client/src/protocol/history_period_data.dart' as _i6;
+import 'package:deyelyte_client/src/protocol/optimization_frame.dart' as _i7;
+import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i8;
+import 'package:deyelyte_client/src/protocol/energy_price.dart' as _i9;
+import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i10;
+import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i11;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i12;
+import 'protocol.dart' as _i13;
 
 /// All methods require the caller to be an authenticated admin.
 /// Admin rows are created exclusively via direct SQL — no endpoint can
@@ -104,14 +104,12 @@ class EndpointAdmin extends _i1.EndpointRef {
   _i2.Future<void> updateTierPermissions({
     required String tier,
     required int syncIntervalSeconds,
-    required int historyDurationDays,
   }) => caller.callServerEndpoint<void>(
     'admin',
     'updateTierPermissions',
     {
       'tier': tier,
       'syncIntervalSeconds': syncIntervalSeconds,
-      'historyDurationDays': historyDurationDays,
     },
   );
 }
@@ -315,9 +313,8 @@ class EndpointForecast extends _i1.EndpointRef {
       );
 }
 
-/// Returns historical energy summaries and events for the Flutter history screen.
-/// Stub implementation — returns zero/empty data until the baseline engine
-/// and telemetry aggregation are wired in a later phase.
+/// Serves all history data for the Flutter history screen.
+/// Each method returns a bundled response — one call per view.
 /// {@category Endpoint}
 class EndpointHistory extends _i1.EndpointRef {
   EndpointHistory(_i1.EndpointCaller caller) : super(caller);
@@ -325,30 +322,52 @@ class EndpointHistory extends _i1.EndpointRef {
   @override
   String get name => 'history';
 
-  /// Returns aggregate summary metrics for the given date range.
-  ///
-  /// [rangeDays] — number of days to include (7, 30, or 90)
-  ///
-  /// Stub returns zero values. Real implementation will aggregate
-  /// DeviceTelemetry + EnergyPrice rows.
-  _i2.Future<String> getSummary(int rangeDays) =>
-      caller.callServerEndpoint<String>(
+  /// Returns telemetry + prices + frames for a single UTC day.
+  _i2.Future<_i5.HistoryDayData> getDayData(DateTime date) =>
+      caller.callServerEndpoint<_i5.HistoryDayData>(
         'history',
-        'getSummary',
-        {'rangeDays': rangeDays},
+        'getDayData',
+        {'date': date},
       );
 
-  /// Returns a list of notable market/schedule events for the history screen.
-  ///
-  /// [rangeDays] — number of days to include (7, 30, or 90)
-  ///
-  /// Stub returns empty list.
-  _i2.Future<String> getEvents(int rangeDays) =>
-      caller.callServerEndpoint<String>(
-        'history',
-        'getEvents',
-        {'rangeDays': rangeDays},
-      );
+  /// Returns daily aggregates + avg prices + frames for [from]..[to] (inclusive).
+  _i2.Future<_i6.HistoryPeriodData> getPeriodData(
+    DateTime from,
+    DateTime to,
+  ) => caller.callServerEndpoint<_i6.HistoryPeriodData>(
+    'history',
+    'getPeriodData',
+    {
+      'from': from,
+      'to': to,
+    },
+  );
+
+  /// Aggregate summary metrics for [from]..[to] (inclusive UTC dates).
+  _i2.Future<String> getSummary(
+    DateTime from,
+    DateTime to,
+  ) => caller.callServerEndpoint<String>(
+    'history',
+    'getSummary',
+    {
+      'from': from,
+      'to': to,
+    },
+  );
+
+  /// Notable events for [from]..[to]. Stub — returns empty list.
+  _i2.Future<String> getEvents(
+    DateTime from,
+    DateTime to,
+  ) => caller.callServerEndpoint<String>(
+    'history',
+    'getEvents',
+    {
+      'from': from,
+      'to': to,
+    },
+  );
 }
 
 /// License key validation. Called during onboarding (user is authenticated
@@ -377,11 +396,12 @@ class EndpointLicense extends _i1.EndpointRef {
       );
 
   /// Returns the active license info for the authenticated user.
-  /// Used by the Flutter app to determine feature availability (e.g. history range).
+  /// Used by the Flutter app to determine feature availability.
   ///
   /// Returns:
-  ///   tier      — String ('beta_free' | 'basic' | 'pro'), or null if no active license
-  ///   expiresAt — ISO8601 UTC expiry date, or null if never expires
+  ///   tier                — String ('beta_free' | 'basic' | 'pro'), or null
+  ///   expiresAt           — ISO8601 UTC expiry, or null if never expires
+  ///   earliestAllowedDate — ISO8601 UTC date; client disables back-nav before this
   _i2.Future<String> getUserLicense() => caller.callServerEndpoint<String>(
     'license',
     'getUserLicense',
@@ -399,16 +419,16 @@ class EndpointOptimizer extends _i1.EndpointRef {
   /// Run the optimizer for the authenticated user, persist the 24-frame plan,
   /// and return it. Upserts by (userInfoId, hour) so repeated calls refresh
   /// the plan in place.
-  _i2.Future<List<_i5.OptimizationFrame>> calculateAndStore() =>
-      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+  _i2.Future<List<_i7.OptimizationFrame>> calculateAndStore() =>
+      caller.callServerEndpoint<List<_i7.OptimizationFrame>>(
         'optimizer',
         'calculateAndStore',
         {},
       );
 
   /// Return the stored 24-hour plan for the authenticated user, ordered by hour.
-  _i2.Future<List<_i5.OptimizationFrame>> getSchedule() =>
-      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+  _i2.Future<List<_i7.OptimizationFrame>> getSchedule() =>
+      caller.callServerEndpoint<List<_i7.OptimizationFrame>>(
         'optimizer',
         'getSchedule',
         {},
@@ -452,8 +472,8 @@ class EndpointOptimizer extends _i1.EndpointRef {
       );
 
   /// List all upcoming outage-reserve dates for the authenticated user.
-  _i2.Future<List<_i6.OutageReserve>> getOutageReserves() =>
-      caller.callServerEndpoint<List<_i6.OutageReserve>>(
+  _i2.Future<List<_i8.OutageReserve>> getOutageReserves() =>
+      caller.callServerEndpoint<List<_i8.OutageReserve>>(
         'optimizer',
         'getOutageReserves',
         {},
@@ -487,17 +507,9 @@ class EndpointPrice extends _i1.EndpointRef {
     {},
   );
 
-  /// Returns energy prices for the last [days] days (for the history screen).
-  _i2.Future<List<_i7.EnergyPrice>> getPricesForPeriod(int days) =>
-      caller.callServerEndpoint<List<_i7.EnergyPrice>>(
-        'price',
-        'getPricesForPeriod',
-        {'days': days},
-      );
-
   /// Returns today's energy prices (UTC day boundary) for the authenticated user.
-  _i2.Future<List<_i7.EnergyPrice>> getTodayPrices() =>
-      caller.callServerEndpoint<List<_i7.EnergyPrice>>(
+  _i2.Future<List<_i9.EnergyPrice>> getTodayPrices() =>
+      caller.callServerEndpoint<List<_i9.EnergyPrice>>(
         'price',
         'getTodayPrices',
         {},
@@ -512,15 +524,15 @@ class EndpointPriceTimeRanges extends _i1.EndpointRef {
   String get name => 'priceTimeRanges';
 
   /// Returns all time ranges for the authenticated user.
-  _i2.Future<List<_i8.PriceTimeRange>> getTimeRanges() =>
-      caller.callServerEndpoint<List<_i8.PriceTimeRange>>(
+  _i2.Future<List<_i10.PriceTimeRange>> getTimeRanges() =>
+      caller.callServerEndpoint<List<_i10.PriceTimeRange>>(
         'priceTimeRanges',
         'getTimeRanges',
         {},
       );
 
   /// Replaces all time ranges for the authenticated user.
-  _i2.Future<void> saveTimeRanges(List<_i8.PriceTimeRange> ranges) =>
+  _i2.Future<void> saveTimeRanges(List<_i10.PriceTimeRange> ranges) =>
       caller.callServerEndpoint<void>(
         'priceTimeRanges',
         'saveTimeRanges',
@@ -537,35 +549,27 @@ class EndpointSchedule extends _i1.EndpointRef {
   String get name => 'schedule';
 
   /// Returns the OptimizationFrame for the current hour, or null.
-  _i2.Future<_i5.OptimizationFrame?> getCurrent() =>
-      caller.callServerEndpoint<_i5.OptimizationFrame?>(
+  _i2.Future<_i7.OptimizationFrame?> getCurrent() =>
+      caller.callServerEndpoint<_i7.OptimizationFrame?>(
         'schedule',
         'getCurrent',
         {},
       );
 
   /// Returns all upcoming OptimizationFrames (current hour onwards).
-  _i2.Future<List<_i5.OptimizationFrame>> getForecast() =>
-      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+  _i2.Future<List<_i7.OptimizationFrame>> getForecast() =>
+      caller.callServerEndpoint<List<_i7.OptimizationFrame>>(
         'schedule',
         'getForecast',
         {},
       );
 
   /// Returns OptimizationFrames for today (UTC day boundary).
-  _i2.Future<List<_i5.OptimizationFrame>> getTodayFrames() =>
-      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+  _i2.Future<List<_i7.OptimizationFrame>> getTodayFrames() =>
+      caller.callServerEndpoint<List<_i7.OptimizationFrame>>(
         'schedule',
         'getTodayFrames',
         {},
-      );
-
-  /// Returns OptimizationFrames for the last [days] days (for the history screen).
-  _i2.Future<List<_i5.OptimizationFrame>> getFramesForPeriod(int days) =>
-      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
-        'schedule',
-        'getFramesForPeriod',
-        {'days': days},
       );
 
   /// Returns schedule events as a list of maps for the Flutter schedule screen.
@@ -578,8 +582,8 @@ class EndpointSchedule extends _i1.EndpointRef {
 
   /// Returns upcoming OptimizationFrames for the user associated with
   /// [licenseKey]. Returns an empty list on invalid license.
-  _i2.Future<List<_i5.OptimizationFrame>> getSchedule(String licenseKey) =>
-      caller.callServerEndpoint<List<_i5.OptimizationFrame>>(
+  _i2.Future<List<_i7.OptimizationFrame>> getSchedule(String licenseKey) =>
+      caller.callServerEndpoint<List<_i7.OptimizationFrame>>(
         'schedule',
         'getSchedule',
         {'licenseKey': licenseKey},
@@ -668,56 +672,29 @@ class EndpointTelemetry extends _i1.EndpointRef {
 
   /// Returns the most recent telemetry snapshot for the authenticated user.
   /// Returns null when no telemetry has been received yet.
-  _i2.Future<_i9.DeviceTelemetry?> getLatest() =>
-      caller.callServerEndpoint<_i9.DeviceTelemetry?>(
+  _i2.Future<_i11.DeviceTelemetry?> getLatest() =>
+      caller.callServerEndpoint<_i11.DeviceTelemetry?>(
         'telemetry',
         'getLatest',
         {},
       );
 
-  /// Returns telemetry history for the authenticated user.
-  /// The window is capped server-side using [TierSyncConfig.historyDurationDays]
-  /// for the user's active tier. [hours] is the client's requested window;
-  /// the server enforces the cap.
-  _i2.Future<List<_i9.DeviceTelemetry>> getHistory(int hours) =>
-      caller.callServerEndpoint<List<_i9.DeviceTelemetry>>(
+  /// Returns recent telemetry for the dashboard / schedule screen.
+  /// Hard-capped at 48 h — history data comes from HistoryEndpoint.
+  _i2.Future<List<_i11.DeviceTelemetry>> getHistory(int hours) =>
+      caller.callServerEndpoint<List<_i11.DeviceTelemetry>>(
         'telemetry',
         'getHistory',
         {'hours': hours},
       );
-
-  /// Returns daily aggregates for the authenticated user over the last [days] days.
-  /// Each row covers one UTC calendar day and contains average power values and
-  /// average battery SoC — equivalent to ~96 raw rows compressed to 1.
-  _i2.Future<List<_i10.DailyEnergyAggregate>> getDailyAggregates(int days) =>
-      caller.callServerEndpoint<List<_i10.DailyEnergyAggregate>>(
-        'telemetry',
-        'getDailyAggregates',
-        {'days': days},
-      );
-
-  /// Returns raw telemetry rows for a specific UTC day window.
-  /// [fromUtc] is inclusive, [toUtc] is exclusive (i.e. midnight start of next day).
-  /// Used by the 1-day history chart to get per-hour detail.
-  _i2.Future<List<_i9.DeviceTelemetry>> getTelemetryForDate(
-    DateTime fromUtc,
-    DateTime toUtc,
-  ) => caller.callServerEndpoint<List<_i9.DeviceTelemetry>>(
-    'telemetry',
-    'getTelemetryForDate',
-    {
-      'fromUtc': fromUtc,
-      'toUtc': toUtc,
-    },
-  );
 }
 
 class Modules {
   Modules(Client client) {
-    auth = _i11.Caller(client);
+    auth = _i12.Caller(client);
   }
 
-  late final _i11.Caller auth;
+  late final _i12.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -740,7 +717,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i12.Protocol(),
+         _i13.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

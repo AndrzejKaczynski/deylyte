@@ -38,8 +38,6 @@ import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i25;
 import 'package:deyelyte_server/src/generated/energy_price.dart' as _i26;
 import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i27;
 import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i28;
-import 'package:deyelyte_server/src/generated/daily_energy_aggregate.dart'
-    as _i29;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'daily_avg_price.dart';
@@ -1308,12 +1306,6 @@ class Protocol extends _i1.SerializationManagerServer {
           isNullable: false,
           dartType: 'int',
         ),
-        _i2.ColumnDefinition(
-          name: 'historyDurationDays',
-          columnType: _i2.ColumnType.bigint,
-          isNullable: false,
-          dartType: 'int',
-        ),
       ],
       foreignKeys: [],
       indexes: [
@@ -1560,12 +1552,6 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == List<_i28.DeviceTelemetry>) {
       return (data as List)
               .map((e) => deserialize<_i28.DeviceTelemetry>(e))
-              .toList()
-          as T;
-    }
-    if (t == List<_i29.DailyEnergyAggregate>) {
-      return (data as List)
-              .map((e) => deserialize<_i29.DailyEnergyAggregate>(e))
               .toList()
           as T;
     }

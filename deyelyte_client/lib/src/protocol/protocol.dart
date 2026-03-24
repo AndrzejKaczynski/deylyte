@@ -36,9 +36,7 @@ import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i23;
 import 'package:deyelyte_client/src/protocol/energy_price.dart' as _i24;
 import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i25;
 import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i26;
-import 'package:deyelyte_client/src/protocol/daily_energy_aggregate.dart'
-    as _i27;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i28;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i27;
 export 'admin_user.dart';
 export 'app_config.dart';
 export 'daily_avg_price.dart';
@@ -278,14 +276,8 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
-    if (t == List<_i27.DailyEnergyAggregate>) {
-      return (data as List)
-              .map((e) => deserialize<_i27.DailyEnergyAggregate>(e))
-              .toList()
-          as T;
-    }
     try {
-      return _i28.Protocol().deserialize<T>(data, t);
+      return _i27.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -364,7 +356,7 @@ class Protocol extends _i1.SerializationManager {
       case _i20.TierSyncConfig():
         return 'TierSyncConfig';
     }
-    className = _i28.Protocol().getClassNameForObject(data);
+    className = _i27.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth.$className';
     }
@@ -436,7 +428,7 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth.')) {
       data['className'] = dataClassName.substring(15);
-      return _i28.Protocol().deserializeByClassName(data);
+      return _i27.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -451,7 +443,7 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i28.Protocol().mapRecordToJson(record);
+      return _i27.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

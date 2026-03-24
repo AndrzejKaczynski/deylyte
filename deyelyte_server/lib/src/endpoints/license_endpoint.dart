@@ -86,11 +86,12 @@ class LicenseEndpoint extends Endpoint {
   }
 
   /// Returns the active license info for the authenticated user.
-  /// Used by the Flutter app to determine feature availability (e.g. history range).
+  /// Used by the Flutter app to determine feature availability.
   ///
   /// Returns:
-  ///   tier      — String ('beta_free' | 'basic' | 'pro'), or null if no active license
-  ///   expiresAt — ISO8601 UTC expiry date, or null if never expires
+  ///   tier                — String ('beta_free' | 'basic' | 'pro'), or null
+  ///   expiresAt           — ISO8601 UTC expiry, or null if never expires
+  ///   earliestAllowedDate — ISO8601 UTC date; client disables back-nav before this
   Future<String> getUserLicense(Session session) async {
     final auth = session.authenticated;
     if (auth == null) return jsonEncode({'tier': null});
@@ -106,15 +107,26 @@ class LicenseEndpoint extends Endpoint {
       return jsonEncode({'tier': null});
     }
 
-    final syncConfig = await TierSyncConfig.db.findFirstRow(
+    // Compute calendar-based earliest date (same logic as HistoryEndpoint).
+    final config = await AppConfig.db.findFirstRow(
       session,
-      where: (t) => t.tier.equals(row.tier),
+      where: (t) => t.userInfoId.equals(uid),
     );
+    final dataStart = config?.dataGatheringSince;
+
+    DateTime earliestAllowedDate;
+    if (row.tier == 'pro') {
+      earliestAllowedDate = dataStart ?? DateTime.utc(2020);
+    } else {
+      final limit = DateTime.utc(now.year, now.month - 1, 1);
+      earliestAllowedDate =
+          (dataStart != null && dataStart.isAfter(limit)) ? dataStart : limit;
+    }
 
     return jsonEncode({
       'tier': row.tier,
       'expiresAt': row.expiresAt?.toIso8601String(),
-      'historyDurationDays': syncConfig?.historyDurationDays ?? 7,
+      'earliestAllowedDate': earliestAllowedDate.toIso8601String(),
     });
   }
 }

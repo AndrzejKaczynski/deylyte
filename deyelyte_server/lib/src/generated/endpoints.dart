@@ -245,11 +245,6 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
-            'historyDurationDays': _i1.ParameterDescription(
-              name: 'historyDurationDays',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
           },
           call:
               (
@@ -260,7 +255,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     tier: params['tier'],
                     syncIntervalSeconds: params['syncIntervalSeconds'],
-                    historyDurationDays: params['historyDurationDays'],
                   ),
         ),
       },
@@ -540,12 +534,61 @@ class Endpoints extends _i1.EndpointDispatch {
       name: 'history',
       endpoint: endpoints['history']!,
       methodConnectors: {
+        'getDayData': _i1.MethodConnector(
+          name: 'getDayData',
+          params: {
+            'date': _i1.ParameterDescription(
+              name: 'date',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['history'] as _i9.HistoryEndpoint).getDayData(
+                    session,
+                    params['date'],
+                  ),
+        ),
+        'getPeriodData': _i1.MethodConnector(
+          name: 'getPeriodData',
+          params: {
+            'from': _i1.ParameterDescription(
+              name: 'from',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'to': _i1.ParameterDescription(
+              name: 'to',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['history'] as _i9.HistoryEndpoint).getPeriodData(
+                    session,
+                    params['from'],
+                    params['to'],
+                  ),
+        ),
         'getSummary': _i1.MethodConnector(
           name: 'getSummary',
           params: {
-            'rangeDays': _i1.ParameterDescription(
-              name: 'rangeDays',
-              type: _i1.getType<int>(),
+            'from': _i1.ParameterDescription(
+              name: 'from',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'to': _i1.ParameterDescription(
+              name: 'to',
+              type: _i1.getType<DateTime>(),
               nullable: false,
             ),
           },
@@ -556,15 +599,21 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['history'] as _i9.HistoryEndpoint).getSummary(
                     session,
-                    params['rangeDays'],
+                    params['from'],
+                    params['to'],
                   ),
         ),
         'getEvents': _i1.MethodConnector(
           name: 'getEvents',
           params: {
-            'rangeDays': _i1.ParameterDescription(
-              name: 'rangeDays',
-              type: _i1.getType<int>(),
+            'from': _i1.ParameterDescription(
+              name: 'from',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'to': _i1.ParameterDescription(
+              name: 'to',
+              type: _i1.getType<DateTime>(),
               nullable: false,
             ),
           },
@@ -575,7 +624,8 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['history'] as _i9.HistoryEndpoint).getEvents(
                     session,
-                    params['rangeDays'],
+                    params['from'],
+                    params['to'],
                   ),
         ),
       },
@@ -754,25 +804,6 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['price'] as _i12.PriceEndpoint)
                   .triggerFetch(session),
         ),
-        'getPricesForPeriod': _i1.MethodConnector(
-          name: 'getPricesForPeriod',
-          params: {
-            'days': _i1.ParameterDescription(
-              name: 'days',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['price'] as _i12.PriceEndpoint).getPricesForPeriod(
-                    session,
-                    params['days'],
-                  ),
-        ),
         'getTodayPrices': _i1.MethodConnector(
           name: 'getTodayPrices',
           params: {},
@@ -855,25 +886,6 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async => (endpoints['schedule'] as _i14.ScheduleEndpoint)
                   .getTodayFrames(session),
-        ),
-        'getFramesForPeriod': _i1.MethodConnector(
-          name: 'getFramesForPeriod',
-          params: {
-            'days': _i1.ParameterDescription(
-              name: 'days',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['schedule'] as _i14.ScheduleEndpoint)
-                  .getFramesForPeriod(
-                    session,
-                    params['days'],
-                  ),
         ),
         'getEvents': _i1.MethodConnector(
           name: 'getEvents',
@@ -1035,50 +1047,6 @@ class Endpoints extends _i1.EndpointDispatch {
                   (endpoints['telemetry'] as _i15.TelemetryEndpoint).getHistory(
                     session,
                     params['hours'],
-                  ),
-        ),
-        'getDailyAggregates': _i1.MethodConnector(
-          name: 'getDailyAggregates',
-          params: {
-            'days': _i1.ParameterDescription(
-              name: 'days',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['telemetry'] as _i15.TelemetryEndpoint)
-                  .getDailyAggregates(
-                    session,
-                    params['days'],
-                  ),
-        ),
-        'getTelemetryForDate': _i1.MethodConnector(
-          name: 'getTelemetryForDate',
-          params: {
-            'fromUtc': _i1.ParameterDescription(
-              name: 'fromUtc',
-              type: _i1.getType<DateTime>(),
-              nullable: false,
-            ),
-            'toUtc': _i1.ParameterDescription(
-              name: 'toUtc',
-              type: _i1.getType<DateTime>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['telemetry'] as _i15.TelemetryEndpoint)
-                  .getTelemetryForDate(
-                    session,
-                    params['fromUtc'],
-                    params['toUtc'],
                   ),
         ),
       },
