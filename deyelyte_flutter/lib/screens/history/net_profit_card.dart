@@ -10,9 +10,11 @@ class NetProfitCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final rangeIdx = ref.watch(historyRangeProvider);
-    final days = rangeDays(rangeIdx);
-    final summary = ref.watch(historySummaryProvider(days)).valueOrNull ?? {};
+    final period = ref.watch(historyPeriodProvider);
+    final anchor = ref.watch(historyAnchorDateProvider);
+    final range = historyDateRange(period, anchor);
+    final summary =
+        ref.watch(historySummaryProvider((from: range.from, to: range.to))).valueOrNull ?? {};
 
     final totalSavings = summary['totalSavingsPln'] as double? ?? 0.0;
     final storageEff = summary['storageEfficiencyPercent'] as double? ?? 0.0;

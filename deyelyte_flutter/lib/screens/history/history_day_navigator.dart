@@ -3,40 +3,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/theme.dart';
 import '../../providers/app_providers.dart';
 
-// ─── History window navigator ─────────────────────────────────────────────────
-//
-// Shared by both 1-day mode (prev/next one day at a time) and multi-day mode
-// (prev/next one full window at a time).
-//
-// [windowDays]  — number of days in the window (1 = single-day 24h view).
-// [minDate]     — oldest date the user can navigate to.
-// [maxDate]     — newest date allowed (typically yesterday).
-
+/// Calendar-aware navigator for history views.
+/// Daily: "Mar 23, 2026", Weekly: "Mar 16 – 22, 2026", Monthly: "March 2026".
 class HistoryWindowNavigator extends ConsumerWidget {
-  const HistoryWindowNavigator({
-    super.key,
-    required this.windowDays,
-    required this.minDate,
-    required this.maxDate,
-  });
-
-  final int windowDays;
-  final DateTime minDate;
-  final DateTime maxDate;
+  const HistoryWindowNavigator({super.key});
 
   static const _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
+  static const _fullMonths = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final windowEnd = ref.watch(historyWindowEndProvider);
-    final windowStart = _windowStart(windowEnd);
+    final period = ref.watch(historyPeriodProvider);
+    final anchor = ref.watch(historyAnchorDateProvider);
+    final earliest = ref.watch(earliestAllowedDateProvider).valueOrNull;
 
-    final canGoBack = windowStart.isAfter(minDate);
-    final canGoForward = windowEnd.isBefore(maxDate);
+    final range = historyDateRange(period, anchor);
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+
+    // Back: disabled if range.from would go before earliest allowed date.
+    final prevAnchor = navigateHistory(period, anchor, -1);
+    final prevRange = historyDateRange(period, prevAnchor);
+    final canGoBack = earliest == null || !prevRange.from.isBefore(earliest);
+
+    // Forward: disabled if range already contains yesterday or later.
+    final canGoForward = range.to.isBefore(yesterday);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -44,17 +43,12 @@ class HistoryWindowNavigator extends ConsumerWidget {
         _NavButton(
           icon: Icons.chevron_left_rounded,
           enabled: canGoBack,
-          onTap: () {
-            final newEnd = windowEnd.subtract(Duration(days: windowDays));
-            final clamped = newEnd.isBefore(minDate.add(Duration(days: windowDays - 1)))
-                ? minDate.add(Duration(days: windowDays - 1))
-                : newEnd;
-            ref.read(historyWindowEndProvider.notifier).state = clamped;
-          },
+          onTap: () =>
+              ref.read(historyAnchorDateProvider.notifier).state = prevAnchor,
         ),
         const SizedBox(width: 8),
         Text(
-          _label(windowStart, windowEnd),
+          _label(period, range.from, range.to),
           style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(width: 8),
@@ -62,33 +56,38 @@ class HistoryWindowNavigator extends ConsumerWidget {
           icon: Icons.chevron_right_rounded,
           enabled: canGoForward,
           onTap: () {
-            final newEnd = windowEnd.add(Duration(days: windowDays));
-            final clamped = newEnd.isAfter(maxDate) ? maxDate : newEnd;
-            ref.read(historyWindowEndProvider.notifier).state = clamped;
+            final next = navigateHistory(period, anchor, 1);
+            // Clamp so we never go past yesterday.
+            final nextRange = historyDateRange(period, next);
+            if (nextRange.to.isAfter(yesterday)) {
+              // Stay in the period containing yesterday.
+              ref.read(historyAnchorDateProvider.notifier).state = yesterday;
+            } else {
+              ref.read(historyAnchorDateProvider.notifier).state = next;
+            }
           },
         ),
       ],
     );
   }
 
-  DateTime _windowStart(DateTime windowEnd) =>
-      windowDays == 1 ? windowEnd : windowEnd.subtract(Duration(days: windowDays - 1));
-
-  String _label(DateTime start, DateTime end) {
-    if (windowDays == 1) {
-      return '${_months[end.month - 1]} ${end.day}, ${end.year}';
+  String _label(HistoryPeriod period, DateTime from, DateTime to) {
+    switch (period) {
+      case HistoryPeriod.daily:
+        return '${_months[to.month - 1]} ${to.day}, ${to.year}';
+      case HistoryPeriod.weekly:
+        if (from.year == to.year) {
+          if (from.month == to.month) {
+            return '${_months[from.month - 1]} ${from.day} – ${to.day}, ${to.year}';
+          }
+          return '${_months[from.month - 1]} ${from.day} – ${_months[to.month - 1]} ${to.day}, ${to.year}';
+        }
+        return '${_months[from.month - 1]} ${from.day}, ${from.year} – ${_months[to.month - 1]} ${to.day}, ${to.year}';
+      case HistoryPeriod.monthly:
+        return '${_fullMonths[from.month - 1]} ${from.year}';
     }
-    if (start.year == end.year) {
-      if (start.month == end.month) {
-        return '${_months[start.month - 1]} ${start.day} – ${end.day}, ${end.year}';
-      }
-      return '${_months[start.month - 1]} ${start.day} – ${_months[end.month - 1]} ${end.day}, ${end.year}';
-    }
-    return '${_months[start.month - 1]} ${start.day}, ${start.year} – ${_months[end.month - 1]} ${end.day}, ${end.year}';
   }
 }
-
-// ─── Nav button ───────────────────────────────────────────────────────────────
 
 class _NavButton extends StatelessWidget {
   const _NavButton({

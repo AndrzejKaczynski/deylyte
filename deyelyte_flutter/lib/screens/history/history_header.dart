@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
+import '../../providers/app_providers.dart';
 
 class HistoryHeader extends StatelessWidget {
   const HistoryHeader({
     super.key,
-    required this.selectedRange,
-    required this.ranges,
-    required this.rangeDays,
-    required this.maxDays,
-    required this.onRangeChanged,
+    required this.selectedPeriod,
+    required this.onPeriodChanged,
   });
 
-  final int selectedRange;
-  final List<String> ranges;
-  final List<int> rangeDays;
-  final int maxDays;
-  final ValueChanged<int> onRangeChanged;
+  final HistoryPeriod selectedPeriod;
+  final ValueChanged<HistoryPeriod> onPeriodChanged;
+
+  static const _labels = {
+    HistoryPeriod.daily: 'Daily',
+    HistoryPeriod.weekly: 'Weekly',
+    HistoryPeriod.monthly: 'Monthly',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -38,40 +39,22 @@ class HistoryHeader extends StatelessWidget {
           padding: const EdgeInsets.all(3),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: ranges.asMap().entries.map((e) {
-              final active = selectedRange == e.key;
-              final locked = rangeDays[e.key] > maxDays;
-              return Tooltip(
-                message: locked ? 'Upgrade to Pro to unlock extended history' : '',
-                triggerMode: locked ? TooltipTriggerMode.tap : TooltipTriggerMode.longPress,
-                child: GestureDetector(
-                  onTap: () => onRangeChanged(e.key),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: active ? AppColors.surfaceContainerHighest : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (locked) ...[
-                          const Icon(Icons.lock_rounded, size: 11, color: AppColors.outline),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          e.value,
-                          style: tt.labelMedium?.copyWith(
-                            color: locked
-                                ? AppColors.outline.withValues(alpha: 0.5)
-                                : active
-                                    ? AppColors.primary
-                                    : AppColors.outline,
-                            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                        ),
-                      ],
+            children: HistoryPeriod.values.map((period) {
+              final active = selectedPeriod == period;
+              return GestureDetector(
+                onTap: () => onPeriodChanged(period),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: active ? AppColors.surfaceContainerHighest : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    _labels[period]!,
+                    style: tt.labelMedium?.copyWith(
+                      color: active ? AppColors.primary : AppColors.outline,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                 ),

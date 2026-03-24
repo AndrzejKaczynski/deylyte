@@ -28,7 +28,8 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
         ]),
         const SizedBox(height: 8),
         Text(
-          'Controls per-tier feature limits. Changes take effect on the next telemetry cycle.',
+          'Controls per-tier feature limits. History access is calendar-based '
+          '(basic = current + previous month, pro = unlimited).',
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -47,7 +48,6 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
                   orElse: () => {
                     'tier': t,
                     'syncIntervalSeconds': 300,
-                    'historyDurationDays': 7,
                   },
                 );
               }).toList();
@@ -57,16 +57,15 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: AppSpacing.sp4),
                 itemBuilder: (_, i) => _TierCard(
-                  key: ValueKey('${rows[i]['tier']}_${rows[i]['syncIntervalSeconds']}_${rows[i]['historyDurationDays']}'),
+                  key: ValueKey('${rows[i]['tier']}_${rows[i]['syncIntervalSeconds']}'),
                   config: rows[i],
-                  onSave: (tier, seconds, days) async {
+                  onSave: (tier, seconds) async {
                     await ref
                         .read(clientProvider)
                         .admin
                         .updateTierPermissions(
                           tier: tier,
                           syncIntervalSeconds: seconds,
-                          historyDurationDays: days,
                         );
                     ref.invalidate(adminSyncSettingsProvider);
                   },
@@ -86,7 +85,7 @@ class _TierCard extends StatefulWidget {
   const _TierCard({super.key, required this.config, required this.onSave});
 
   final Map<String, dynamic> config;
-  final Future<void> Function(String tier, int seconds, int days) onSave;
+  final Future<void> Function(String tier, int seconds) onSave;
 
   @override
   State<_TierCard> createState() => _TierCardState();
@@ -94,7 +93,6 @@ class _TierCard extends StatefulWidget {
 
 class _TierCardState extends State<_TierCard> {
   late final TextEditingController _syncCtrl;
-  late final TextEditingController _historyCtrl;
   bool _saving = false;
   String? _error;
 
@@ -104,27 +102,18 @@ class _TierCardState extends State<_TierCard> {
     _syncCtrl = TextEditingController(
       text: '${widget.config['syncIntervalSeconds'] ?? 300}',
     );
-    _historyCtrl = TextEditingController(
-      text: '${widget.config['historyDurationDays'] ?? 7}',
-    );
   }
 
   @override
   void dispose() {
     _syncCtrl.dispose();
-    _historyCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     final seconds = int.tryParse(_syncCtrl.text.trim());
-    final days = int.tryParse(_historyCtrl.text.trim());
     if (seconds == null || seconds < 300) {
       setState(() => _error = 'Sync interval minimum is 300 s');
-      return;
-    }
-    if (days == null || days < 1) {
-      setState(() => _error = 'History duration minimum is 1 day');
       return;
     }
     setState(() {
@@ -132,7 +121,7 @@ class _TierCardState extends State<_TierCard> {
       _error = null;
     });
     try {
-      await widget.onSave(widget.config['tier'] as String, seconds, days);
+      await widget.onSave(widget.config['tier'] as String, seconds);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
@@ -197,16 +186,6 @@ class _TierCardState extends State<_TierCard> {
             readable: _readableSeconds(
                 int.tryParse(_syncCtrl.text.trim()) ?? 300),
           ),
-          const SizedBox(height: AppSpacing.sp3),
-          _PermissionRow(
-            icon: Icons.history_rounded,
-            label: 'History duration',
-            hint: 'How many days of telemetry the user can access',
-            controller: _historyCtrl,
-            suffix: 'days',
-            readable: _readableDays(
-                int.tryParse(_historyCtrl.text.trim()) ?? 7),
-          ),
         ]),
       ),
     );
@@ -218,15 +197,6 @@ class _TierCardState extends State<_TierCard> {
     final s = seconds % 60;
     if (s == 0) return '$m min';
     return '$m min $s s';
-  }
-
-  String _readableDays(int days) {
-    if (days == 1) return '1 day';
-    if (days < 7) return '$days days';
-    final w = days ~/ 7;
-    final d = days % 7;
-    if (d == 0) return w == 1 ? '1 week' : '$w weeks';
-    return '$w w $d d';
   }
 }
 

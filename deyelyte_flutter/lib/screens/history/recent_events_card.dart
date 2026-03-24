@@ -10,9 +10,11 @@ class RecentEventsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final rangeIdx = ref.watch(historyRangeProvider);
-    final days = rangeDays(rangeIdx);
-    final eventsAsync = ref.watch(historyEventsProvider(days));
+    final period = ref.watch(historyPeriodProvider);
+    final anchor = ref.watch(historyAnchorDateProvider);
+    final range = historyDateRange(period, anchor);
+    final eventsAsync =
+        ref.watch(historyEventsProvider((from: range.from, to: range.to)));
     final events = eventsAsync.valueOrNull ?? [];
 
     return SurfaceCard(

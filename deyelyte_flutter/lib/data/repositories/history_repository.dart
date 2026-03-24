@@ -1,7 +1,7 @@
 abstract class HistoryRepository {
-  /// Returns aggregate summary metrics for [rangeDays] days.
-  Future<Map<String, dynamic>> getSummary(int rangeDays);
+  /// Returns aggregate summary metrics for [from]..[to] (inclusive).
+  Future<Map<String, dynamic>> getSummary(DateTime from, DateTime to);
 
-  /// Returns notable events for [rangeDays] days.
-  Future<List<Map<String, dynamic>>> getEvents(int rangeDays);
+  /// Returns notable events for [from]..[to] (inclusive).
+  Future<List<Map<String, dynamic>>> getEvents(DateTime from, DateTime to);
 }

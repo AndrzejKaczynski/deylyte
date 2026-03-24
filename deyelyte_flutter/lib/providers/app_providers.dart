@@ -63,17 +63,6 @@ final licenseRepositoryProvider = Provider<LicenseRepository>((ref) {
 
 // ── Data providers ────────────────────────────────────────────────────────────
 
-/// Selected date range index for HistoryScreen (0=1d, 1=7d, 2=30d, 3=60d, 4=90d).
-final historyRangeProvider = StateProvider<int>((ref) => 0);
-
-/// The rightmost date of the currently visible history window.
-/// For 1-day mode this is the single day shown; for multi-day it is the last (most recent) day.
-/// Defaults to yesterday.
-final historyWindowEndProvider = StateProvider<DateTime>((ref) {
-  final now = DateTime.now().toLocal();
-  return DateTime(now.year, now.month, now.day - 1);
-});
-
 /// Loads the user's AppConfig from the server. Null if the user has no config yet.
 class AppConfigNotifier extends AsyncNotifier<AppConfig?> {
   @override
@@ -227,67 +216,87 @@ final scheduleEventsProvider =
 
 // ── History ───────────────────────────────────────────────────────────────────
 
-/// Maps historyRangeProvider index → days.
-int rangeDays(int index) => const [1, 7, 30, 60, 90][index];
+enum HistoryPeriod { daily, weekly, monthly }
 
-/// How many columns to show in the aggregated chart for the given range index.
-/// Multi-day views are capped at 30 columns for readability.
-int windowSize(int rangeIndex) => rangeIndex == 0 ? 1 : rangeDays(rangeIndex).clamp(1, 30);
+/// Currently selected history period.
+final historyPeriodProvider =
+    StateProvider<HistoryPeriod>((ref) => HistoryPeriod.daily);
 
-/// Maximum history days the current user's tier allows.
-/// Falls back to 7 if the tier config has not been loaded yet.
-final userHistoryDurationDaysProvider = FutureProvider<int>((ref) async {
+/// Anchor date for the history view. Navigating moves this date.
+/// Defaults to yesterday.
+final historyAnchorDateProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month, now.day - 1);
+});
+
+/// Earliest date the current user's tier allows.
+/// Returned by getUserLicense as an ISO8601 string.
+final earliestAllowedDateProvider = FutureProvider<DateTime>((ref) async {
   try {
     final raw = await ref.read(clientProvider).license.getUserLicense();
     final data = jsonDecode(raw) as Map<String, dynamic>;
-    return (data['historyDurationDays'] as int?) ?? 7;
-  } catch (_) {
-    return 7;
+    final iso = data['earliestAllowedDate'] as String?;
+    if (iso != null) return DateTime.parse(iso).toLocal();
+  } catch (_) {}
+  // Fallback: previous month start
+  final now = DateTime.now();
+  return DateTime(now.year, now.month - 1, 1);
+});
+
+/// Computes the inclusive date range for the given period and anchor.
+({DateTime from, DateTime to}) historyDateRange(
+    HistoryPeriod period, DateTime anchor) {
+  switch (period) {
+    case HistoryPeriod.daily:
+      return (from: anchor, to: anchor);
+    case HistoryPeriod.weekly:
+      // anchor's week: Monday..Sunday
+      final monday = anchor.subtract(Duration(days: anchor.weekday - 1));
+      final sunday = monday.add(const Duration(days: 6));
+      return (from: monday, to: sunday);
+    case HistoryPeriod.monthly:
+      final first = DateTime(anchor.year, anchor.month, 1);
+      final last = DateTime(anchor.year, anchor.month + 1, 0);
+      return (from: first, to: last);
   }
+}
+
+/// Moves the anchor date by one step in the given direction (-1 or +1).
+DateTime navigateHistory(
+    HistoryPeriod period, DateTime anchor, int direction) {
+  switch (period) {
+    case HistoryPeriod.daily:
+      return anchor.add(Duration(days: direction));
+    case HistoryPeriod.weekly:
+      return anchor.add(Duration(days: 7 * direction));
+    case HistoryPeriod.monthly:
+      return DateTime(anchor.year, anchor.month + direction, anchor.day);
+  }
+}
+
+/// Bundled single-day history data. Cached by date.
+final historyDayDataProvider =
+    FutureProvider.family<HistoryDayData, DateTime>((ref, date) {
+  return ref.read(clientProvider).history.getDayData(date.toUtc());
 });
 
-/// History summary metrics. Re-fetches when range changes.
-final historySummaryProvider =
-    FutureProvider.family<Map<String, dynamic>, int>((ref, days) {
-  return ref.read(historyRepositoryProvider).getSummary(days);
+/// Bundled period (weekly/monthly) history data. Cached by range.
+final historyPeriodDataProvider = FutureProvider.family<HistoryPeriodData,
+    ({DateTime from, DateTime to})>((ref, range) {
+  return ref
+      .read(clientProvider)
+      .history
+      .getPeriodData(range.from.toUtc(), range.to.toUtc());
 });
 
-/// History events. Re-fetches when range changes.
-final historyEventsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, int>((ref, days) {
-  return ref.read(historyRepositoryProvider).getEvents(days);
+/// History summary metrics for a date range.
+final historySummaryProvider = FutureProvider.family<Map<String, dynamic>,
+    ({DateTime from, DateTime to})>((ref, range) {
+  return ref.read(historyRepositoryProvider).getSummary(range.from, range.to);
 });
 
-/// Daily aggregates for the last [days] days — used by multi-day history chart.
-/// Each row = one UTC calendar day; ~90× less data than raw telemetry.
-final historyDailyAggregatesProvider =
-    FutureProvider.family<List<DailyEnergyAggregate>, int>((ref, days) {
-  return ref.read(clientProvider).telemetry.getDailyAggregates(days);
-});
-
-/// Raw telemetry for a single UTC date — used by the 1-day history chart.
-/// [date] should be the local midnight date (year/month/day only).
-final historyDayTelemetryProvider =
-    FutureProvider.family<List<DeviceTelemetry>, DateTime>((ref, date) {
-  final fromUtc = date.toUtc();
-  final toUtc = fromUtc.add(const Duration(days: 1));
-  return ref.read(clientProvider).telemetry.getTelemetryForDate(fromUtc, toUtc);
-});
-
-/// All telemetry for the last [days] days — used by the history chart.
-final historyPeriodTelemetryProvider =
-    FutureProvider.family<List<DeviceTelemetry>, int>((ref, days) {
-  return ref.read(telemetryRepositoryProvider).getHistory(days * 24);
-});
-
-/// All energy prices for the last [days] days — used by the history chart.
-final historyPeriodPricesProvider =
-    FutureProvider.family<List<EnergyPrice>, int>((ref, days) {
-  return ref.read(clientProvider).price.getPricesForPeriod(days);
-});
-
-/// All optimization frames for the last [days] days — used by the history chart.
-final historyPeriodFramesProvider =
-    FutureProvider.family<List<OptimizationFrame>, int>((ref, days) {
-  return ref.read(clientProvider).schedule.getFramesForPeriod(days);
+/// History events for a date range.
+final historyEventsProvider = FutureProvider.family<List<Map<String, dynamic>>,
+    ({DateTime from, DateTime to})>((ref, range) {
+  return ref.read(historyRepositoryProvider).getEvents(range.from, range.to);
 });

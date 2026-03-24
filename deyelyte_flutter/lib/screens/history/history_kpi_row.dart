@@ -10,17 +10,19 @@ class HistoryKpiRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final rangeIdx = ref.watch(historyRangeProvider);
-    final days = rangeDays(rangeIdx);
-    final summary = ref.watch(historySummaryProvider(days)).valueOrNull ?? {};
+    final period = ref.watch(historyPeriodProvider);
+    final anchor = ref.watch(historyAnchorDateProvider);
+    final range = historyDateRange(period, anchor);
+    final summary =
+        ref.watch(historySummaryProvider((from: range.from, to: range.to))).valueOrNull ?? {};
 
-    final priceVelocity = summary['priceVelocity'] as double? ?? 0.0;
+    final avgBuyPrice = summary['avgBuyPrice'] as double? ?? 0.0;
     final netRevenue = summary['netRevenuePln'] as double? ?? 0.0;
     final peakLoad = summary['peakLoadKw'] as double? ?? 0.0;
     final greenMix = summary['greenMixPercent'] as double? ?? 0.0;
 
     final items = [
-      (label: 'Price Velocity', value: '${priceVelocity.toStringAsFixed(2)} zł/kWh', sub: 'Avg. this period', color: AppColors.primary, icon: Icons.speed_rounded),
+      (label: 'Avg Buy Price', value: '${avgBuyPrice.toStringAsFixed(2)} zł/kWh', sub: 'Avg. this period', color: AppColors.primary, icon: Icons.speed_rounded),
       (label: 'Net Revenue', value: '${netRevenue >= 0 ? '+' : ''}${netRevenue.toStringAsFixed(2)} zł', sub: 'This period', color: AppColors.secondary, icon: Icons.trending_up_rounded),
       (label: 'Peak Load', value: '${peakLoad.toStringAsFixed(1)} kW', sub: 'Highest usage point', color: AppColors.tertiary, icon: Icons.flash_on_rounded),
       (label: 'Green Mix', value: '${greenMix.toStringAsFixed(0)}%', sub: 'Renewable source', color: AppColors.secondary, icon: Icons.eco_rounded),

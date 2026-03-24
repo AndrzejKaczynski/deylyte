@@ -9,14 +9,14 @@ class ServerpodHistoryRepository implements HistoryRepository {
   final Client _client;
 
   @override
-  Future<Map<String, dynamic>> getSummary(int rangeDays) async {
-    final json = await _client.history.getSummary(rangeDays);
+  Future<Map<String, dynamic>> getSummary(DateTime from, DateTime to) async {
+    final json = await _client.history.getSummary(from.toUtc(), to.toUtc());
     return jsonDecode(json) as Map<String, dynamic>;
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getEvents(int rangeDays) async {
-    final json = await _client.history.getEvents(rangeDays);
+  Future<List<Map<String, dynamic>>> getEvents(DateTime from, DateTime to) async {
+    final json = await _client.history.getEvents(from.toUtc(), to.toUtc());
     return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
   }
 }
