@@ -150,7 +150,12 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     final telemetry = telemetryAsync.valueOrNull ?? [];
 
     final hours = _buildHours(forecast, prices, frames, telemetry);
-    final peak = hours.fold(0.0, (m, h) => h.pvKw > m ? h.pvKw : m);
+    final peak = hours.fold(0.0, (m, h) {
+      final v = h.pvActualKw != null && h.pvActualKw! > h.pvKw
+          ? h.pvActualKw!
+          : h.pvKw;
+      return v > m ? v : m;
+    });
 
     final now = DateTime.now().toLocal();
     final nowHour = now.hour;
@@ -290,6 +295,14 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
                                 label:
                                     'Buy ${hoveredData.buyPrice!.toStringAsFixed(2)} PLN/kWh',
                                 color: _priceColor(hoveredData.buyPrice!),
+                              ),
+                            if (_layers.showPrice &&
+                                hoveredData.sellPrice != null &&
+                                hoveredData.sellPrice! > 0)
+                              _TipChip(
+                                label:
+                                    'Sell ${hoveredData.sellPrice!.toStringAsFixed(2)} PLN/kWh',
+                                color: _sellPriceColor(hoveredData.sellPrice!),
                               ),
                             if (_layers.showSoc &&
                                 hoveredData.socPct != null)
@@ -454,13 +467,20 @@ class _LayerChip extends StatelessWidget {
   }
 }
 
-// ─── Price colour helper ──────────────────────────────────────────────────────
+// ─── Price colour helpers ─────────────────────────────────────────────────────
 
 Color _priceColor(double price) {
   if (price <= 0) return AppColors.secondary;
   if (price < 0.7) return AppColors.primary;
   if (price < 1.0) return AppColors.tertiary;
   return AppColors.error;
+}
+
+Color _sellPriceColor(double price) {
+  if (price <= 0) return AppColors.error;
+  if (price < 0.3) return AppColors.tertiary;
+  if (price < 0.5) return AppColors.primary;
+  return AppColors.secondary;
 }
 
 // ─── Painter ─────────────────────────────────────────────────────────────────
@@ -519,6 +539,19 @@ class _DailyPlanPainter extends CustomPainter {
           Paint()..color = color.withValues(alpha: 0.75),
         );
       }
+      // Sell price: downward bars from zero baseline
+      for (var i = 0; i < _n; i++) {
+        final sellPrice = hours[i].sellPrice;
+        if (sellPrice == null || sellPrice <= 0) continue;
+        final sellBarH = (sellPrice / _maxPriceRef).clamp(0.0, 1.0) * _priceHalf;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(i * colW + 2, priceZeroY, colW - 4, sellBarH),
+            const Radius.circular(2),
+          ),
+          Paint()..color = _sellPriceColor(sellPrice).withValues(alpha: 0.75),
+        );
+      }
     }
 
     // 2 ── Hover column highlight
@@ -550,7 +583,7 @@ class _DailyPlanPainter extends CustomPainter {
       for (var i = 0; i < _n; i++) {
         final d = hours[i];
         final kw = d.pvKw;
-        if (kw <= 0) continue;
+        if (kw <= 0 && d.pvActualKw == null) continue;
         final barH = (kw / peak).clamp(0.0, 1.0) * chartH;
         final rrect = RRect.fromRectAndRadius(
           Rect.fromLTWH(i * colW + 2, chartH - barH, colW - 4, barH),
