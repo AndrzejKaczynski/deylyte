@@ -36,7 +36,6 @@ CREATE TABLE "app_config" (
     "longitude" double precision,
     "priceSource" text,
     "fixedBuyRatePln" double precision,
-    "fixedSellRatePln" double precision,
     "energyVatRate" double precision,
     "planningOnly" boolean NOT NULL,
     "pstrykEnabled" boolean NOT NULL,
@@ -207,8 +206,7 @@ CREATE TABLE "price_time_range" (
     "userInfoId" bigint NOT NULL,
     "hourStart" bigint NOT NULL,
     "hourEnd" bigint NOT NULL,
-    "distributionRatePln" double precision NOT NULL,
-    "sellRatePln" double precision
+    "distributionRatePln" double precision NOT NULL
 );
 
 -- Indexes
@@ -595,9 +593,9 @@ ALTER TABLE ONLY "serverpod_query_log"
 -- MIGRATION VERSION FOR deyelyte
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('deyelyte', '20260323155233158', now())
+    VALUES ('deyelyte', '20260324130946697', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260323155233158', "timestamp" = now();
+    DO UPDATE SET "version" = '20260324130946697', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

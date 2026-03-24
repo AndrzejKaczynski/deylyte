@@ -215,13 +215,6 @@
         },
         {
           "__className__": "serverpod.ColumnDefinition",
-          "name": "fixedSellRatePln",
-          "columnType": 3,
-          "isNullable": true,
-          "dartType": "double?"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
           "name": "energyVatRate",
           "columnType": 3,
           "isNullable": true,
@@ -1271,13 +1264,6 @@
           "columnType": 3,
           "isNullable": false,
           "dartType": "double"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "sellRatePln",
-          "columnType": 3,
-          "isNullable": true,
-          "dartType": "double?"
         }
       ],
       "foreignKeys": [],
