@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart' hide Path;
 import 'package:flutter/material.dart' as material show Path;
 import '../../theme/theme.dart';
-import 'forecast_hour_data.dart';
+import 'hour_data.dart';
 
 // ─── Price colour helpers ─────────────────────────────────────────────────────
 
@@ -22,7 +22,6 @@ Color sellPriceColor(double price) {
 // ─── Path helpers ─────────────────────────────────────────────────────────────
 
 /// Builds a smooth catmull-rom spline path through [points].
-/// Uses centripetal parameterisation (alpha = 0.5) to avoid loops.
 material.Path catmullRomPath(List<Offset> points) {
   if (points.isEmpty) return material.Path();
   if (points.length == 1) return material.Path()..moveTo(points[0].dx, points[0].dy);
@@ -35,7 +34,6 @@ material.Path catmullRomPath(List<Offset> points) {
     final p2 = points[i + 1];
     final p3 = points[i + 2 < points.length ? i + 2 : i + 1];
 
-    // Control points derived from centripetal catmull-rom
     final cp1 = Offset(
       p1.dx + (p2.dx - p0.dx) / 6,
       p1.dy + (p2.dy - p0.dy) / 6,
@@ -81,35 +79,35 @@ class DailyPlanPainter extends CustomPainter {
     required this.hours,
     required this.peak,
     required this.hoveredHour,
-    required this.nowHour,
-    required this.nowMinute,
     required this.layers,
+    this.nowHour,
+    this.nowMinute,
   });
 
   final List<HourData> hours;
   final double peak;
   final int? hoveredHour;
-  final int nowHour;
-  final int nowMinute;
   final Layers layers;
+  /// When null the chart is in history mode: no NOW pill, all hours treated as actual.
+  final int? nowHour;
+  final int? nowMinute;
 
   static const _n = 24;
-  static const _topPad = 24.0; // room for the NOW pill label
-  static const _priceGap = 8.0; // visual gap between chart and price bars
-  static const _priceH = 58.0; // gap (8) + bar zone (50)
-  static const _priceHalf = 25.0; // half of the bar zone (bars span ±25 around zero)
-  static const _maxPriceRef = 1.5; // PLN/kWh — full-bar reference
+  static const _topPad = 24.0;
+  static const _priceGap = 8.0;
+  static const _priceH = 58.0;
+  static const _priceHalf = 25.0;
+  static const _maxPriceRef = 1.5;
 
   @override
   void paint(Canvas canvas, Size size) {
     final colW = size.width / _n;
-    // chartH is the drawable area between the top pad and the price sub-chart.
     const chartTop = _topPad;
     final chartH = size.height - _topPad - _priceH;
     final chartBottom = chartTop + chartH;
     final priceZeroY = chartBottom + _priceGap + _priceHalf;
 
-    // 1 ── Price sub-chart (separator line at top of price zone)
+    // 1 ── Price sub-chart
     canvas.drawLine(
       Offset(0, chartBottom),
       Offset(size.width, chartBottom),
@@ -174,7 +172,7 @@ class DailyPlanPainter extends CustomPainter {
     }
 
     if (peak > 0) {
-      // 4 ── Home Load area (actual data only — skip future hours where loadKw is null)
+      // 4 ── Home Load area
       if (layers.showLoad) {
         final loadPoints = <Offset>[];
         for (var i = 0; i < _n; i++) {
@@ -196,10 +194,8 @@ class DailyPlanPainter extends CustomPainter {
         }
       }
 
-      // 5 ── PV Estimate dashed curve (forecast for all 24h)
-      // At the current hour use the partial actual (pvActualKw) as the anchor
-      // so the curve doesn't spike when the forecast for that hour is 0 or stale.
-      if (layers.showPvEstimate) {
+      // 5 ── PV Estimate dashed curve (schedule mode only — skipped when nowHour is null)
+      if (layers.showPvEstimate && nowHour != null) {
         final estPoints = <Offset>[];
         for (var i = 0; i < _n; i++) {
           final kw = (i == nowHour && hours[i].pvActualKw != null)
@@ -221,11 +217,13 @@ class DailyPlanPainter extends CustomPainter {
         );
       }
 
-      // 6 ── PV Intake filled area (actual past hours + partial current hour)
+      // 6 ── PV Intake filled area
+      // Schedule: up to current hour. History (nowHour == null): all 24 hours.
       if (layers.showPvIntake) {
+        final intakeEnd = nowHour ?? 23;
         final intakePoints = <Offset>[];
-        for (var i = 0; i <= nowHour; i++) {
-          final kw = i == nowHour
+        for (var i = 0; i <= intakeEnd; i++) {
+          final kw = (nowHour != null && i == nowHour)
               ? (hours[i].pvActualKw ?? hours[i].pvKw)
               : hours[i].pvKw;
           final y = chartBottom - (kw / peak).clamp(0.0, 1.0) * chartH;
@@ -288,39 +286,40 @@ class DailyPlanPainter extends CustomPainter {
       }
     }
 
-    // 8 ── "NOW" pill label + vertical line
-    final nowFraction = (nowHour + nowMinute / 60.0) / 24.0;
-    final nowX = nowFraction * size.width;
-    final label =
-        'NOW ${nowHour.toString().padLeft(2, '0')}:${nowMinute.toString().padLeft(2, '0')}';
-    final tp = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+    // 8 ── "NOW" pill + vertical line (schedule mode only)
+    if (nowHour != null && nowMinute != null) {
+      final nowFraction = (nowHour! + nowMinute! / 60.0) / 24.0;
+      final nowX = nowFraction * size.width;
+      final label =
+          'NOW ${nowHour.toString().padLeft(2, '0')}:${nowMinute.toString().padLeft(2, '0')}';
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    const pillH = 16.0;
-    final pillW = tp.width + 10;
-    final pillX = (nowX - pillW / 2).clamp(0.0, size.width - pillW);
-    // Line starts at pill bottom so it appears connected
-    canvas.drawLine(
-      Offset(nowX, pillH),
-      Offset(nowX, size.height),
-      Paint()
-        ..color = AppColors.secondary
-        ..strokeWidth = 1.5,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(pillX, 0, pillW, pillH), const Radius.circular(4)),
-      Paint()..color = AppColors.secondary,
-    );
-    tp.paint(canvas, Offset(pillX + 5, (pillH - tp.height) / 2));
+        textDirection: TextDirection.ltr,
+      )..layout();
+      const pillH = 16.0;
+      final pillW = tp.width + 10;
+      final pillX = (nowX - pillW / 2).clamp(0.0, size.width - pillW);
+      canvas.drawLine(
+        Offset(nowX, pillH),
+        Offset(nowX, size.height),
+        Paint()
+          ..color = AppColors.secondary
+          ..strokeWidth = 1.5,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(pillX, 0, pillW, pillH), const Radius.circular(4)),
+        Paint()..color = AppColors.secondary,
+      );
+      tp.paint(canvas, Offset(pillX + 5, (pillH - tp.height) / 2));
+    }
   }
 
   @override

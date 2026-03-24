@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
-import 'forecast_hour_data.dart';
+import 'hour_data.dart';
 
-// ─── Planned Battery Action strip ─────────────────────────────────────────────
+// ─── Battery action strip ─────────────────────────────────────────────────────
 
 class CommandStrip extends StatelessWidget {
-  const CommandStrip({super.key, required this.hours});
+  const CommandStrip({
+    super.key,
+    required this.hours,
+    this.label = 'BATTERY ACTION',
+  });
 
   final List<HourData> hours;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    // Group consecutive same-command hours into segments
     final segments = <_Segment>[];
     for (var i = 0; i < hours.length; i++) {
       final cmd = hours[i].command ?? 'idle';
@@ -32,7 +36,7 @@ class CommandStrip extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: Text(
-            'PLANNED BATTERY ACTION',
+            label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.onSurfaceVariant,
                   letterSpacing: 0.8,
@@ -46,7 +50,7 @@ class CommandStrip extends StatelessWidget {
             children: segments.map((seg) {
               final flex = seg.end - seg.start + 1;
               final color = _commandColor(seg.command);
-              final label = _commandLabel(seg.command);
+              final segLabel = _commandLabel(seg.command);
               return Expanded(
                 flex: flex,
                 child: Container(
@@ -62,7 +66,7 @@ class CommandStrip extends StatelessWidget {
                   alignment: Alignment.center,
                   child: flex >= 2
                       ? Text(
-                          label,
+                          segLabel,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: color,
@@ -97,8 +101,6 @@ class CommandStrip extends StatelessWidget {
     };
   }
 }
-
-// ─── Internal segment model ───────────────────────────────────────────────────
 
 class _Segment {
   _Segment({required this.command, required this.start, required this.end});

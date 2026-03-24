@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/theme.dart';
-import 'forecast_hour_data.dart';
-import 'forecast_painter.dart';
+import 'hour_data.dart';
+import 'daily_chart_painter.dart';
 
 // ─── Floating hover card ──────────────────────────────────────────────────────
 
@@ -10,7 +10,7 @@ class HoverCard extends StatelessWidget {
     super.key,
     required this.data,
     required this.layers,
-    required this.isLive,
+    this.isLive = false,
   });
 
   final HourData data;
@@ -41,7 +41,6 @@ class HoverCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -75,7 +74,6 @@ class HoverCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // PV Intake
           if (layers.showPvIntake || layers.showPvEstimate)
             _StatRow(
               label: 'PV Intake',
@@ -87,7 +85,6 @@ class HoverCard extends StatelessWidget {
               color: AppColors.tertiary,
             ),
 
-          // Home Load
           if (layers.showLoad && data.loadKw != null)
             _StatRow(
               label: 'Home Load',
@@ -95,7 +92,6 @@ class HoverCard extends StatelessWidget {
               color: AppColors.onSurface,
             ),
 
-          // Grid Price (buy)
           if (layers.showBuyPrice && data.buyPrice != null)
             _StatRow(
               label: 'Buy Price',
@@ -103,7 +99,6 @@ class HoverCard extends StatelessWidget {
               color: priceColor(data.buyPrice!),
             ),
 
-          // Sell Price
           if (layers.showSellPrice && data.sellPrice != null && data.sellPrice! > 0)
             _StatRow(
               label: 'Sell Price',
@@ -111,7 +106,6 @@ class HoverCard extends StatelessWidget {
               color: sellPriceColor(data.sellPrice!),
             ),
 
-          // Grid flow: importing or exporting
           if (data.gridKw != null) ...[
             if (data.gridKw! < -0.05)
               _StatRow(
@@ -127,7 +121,6 @@ class HoverCard extends StatelessWidget {
               ),
           ],
 
-          // Battery SoC
           if (layers.showSoc && data.socPct != null)
             _StatRow(
               label: 'Battery SoC',
@@ -135,7 +128,6 @@ class HoverCard extends StatelessWidget {
               color: AppColors.primary,
             ),
 
-          // Battery power
           if (data.batteryKw != null && data.batteryKw!.abs() > 0.05)
             _StatRow(
               label: data.batteryKw! > 0 ? 'Charging' : 'Discharging',
@@ -143,7 +135,6 @@ class HoverCard extends StatelessWidget {
               color: data.batteryKw! > 0 ? AppColors.secondary : AppColors.error,
             ),
 
-          // Command
           if (layers.showPlan)
             _StatRow(
               label: 'Plan',

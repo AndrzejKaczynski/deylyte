@@ -111,18 +111,13 @@ class _DashedSquarePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     const dash = 2.5;
     const gap = 1.5;
-    // Draw dashed border around the 8×8 square
     final perimeter = [
-      // top
       for (var x = 0.0; x < size.width; x += dash + gap)
         [Offset(x, 0), Offset((x + dash).clamp(0, size.width), 0)],
-      // right
       for (var y = 0.0; y < size.height; y += dash + gap)
         [Offset(size.width, y), Offset(size.width, (y + dash).clamp(0, size.height))],
-      // bottom (right to left)
       for (var x = size.width; x > 0; x -= dash + gap)
         [Offset(x, size.height), Offset((x - dash).clamp(0, size.width), size.height)],
-      // left (bottom to top)
       for (var y = size.height; y > 0; y -= dash + gap)
         [Offset(0, y), Offset(0, (y - dash).clamp(0, size.height))],
     ];

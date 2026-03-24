@@ -1,6 +1,6 @@
 import 'package:deyelyte_client/deyelyte_client.dart';
 
-// ─── Data model ───────────────────────────────────────────────────────────────
+// ─── Per-hour data model ──────────────────────────────────────────────────────
 
 class HourData {
   const HourData({
@@ -22,13 +22,16 @@ class HourData {
   final bool pvIsActual; // true = measured telemetry, false = forecast
   final double? pvActualKw; // partial actual for current hour only
   final double? loadKw; // home consumption kW (actual only)
-  final double? gridKw; // grid power: positive = importing, negative = exporting (actual only)
-  final double? batteryKw; // battery power: positive = charging, negative = discharging (actual only)
+  final double? gridKw; // grid power: positive = importing, negative = exporting
+  final double? batteryKw; // battery power: positive = charging, negative = discharging
   final double? buyPrice; // PLN/kWh
   final double? sellPrice; // PLN/kWh
   final double? socPct; // 0-100
   final String? command; // 'charge' | 'discharge' | 'idle' | null
 
+  /// Builds 24 [HourData] entries for today, blending live telemetry,
+  /// PV forecast, energy prices, and optimizer frames.
+  /// Past hours use actual telemetry; future hours use forecast + frame estimates.
   static List<HourData> buildHours(
     List<PvForecast> forecast,
     List<EnergyPrice> prices,
@@ -38,7 +41,6 @@ class HourData {
     final now = DateTime.now().toLocal();
     final nowHour = now.hour;
 
-    // Telemetry aggregation: sum + count per local hour for today
     final pvSum = List<double>.filled(24, 0);
     final pvCount = List<int>.filled(24, 0);
     final loadSum = List<double>.filled(24, 0);
@@ -66,7 +68,6 @@ class HourData {
       }
     }
 
-    // Forecast PV: average W per local hour for today
     final forecastPvSum = List<double>.filled(24, 0);
     final forecastPvCount = List<int>.filled(24, 0);
     for (final r in forecast) {
@@ -77,13 +78,11 @@ class HourData {
       }
     }
 
-    // Prices keyed by local hour
     final priceByHour = <int, EnergyPrice>{};
     for (final p in prices) {
       priceByHour[p.timestamp.toLocal().hour] = p;
     }
 
-    // Schedule frames keyed by local hour
     final frameByHour = <int, OptimizationFrame>{};
     for (final f in frames) {
       frameByHour[f.hour.toLocal().hour] = f;
@@ -92,7 +91,6 @@ class HourData {
     return List.generate(24, (h) {
       final isActual = h < nowHour;
 
-      // PV kW: actual for past, forecast for current+future
       final double pvKw;
       if (isActual && pvCount[h] > 0) {
         pvKw = (pvSum[h] / pvCount[h] / 1000.0).clamp(0.0, double.infinity);
@@ -102,12 +100,10 @@ class HourData {
         pvKw = 0.0;
       }
 
-      // Partial actual for current hour (both actual + forecast shown)
       final double? pvActualKw = (h == nowHour && pvCount[h] > 0)
           ? (pvSum[h] / pvCount[h] / 1000.0).clamp(0.0, double.infinity)
           : null;
 
-      // Load, grid, battery, SoC: actual data only (past hours + current hour)
       final bool hasActual = h <= nowHour && pvCount[h] > 0;
       final double? loadKw =
           (hasActual && loadCount[h] > 0) ? loadSum[h] / loadCount[h] / 1000.0 : null;
@@ -119,10 +115,9 @@ class HourData {
       final price = priceByHour[h];
       final frame = frameByHour[h];
 
-      // SoC: actual telemetry for past/current hours, optimizer estimate for future
       final double? socPct;
       if (hasActual && socCount[h] > 0) {
-        socPct = socSum[h] / socCount[h]; // batterySOC is already a percentage
+        socPct = socSum[h] / socCount[h];
       } else {
         socPct = frame?.estimatedSocAtStart;
       }
@@ -139,6 +134,69 @@ class HourData {
         sellPrice: price?.sellPrice,
         socPct: socPct,
         command: frame?.command,
+      );
+    });
+  }
+
+  /// Builds 24 [HourData] entries for a specific past [date].
+  /// All hours use actual telemetry only — no forecast, no estimates.
+  static List<HourData> buildForDate(
+    DateTime date,
+    List<EnergyPrice> prices,
+    List<OptimizationFrame> frames,
+    List<DeviceTelemetry> telemetry,
+  ) {
+    final pvSum = List<double>.filled(24, 0);
+    final pvCount = List<int>.filled(24, 0);
+    final loadSum = List<double>.filled(24, 0);
+    final loadCount = List<int>.filled(24, 0);
+    final gridSum = List<double>.filled(24, 0);
+    final gridCount = List<int>.filled(24, 0);
+    final batterySum = List<double>.filled(24, 0);
+    final batteryCount = List<int>.filled(24, 0);
+    final socSum = List<double>.filled(24, 0);
+    final socCount = List<int>.filled(24, 0);
+
+    for (final t in telemetry) {
+      final lt = t.timestamp.toLocal();
+      if (lt.year == date.year && lt.month == date.month && lt.day == date.day) {
+        pvSum[lt.hour] += t.pvPowerW;
+        pvCount[lt.hour]++;
+        loadSum[lt.hour] += t.loadPowerW;
+        loadCount[lt.hour]++;
+        gridSum[lt.hour] += t.gridPowerW;
+        gridCount[lt.hour]++;
+        batterySum[lt.hour] += t.batteryPowerW;
+        batteryCount[lt.hour]++;
+        socSum[lt.hour] += t.batterySOC;
+        socCount[lt.hour]++;
+      }
+    }
+
+    final priceByHour = <int, EnergyPrice>{};
+    for (final p in prices) {
+      priceByHour[p.timestamp.toLocal().hour] = p;
+    }
+
+    final frameByHour = <int, OptimizationFrame>{};
+    for (final f in frames) {
+      frameByHour[f.hour.toLocal().hour] = f;
+    }
+
+    return List.generate(24, (h) {
+      final hasTelemetry = pvCount[h] > 0;
+      return HourData(
+        hour: h,
+        pvKw: hasTelemetry ? (pvSum[h] / pvCount[h] / 1000.0).clamp(0.0, double.infinity) : 0.0,
+        pvIsActual: true,
+        loadKw: (hasTelemetry && loadCount[h] > 0) ? loadSum[h] / loadCount[h] / 1000.0 : null,
+        gridKw: (hasTelemetry && gridCount[h] > 0) ? gridSum[h] / gridCount[h] / 1000.0 : null,
+        batteryKw:
+            (hasTelemetry && batteryCount[h] > 0) ? batterySum[h] / batteryCount[h] / 1000.0 : null,
+        socPct: (hasTelemetry && socCount[h] > 0) ? socSum[h] / socCount[h] : null,
+        buyPrice: priceByHour[h]?.buyPrice,
+        sellPrice: priceByHour[h]?.sellPrice,
+        command: frameByHour[h]?.command,
       );
     });
   }
