@@ -290,6 +290,88 @@ class TelemetryEndpoint extends Endpoint {
     );
   }
 
+  /// Returns daily aggregates for the authenticated user over the last [days] days.
+  /// Each row covers one UTC calendar day and contains average power values and
+  /// average battery SoC — equivalent to ~96 raw rows compressed to 1.
+  Future<List<DailyEnergyAggregate>> getDailyAggregates(
+    Session session,
+    int days,
+  ) async {
+    final uid = _uid(session);
+    if (uid == null) return [];
+
+    // Enforce the same tier-based cap as getHistory.
+    final license = await LicenseKey.db.findFirstRow(
+      session,
+      where: (t) => t.userId.equals(uid) & t.isActive.equals(true),
+    );
+    final syncConfig = license == null
+        ? null
+        : await TierSyncConfig.db.findFirstRow(
+            session,
+            where: (t) => t.tier.equals(license.tier),
+          );
+    final maxDays = syncConfig?.historyDurationDays ?? 7;
+    final cappedDays = days.clamp(1, maxDays);
+
+    final cutoff = DateTime.now().toUtc().subtract(Duration(days: cappedDays));
+
+    final result = await session.db.unsafeQuery(
+      """
+      SELECT
+        DATE_TRUNC('day', "timestamp") AS day,
+        AVG("pvPowerW")       AS avg_pv,
+        AVG("loadPowerW")     AS avg_load,
+        AVG("gridPowerW")     AS avg_grid,
+        AVG("batteryPowerW")  AS avg_battery,
+        AVG("batterySOC")     AS avg_soc,
+        COUNT(*)              AS sample_count
+      FROM "device_telemetry"
+      WHERE "userId" = @userId AND "timestamp" >= @cutoff
+      GROUP BY DATE_TRUNC('day', "timestamp")
+      ORDER BY day
+      """,
+      parameters: QueryParameters.named({
+        'userId': uid,
+        'cutoff': cutoff,
+      }),
+    );
+
+    return result.map((row) {
+      final m = row.toColumnMap();
+      return DailyEnergyAggregate(
+        date: (m['day'] as DateTime).toUtc(),
+        avgPvPowerW: (m['avg_pv'] as num).toDouble(),
+        avgLoadPowerW: (m['avg_load'] as num).toDouble(),
+        avgGridPowerW: (m['avg_grid'] as num).toDouble(),
+        avgBatteryPowerW: (m['avg_battery'] as num).toDouble(),
+        avgBatterySOC: (m['avg_soc'] as num).toDouble(),
+        sampleCount: (m['sample_count'] as num).toInt(),
+      );
+    }).toList();
+  }
+
+  /// Returns raw telemetry rows for a specific UTC day window.
+  /// [fromUtc] is inclusive, [toUtc] is exclusive (i.e. midnight start of next day).
+  /// Used by the 1-day history chart to get per-hour detail.
+  Future<List<DeviceTelemetry>> getTelemetryForDate(
+    Session session,
+    DateTime fromUtc,
+    DateTime toUtc,
+  ) async {
+    final uid = _uid(session);
+    if (uid == null) return [];
+
+    return DeviceTelemetry.db.find(
+      session,
+      where: (t) =>
+          t.userId.equals(uid) &
+          (t.timestamp >= fromUtc) &
+          (t.timestamp < toUtc),
+      orderBy: (t) => t.timestamp,
+    );
+  }
+
   int? _uid(Session session) {
     final auth = session.authenticated;
     if (auth == null) return null;

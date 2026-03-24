@@ -258,6 +258,22 @@ final historyEventsProvider =
   return ref.read(historyRepositoryProvider).getEvents(days);
 });
 
+/// Daily aggregates for the last [days] days — used by multi-day history chart.
+/// Each row = one UTC calendar day; ~90× less data than raw telemetry.
+final historyDailyAggregatesProvider =
+    FutureProvider.family<List<DailyEnergyAggregate>, int>((ref, days) {
+  return ref.read(clientProvider).telemetry.getDailyAggregates(days);
+});
+
+/// Raw telemetry for a single UTC date — used by the 1-day history chart.
+/// [date] should be the local midnight date (year/month/day only).
+final historyDayTelemetryProvider =
+    FutureProvider.family<List<DeviceTelemetry>, DateTime>((ref, date) {
+  final fromUtc = date.toUtc();
+  final toUtc = fromUtc.add(const Duration(days: 1));
+  return ref.read(clientProvider).telemetry.getTelemetryForDate(fromUtc, toUtc);
+});
+
 /// All telemetry for the last [days] days — used by the history chart.
 final historyPeriodTelemetryProvider =
     FutureProvider.family<List<DeviceTelemetry>, int>((ref, days) {

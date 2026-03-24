@@ -19,8 +19,10 @@ import 'package:deyelyte_client/src/protocol/outage_reserve.dart' as _i6;
 import 'package:deyelyte_client/src/protocol/energy_price.dart' as _i7;
 import 'package:deyelyte_client/src/protocol/price_time_range.dart' as _i8;
 import 'package:deyelyte_client/src/protocol/device_telemetry.dart' as _i9;
-import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i10;
-import 'protocol.dart' as _i11;
+import 'package:deyelyte_client/src/protocol/daily_energy_aggregate.dart'
+    as _i10;
+import 'package:serverpod_auth_client/serverpod_auth_client.dart' as _i11;
+import 'protocol.dart' as _i12;
 
 /// All methods require the caller to be an authenticated admin.
 /// Admin rows are created exclusively via direct SQL — no endpoint can
@@ -683,14 +685,39 @@ class EndpointTelemetry extends _i1.EndpointRef {
         'getHistory',
         {'hours': hours},
       );
+
+  /// Returns daily aggregates for the authenticated user over the last [days] days.
+  /// Each row covers one UTC calendar day and contains average power values and
+  /// average battery SoC — equivalent to ~96 raw rows compressed to 1.
+  _i2.Future<List<_i10.DailyEnergyAggregate>> getDailyAggregates(int days) =>
+      caller.callServerEndpoint<List<_i10.DailyEnergyAggregate>>(
+        'telemetry',
+        'getDailyAggregates',
+        {'days': days},
+      );
+
+  /// Returns raw telemetry rows for a specific UTC day window.
+  /// [fromUtc] is inclusive, [toUtc] is exclusive (i.e. midnight start of next day).
+  /// Used by the 1-day history chart to get per-hour detail.
+  _i2.Future<List<_i9.DeviceTelemetry>> getTelemetryForDate(
+    DateTime fromUtc,
+    DateTime toUtc,
+  ) => caller.callServerEndpoint<List<_i9.DeviceTelemetry>>(
+    'telemetry',
+    'getTelemetryForDate',
+    {
+      'fromUtc': fromUtc,
+      'toUtc': toUtc,
+    },
+  );
 }
 
 class Modules {
   Modules(Client client) {
-    auth = _i10.Caller(client);
+    auth = _i11.Caller(client);
   }
 
-  late final _i10.Caller auth;
+  late final _i11.Caller auth;
 }
 
 class Client extends _i1.ServerpodClientShared {
@@ -713,7 +740,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i11.Protocol(),
+         _i12.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

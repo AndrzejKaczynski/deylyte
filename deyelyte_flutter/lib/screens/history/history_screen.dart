@@ -114,18 +114,27 @@ class _HistoryChartSection extends ConsumerWidget {
         DateTime(gatheringSince.year, gatheringSince.month, gatheringSince.day);
     final minDate = gatheringDate.isAfter(oldestAllowed) ? gatheringDate : oldestAllowed;
 
-    // Fetch period data (full period, filtered client-side per window).
-    // TODO: replace with getDailyAggregates endpoint to reduce data transfer.
-    final telemetryAsync = ref.watch(historyPeriodTelemetryProvider(periodDays));
     final pricesAsync = ref.watch(historyPeriodPricesProvider(periodDays));
     final framesAsync = ref.watch(historyPeriodFramesProvider(periodDays));
 
-    final isLoading =
-        telemetryAsync.isLoading || pricesAsync.isLoading || framesAsync.isLoading;
-    final hasError =
-        telemetryAsync.hasError || pricesAsync.hasError || framesAsync.hasError;
+    // 1-day view: raw per-date telemetry (~96 rows).
+    // Multi-day view: server-side daily aggregates (~N rows, no heavy fetch).
+    final dayTelemetryAsync = rangeIndex == 0
+        ? ref.watch(historyDayTelemetryProvider(effectiveEnd))
+        : null;
+    final aggregatesAsync = rangeIndex != 0
+        ? ref.watch(historyDailyAggregatesProvider(periodDays))
+        : null;
 
-    final telemetry = telemetryAsync.valueOrNull ?? [];
+    final isLoading = pricesAsync.isLoading ||
+        framesAsync.isLoading ||
+        (dayTelemetryAsync?.isLoading ?? false) ||
+        (aggregatesAsync?.isLoading ?? false);
+    final hasError = pricesAsync.hasError ||
+        framesAsync.hasError ||
+        (dayTelemetryAsync?.hasError ?? false) ||
+        (aggregatesAsync?.hasError ?? false);
+
     final prices = pricesAsync.valueOrNull ?? [];
     final frames = framesAsync.valueOrNull ?? [];
 
@@ -135,13 +144,15 @@ class _HistoryChartSection extends ConsumerWidget {
     final int columnCount;
 
     if (rangeIndex == 0) {
-      // Single-day 24h view.
+      // Single-day 24h view — raw telemetry for this specific date.
+      final telemetry = dayTelemetryAsync?.valueOrNull ?? [];
       hours = HourData.buildForDate(effectiveEnd, prices, frames, telemetry);
       axisLabels = null; // default hour labels
       columnCount = 24;
     } else {
       // Multi-day aggregated view (up to 30 columns).
-      hours = HourData.buildForDateRange(windowStart, effectiveEnd, prices, frames, telemetry);
+      final aggregates = aggregatesAsync?.valueOrNull ?? [];
+      hours = HourData.buildFromAggregates(windowStart, effectiveEnd, aggregates, prices, frames);
       axisLabels = HourData.buildPeriodAxisLabels(windowStart, effectiveEnd);
       columnCount = winSize;
     }

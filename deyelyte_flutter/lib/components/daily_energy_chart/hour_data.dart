@@ -217,6 +217,69 @@ class HourData {
     });
   }
 
+  /// Builds one [HourData] per day for the inclusive range [from]..[to],
+  /// using pre-aggregated [DailyEnergyAggregate] rows from the server.
+  /// Falls back to zero values for days missing from [aggregates].
+  /// Prices and frames are still resolved client-side (they're small).
+  static List<HourData> buildFromAggregates(
+    DateTime from,
+    DateTime to,
+    List<DailyEnergyAggregate> aggregates,
+    List<EnergyPrice> prices,
+    List<OptimizationFrame> frames,
+  ) {
+    final fromDate = DateTime(from.year, from.month, from.day);
+    final toDate = DateTime(to.year, to.month, to.day);
+    final days = toDate.difference(fromDate).inDays + 1;
+
+    // Index aggregates by UTC date (year/month/day).
+    final aggByDate = <String, DailyEnergyAggregate>{};
+    for (final a in aggregates) {
+      final d = a.date.toLocal();
+      aggByDate['${d.year}-${d.month}-${d.day}'] = a;
+    }
+
+    return List.generate(days, (i) {
+      final date = fromDate.add(Duration(days: i));
+      final key = '${date.year}-${date.month}-${date.day}';
+      final agg = aggByDate[key];
+
+      final dayPrices = prices.where((p) {
+        final lt = p.timestamp.toLocal();
+        return lt.year == date.year && lt.month == date.month && lt.day == date.day;
+      }).toList();
+      final pCount = dayPrices.length;
+      final buyAvg = pCount == 0 ? null : dayPrices.fold(0.0, (s, p) => s + p.buyPrice) / pCount;
+      final sellAvg =
+          pCount == 0 ? null : dayPrices.fold(0.0, (s, p) => s + p.sellPrice) / pCount;
+
+      final dayFrames = frames.where((f) {
+        final lt = f.hour.toLocal();
+        return lt.year == date.year && lt.month == date.month && lt.day == date.day;
+      }).toList();
+      final cmdCounts = <String, int>{};
+      for (final f in dayFrames) {
+        cmdCounts[f.command] = (cmdCounts[f.command] ?? 0) + 1;
+      }
+      final dominantCmd = cmdCounts.isEmpty
+          ? null
+          : cmdCounts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+
+      return HourData(
+        hour: i,
+        pvKw: agg != null ? (agg.avgPvPowerW / 1000.0).clamp(0.0, double.infinity) : 0.0,
+        pvIsActual: true,
+        loadKw: agg != null ? agg.avgLoadPowerW / 1000.0 : null,
+        gridKw: agg != null ? agg.avgGridPowerW / 1000.0 : null,
+        batteryKw: agg != null ? agg.avgBatteryPowerW / 1000.0 : null,
+        socPct: agg?.avgBatterySOC,
+        buyPrice: buyAvg,
+        sellPrice: sellAvg,
+        command: dominantCmd,
+      );
+    });
+  }
+
   /// Returns 7 evenly-spaced axis labels (e.g. "18 Mar") for a date range.
   static List<String> buildPeriodAxisLabels(DateTime from, DateTime to) {
     const months = [

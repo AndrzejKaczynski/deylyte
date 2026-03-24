@@ -1037,6 +1037,50 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['hours'],
                   ),
         ),
+        'getDailyAggregates': _i1.MethodConnector(
+          name: 'getDailyAggregates',
+          params: {
+            'days': _i1.ParameterDescription(
+              name: 'days',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['telemetry'] as _i15.TelemetryEndpoint)
+                  .getDailyAggregates(
+                    session,
+                    params['days'],
+                  ),
+        ),
+        'getTelemetryForDate': _i1.MethodConnector(
+          name: 'getTelemetryForDate',
+          params: {
+            'fromUtc': _i1.ParameterDescription(
+              name: 'fromUtc',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+            'toUtc': _i1.ParameterDescription(
+              name: 'toUtc',
+              type: _i1.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['telemetry'] as _i15.TelemetryEndpoint)
+                  .getTelemetryForDate(
+                    session,
+                    params['fromUtc'],
+                    params['toUtc'],
+                  ),
+        ),
       },
     );
     modules['serverpod_auth'] = _i18.Endpoints()..initializeEndpoints(server);

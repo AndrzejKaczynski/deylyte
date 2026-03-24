@@ -63,3 +63,5 @@ telemetry:
   - ingest:
   - getLatest:
   - getHistory:
+  - getDailyAggregates:
+  - getTelemetryForDate:

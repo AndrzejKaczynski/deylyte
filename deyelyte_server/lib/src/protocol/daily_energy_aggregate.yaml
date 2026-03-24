@@ -1,0 +1,11 @@
+# Daily aggregate of device telemetry — computed server-side via GROUP BY.
+# No table: serialization only (never persisted directly).
+class: DailyEnergyAggregate
+fields:
+  date: DateTime               # UTC midnight for this day
+  avgPvPowerW: double          # average PV generation W
+  avgLoadPowerW: double        # average site load W
+  avgGridPowerW: double        # average grid power W (pos = export, neg = import)
+  avgBatteryPowerW: double     # average battery power W
+  avgBatterySOC: double        # average battery state-of-charge %
+  sampleCount: int             # number of telemetry samples in this day
