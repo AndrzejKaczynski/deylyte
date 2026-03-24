@@ -151,6 +151,8 @@ class _DesktopSidebar extends StatelessWidget {
                         letterSpacing: -0.3,
                       ),
                 ),
+                const SizedBox(width: 8),
+                const _BetaBadge(),
               ],
             ),
           ),
@@ -295,7 +297,12 @@ class _MobileShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: child,
+      body: Column(
+        children: [
+          const _BetaBanner(),
+          Expanded(child: child),
+        ],
+      ),
       bottomNavigationBar: _GlassBottomBar(
         selectedIndex: selectedIndex,
         destinations: destinations,
@@ -415,6 +422,58 @@ class _NavDestination {
   final IconData activeIcon;
   final String label;
   final String route;
+}
+
+/// Small pill badge shown next to the app name on desktop.
+class _BetaBadge extends StatelessWidget {
+  const _BetaBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.tertiary.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        'BETA',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.tertiary,
+              fontWeight: FontWeight.w700,
+              fontSize: 9,
+              letterSpacing: 0.5,
+            ),
+      ),
+    );
+  }
+}
+
+/// Thin amber strip shown at the top of the screen on mobile.
+class _BetaBanner extends StatelessWidget {
+  const _BetaBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: AppColors.tertiary.withValues(alpha: 0.12),
+      padding: EdgeInsets.only(
+        top: MediaQuery.paddingOf(context).top + 4,
+        bottom: 4,
+      ),
+      child: Text(
+        'BETA — app is under active development',
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.tertiary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+      ),
+    );
+  }
 }
 
 /// Reusable lightning-bolt icon used across the app shell.
