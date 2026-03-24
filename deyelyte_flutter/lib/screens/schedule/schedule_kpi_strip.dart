@@ -63,7 +63,23 @@ class ScheduleKpiStrip extends ConsumerWidget {
       ];
 
       if (wide) {
-        return Row(
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: items
+                .map((i) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: i,
+                      ),
+                    ))
+                .toList(),
+          ),
+        );
+      }
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: items
               .map((i) => Expanded(
                     child: Padding(
@@ -72,16 +88,7 @@ class ScheduleKpiStrip extends ConsumerWidget {
                     ),
                   ))
               .toList(),
-        );
-      }
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.5,
-        children: items,
+        ),
       );
     });
   }
@@ -114,7 +121,7 @@ class _KpiItem extends StatelessWidget {
           Row(children: [
             Icon(icon, size: 16, color: iconColor),
             const SizedBox(width: 6),
-            Text(title, style: tt.bodySmall),
+            Expanded(child: Text(title, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
           ]),
           const SizedBox(height: 10),
           Text(
@@ -124,12 +131,14 @@ class _KpiItem extends StatelessWidget {
               fontWeight: FontWeight.w700,
               letterSpacing: -0.02,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 4),
             Text(
               subtitle!,
               style: tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],

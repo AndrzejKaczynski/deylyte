@@ -42,7 +42,7 @@ class StrategySummaryCard extends ConsumerWidget {
         Row(children: [
           const Icon(Icons.psychology_rounded, size: 18, color: AppColors.primary),
           const SizedBox(width: 8),
-          Text('Strategy Summary', style: tt.titleMedium),
+          Expanded(child: Text('Strategy Summary', style: tt.titleMedium, overflow: TextOverflow.ellipsis)),
         ]),
         const SizedBox(height: 16),
         _StrategyRow(

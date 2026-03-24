@@ -215,28 +215,29 @@ class _PriceSourcePicker extends StatelessWidget {
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: _options.map((opt) {
           final (value, label) = opt;
           final isSelected = selected == value;
-          return GestureDetector(
-            onTap: () => onChanged(value),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeInOut,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Text(
-                label,
-                style: tt.bodySmall?.copyWith(
-                  color: isSelected
-                      ? AppColors.surface
-                      : AppColors.onSurfaceVariant,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(value),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: tt.bodySmall?.copyWith(
+                    color: isSelected
+                        ? AppColors.surface
+                        : AppColors.onSurfaceVariant,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
               ),
             ),

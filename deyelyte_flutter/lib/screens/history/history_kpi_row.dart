@@ -37,33 +37,47 @@ class HistoryKpiRow extends ConsumerWidget {
             Row(children: [
               Icon(it.icon, size: 14, color: it.color),
               const SizedBox(width: 6),
-              Text(it.label, style: tt.bodySmall),
+              Expanded(child: Text(it.label, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
             ]),
             const SizedBox(height: 8),
             Text(it.value,
                 style: tt.headlineSmall?.copyWith(
-                    color: it.color, fontWeight: FontWeight.w700, letterSpacing: -0.02)),
+                    color: it.color, fontWeight: FontWeight.w700, letterSpacing: -0.02),
+                overflow: TextOverflow.ellipsis),
             const SizedBox(height: 2),
-            Text(it.sub, style: tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant)),
+            Text(it.sub, style: tt.bodySmall?.copyWith(color: AppColors.onSurfaceVariant),
+                overflow: TextOverflow.ellipsis),
           ]),
         );
       }).toList();
 
+      IntrinsicHeight kpiRow(Widget a, Widget b) => IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: a),
+                const SizedBox(width: 12),
+                Expanded(child: b),
+              ],
+            ),
+          );
+
       if (wide) {
-        return Row(
-          children: widgets
-              .map((w) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 12), child: w)))
-              .toList(),
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: widgets
+                .map((w) => Expanded(child: Padding(padding: const EdgeInsets.only(right: 12), child: w)))
+                .toList(),
+          ),
         );
       }
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.4,
-        children: widgets,
+      return Column(
+        children: [
+          kpiRow(widgets[0], widgets[1]),
+          const SizedBox(height: 12),
+          kpiRow(widgets[2], widgets[3]),
+        ],
       );
     });
   }

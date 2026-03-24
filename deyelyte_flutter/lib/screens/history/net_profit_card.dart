@@ -58,10 +58,10 @@ class _StatRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: tt.bodySmall),
-      Text(value,
-          style: tt.bodyMedium?.copyWith(color: color, fontWeight: FontWeight.w700)),
+    return Row(children: [
+      Expanded(child: Text(label, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
+      const SizedBox(width: 8),
+      Text(value, style: tt.bodyMedium?.copyWith(color: color, fontWeight: FontWeight.w700)),
     ]);
   }
 }

@@ -86,26 +86,40 @@ class KpiStrip extends ConsumerWidget {
         ),
       ];
 
+      IntrinsicHeight kpiRow(Widget a, Widget b) => IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: a),
+              const SizedBox(width: 12),
+              Expanded(child: b),
+            ],
+          ),
+        );
+
       if (wide) {
-        return Row(
-          children: items
-              .map((i) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: i,
-                    ),
-                  ))
-              .toList(),
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: items
+                .map((i) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: i,
+                      ),
+                    ))
+                .toList(),
+          ),
         );
       }
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.5,
-        children: items,
+      return Column(
+        children: [
+          kpiRow(items[0], items[1]),
+          const SizedBox(height: 12),
+          kpiRow(items[2], items[3]),
+          const SizedBox(height: 12),
+          kpiRow(items[4], items[5]),
+        ],
       );
     });
   }
@@ -143,7 +157,7 @@ class _KpiItem extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: iconColor),
               const SizedBox(width: 6),
-              Text(title, style: tt.bodySmall),
+              Expanded(child: Text(title, style: tt.bodySmall, overflow: TextOverflow.ellipsis)),
             ],
           ),
           const SizedBox(height: 10),
@@ -154,6 +168,7 @@ class _KpiItem extends StatelessWidget {
               fontWeight: FontWeight.w700,
               letterSpacing: -0.02,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           if (subtitle != null) ...[
             const SizedBox(height: 4),
@@ -161,6 +176,7 @@ class _KpiItem extends StatelessWidget {
               subtitle!,
               style: tt.bodySmall?.copyWith(
                   color: subtitleColor ?? AppColors.onSurfaceVariant),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
           if (child != null) ...[
@@ -179,33 +195,36 @@ class _BatterySocBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, c) {
-      return Stack(
-        children: [
-          Container(
-            height: 6,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(3),
+    return SizedBox(
+      height: 6,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(color: AppColors.surfaceContainerHigh),
             ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 600),
-            height: 6,
-            width: c.maxWidth * soc,
-            decoration: BoxDecoration(
-              gradient: AppGradients.profitGreen,
-              borderRadius: BorderRadius.circular(3),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.secondary.withValues(alpha: 0.4),
-                  blurRadius: 6,
+            Positioned.fill(
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: soc.clamp(0.0, 1.0),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.profitGreen,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.secondary.withValues(alpha: 0.4),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        ),
+      ),
+    );
   }
 }
