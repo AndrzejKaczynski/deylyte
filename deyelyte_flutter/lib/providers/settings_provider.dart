@@ -197,6 +197,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
         fixedBuyRatePln: c.fixedBuyRatePln,
         fixedSellRatePln: c.fixedSellRatePln,
         priceTimeRanges: state.priceTimeRanges,
+        solcast: state.solcast, // managed separately via loadIntegrationStatus
         pstryk: c.pstrykEnabled,
         baselineChargingEnabled: c.baselineChargingEnabled,
         baselineSellingEnabled: c.baselineSellingEnabled,

@@ -39,7 +39,7 @@ class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
       BuildContext context, String integrationName) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surfaceContainer,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusXl),
         title: Text('Disable $integrationName?',
@@ -52,12 +52,12 @@ class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Cancel',
                 style: TextStyle(color: AppColors.onSurfaceVariant)),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: AppColors.surface,
