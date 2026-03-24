@@ -114,8 +114,13 @@ class _HistoryChartSection extends ConsumerWidget {
         DateTime(gatheringSince.year, gatheringSince.month, gatheringSince.day);
     final minDate = gatheringDate.isAfter(oldestAllowed) ? gatheringDate : oldestAllowed;
 
-    final pricesAsync = ref.watch(historyPeriodPricesProvider(periodDays));
-    final framesAsync = ref.watch(historyPeriodFramesProvider(periodDays));
+    // Cap all fetches to the user's tier limit — no point requesting 90 days
+    // if the license only allows 30. For 1-day mode, fetch prices/frames for
+    // the full browsable window so navigating any past date has data.
+    final cappedDays = periodDays.clamp(1, maxDays);
+    final priceDays = rangeIndex == 0 ? maxDays : cappedDays;
+    final pricesAsync = ref.watch(historyPeriodPricesProvider(priceDays));
+    final framesAsync = ref.watch(historyPeriodFramesProvider(priceDays));
 
     // 1-day view: raw per-date telemetry (~96 rows).
     // Multi-day view: server-side daily aggregates (~N rows, no heavy fetch).
@@ -123,7 +128,7 @@ class _HistoryChartSection extends ConsumerWidget {
         ? ref.watch(historyDayTelemetryProvider(effectiveEnd))
         : null;
     final aggregatesAsync = rangeIndex != 0
-        ? ref.watch(historyDailyAggregatesProvider(periodDays))
+        ? ref.watch(historyDailyAggregatesProvider(cappedDays))
         : null;
 
     final isLoading = pricesAsync.isLoading ||
@@ -174,6 +179,7 @@ class _HistoryChartSection extends ConsumerWidget {
           isLoading: isLoading,
           hasError: hasError,
           showEstimateLayer: false,
+          showPlanLayer: rangeIndex == 0,
           commandStripLabel: 'EXECUTED PLAN',
           columnCount: columnCount,
           axisLabels: axisLabels,

@@ -30,6 +30,7 @@ class DailyEnergyChart extends StatefulWidget {
     this.isLoading = false,
     this.hasError = false,
     this.showEstimateLayer = true,
+    this.showPlanLayer = true,
     this.commandStripLabel = 'PLANNED BATTERY ACTION',
     this.columnCount = 24,
     this.axisLabels,
@@ -51,6 +52,10 @@ class DailyEnergyChart extends StatefulWidget {
   /// Whether to show the PV Estimate toggle chip and dashed curve.
   /// Set to false for history where there is no forecast data.
   final bool showEstimateLayer;
+
+  /// Whether to show the command strip and Charge Plan toggle chip.
+  /// Set to false for multi-day history where per-day commands aren't meaningful.
+  final bool showPlanLayer;
 
   /// Label shown above the command strip.
   final String commandStripLabel;
@@ -74,6 +79,9 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
     super.initState();
     if (!widget.showEstimateLayer) {
       _layers.showPvEstimate = false;
+    }
+    if (!widget.showPlanLayer) {
+      _layers.showPlan = false;
     }
   }
 
@@ -189,7 +197,7 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
             const SizedBox(height: 12),
 
             // ── Command strip ──────────────────────────────────────────────
-            if (_layers.showPlan)
+            if (widget.showPlanLayer && _layers.showPlan)
               CommandStrip(hours: widget.hours, label: widget.commandStripLabel),
 
             const SizedBox(height: 16),
@@ -248,14 +256,15 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
                   tooltip: 'Energy export price per kWh',
                   onTap: () => setState(() => _layers.showSellPrice = !_layers.showSellPrice),
                 ),
-                LayerChip(
-                  label: 'Charge Plan',
-                  color: AppColors.secondary,
-                  active: _layers.showPlan,
-                  style: LayerChipStyle.solid,
-                  tooltip: 'Optimizer command per hour: charge / discharge / idle',
-                  onTap: () => setState(() => _layers.showPlan = !_layers.showPlan),
-                ),
+                if (widget.showPlanLayer)
+                  LayerChip(
+                    label: 'Charge Plan',
+                    color: AppColors.secondary,
+                    active: _layers.showPlan,
+                    style: LayerChipStyle.solid,
+                    tooltip: 'Optimizer command per hour: charge / discharge / idle',
+                    onTap: () => setState(() => _layers.showPlan = !_layers.showPlan),
+                  ),
               ],
             ),
           ],
