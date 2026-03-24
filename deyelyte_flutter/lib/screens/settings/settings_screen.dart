@@ -234,6 +234,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     pstryk: settings.pstryk,
                     cityName: settings.cityName,
                     onSolcastChanged: notifier.setSolcast,
+                    onPstrykChanged: notifier.setPstryk,
                     onCityNameChanged: notifier.setCityName,
                   ),
                   if (settings.hasBaseline) ...[

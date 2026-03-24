@@ -477,6 +477,14 @@ class EndpointPrice extends _i1.EndpointRef {
     },
   );
 
+  /// Fetches prices immediately using the stored Pstryk token.
+  /// Used after saving credentials to verify they are valid.
+  _i2.Future<void> triggerFetch() => caller.callServerEndpoint<void>(
+        'price',
+        'triggerFetch',
+        {},
+      );
+
   /// Returns today's energy prices (UTC day boundary) for the authenticated user.
   _i2.Future<List<_i7.EnergyPrice>> getTodayPrices() =>
       caller.callServerEndpoint<List<_i7.EnergyPrice>>(

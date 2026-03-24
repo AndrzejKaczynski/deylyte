@@ -8,6 +8,24 @@ class PriceEndpoint extends Endpoint {
     await client.fetchAndStorePrices(session);
   }
 
+  /// Fetches prices immediately using the authenticated user's stored Pstryk token.
+  /// Used after saving credentials to verify they are valid and populate initial data.
+  Future<void> triggerFetch(Session session) async {
+    final auth = session.authenticated;
+    if (auth == null) throw Exception('Not authenticated');
+    final uid = int.parse(auth.userIdentifier);
+
+    final creds = await IntegrationCredentials.db.findFirstRow(
+      session,
+      where: (t) => t.userInfoId.equals(uid),
+    );
+    final token = creds?.pstrykToken;
+    if (token == null) throw Exception('No Pstryk token configured');
+
+    final client = PstrykClient(token, userInfoId: uid);
+    await client.fetchAndStorePrices(session);
+  }
+
   /// Returns today's energy prices (UTC day boundary) for the authenticated user.
   Future<List<EnergyPrice>> getTodayPrices(Session session) async {
     final auth = session.authenticated;

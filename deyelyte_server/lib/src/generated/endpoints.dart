@@ -744,6 +744,16 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['userInfoId'],
                   ),
         ),
+        'triggerFetch': _i1.MethodConnector(
+          name: 'triggerFetch',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['price'] as _i12.PriceEndpoint)
+                  .triggerFetch(session),
+        ),
         'getTodayPrices': _i1.MethodConnector(
           name: 'getTodayPrices',
           params: {},

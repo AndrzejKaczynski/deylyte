@@ -4,53 +4,65 @@ import 'package:serverpod/serverpod.dart';
 import '../../generated/protocol.dart';
 
 class PstrykClient {
-  static const String baseUrl = 'https://api.pstryk.pl/integrations';
+  static const String _baseUrl = 'https://api.pstryk.pl/integrations';
   final String token;
   final int userInfoId;
 
   PstrykClient(this.token, {required this.userInfoId});
 
+  Map<String, String> get _headers => {
+        'Authorization': token,
+        'Content-Type': 'application/json',
+      };
+
   Future<void> fetchAndStorePrices(Session session) async {
     final now = DateTime.now().toUtc();
-    final start = '${DateTime(now.year, now.month, now.day).toIso8601String()}Z';
+    // 48h window: today + tomorrow (UTC). Warsaw is UTC+1/+2, so this covers
+    // all Warsaw hours for both days. for_tz cannot be used with hourly resolution.
+    final windowStart = DateTime.utc(now.year, now.month, now.day);
+    final windowEnd = windowStart.add(const Duration(hours: 48));
 
-    final headers = {
-      'Authorization': 'Token $token',
-      'Content-Type': 'application/json',
-    };
+    final uri = Uri.parse(
+      '$_baseUrl/meter-data/unified-metrics/'
+      '?metrics=pricing'
+      '&resolution=hour'
+      '&window_start=${_fmtUtc(windowStart)}'
+      '&window_end=${_fmtUtc(windowEnd)}',
+    );
 
-    // Fetch Buy Prices
-    final buyUri = Uri.parse('$baseUrl/pricing/?resolution=hour&window_start=$start');
-    final buyRes = await http.get(buyUri, headers: headers);
-    
-    // Fetch Sell Prices (Prosumer)
-    final sellUri = Uri.parse('$baseUrl/prosumer-pricing/?resolution=hour&window_start=$start');
-    final sellRes = await http.get(sellUri, headers: headers);
+    final res = await http.get(uri, headers: _headers);
 
-    if (buyRes.statusCode != 200 || sellRes.statusCode != 200) {
-      session.log('Failed to fetch Pstryk prices: ${buyRes.statusCode} / ${sellRes.statusCode}');
-      return;
+    if (res.statusCode != 200) {
+      session.log(
+        'Pstryk unified-metrics fetch failed: ${res.statusCode} — ${res.body}',
+        level: LogLevel.error,
+      );
+      throw Exception('Pstryk API returned ${res.statusCode}');
     }
 
-    final buyData = jsonDecode(buyRes.body);
-    final sellData = jsonDecode(sellRes.body);
+    final data = jsonDecode(res.body) as Map<String, dynamic>;
+    final frames = data['frames'] as List;
 
-    final buyFrames = buyData['frames'] as List;
-    final sellFrames = sellData['frames'] as List;
-
-    final sellMap = {
-      for (var f in sellFrames) f['start']: f['price_gross']
-    };
-
-    for (var frame in buyFrames) {
+    int stored = 0;
+    for (final frame in frames) {
       final startTimeStr = frame['start'] as String;
       final startTime = DateTime.parse(startTimeStr).toUtc();
-      
-      final buyPrice = (frame['price_gross'] as num).toDouble();
-      final sellPrice = (sellMap[startTimeStr] as num?)?.toDouble() ?? 0.0;
 
-      final existing = await EnergyPrice.db.findFirstRow(session,
-        where: (t) => t.timestamp.equals(startTime) & t.userInfoId.equals(userInfoId),
+      final metrics = frame['metrics'] as Map<String, dynamic>?;
+      final pricing = metrics?['pricing'] as Map<String, dynamic>?;
+      if (pricing == null) continue;
+
+      // price_gross is null when tomorrow's TGE prices aren't published yet
+      final buyPrice = (pricing['price_gross'] as num?)?.toDouble();
+      if (buyPrice == null) continue;
+
+      final sellPrice =
+          (pricing['price_prosumer_gross'] as num?)?.toDouble() ?? 0.0;
+
+      final existing = await EnergyPrice.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.timestamp.equals(startTime) & t.userInfoId.equals(userInfoId),
       );
 
       if (existing != null) {
@@ -58,17 +70,27 @@ class PstrykClient {
         existing.sellPrice = sellPrice;
         await EnergyPrice.db.updateRow(session, existing);
       } else {
-        final newPrice = EnergyPrice(
-          userInfoId: userInfoId,
-          timestamp: startTime,
-          buyPrice: buyPrice,
-          sellPrice: sellPrice,
-          currency: 'PLN',
+        await EnergyPrice.db.insertRow(
+          session,
+          EnergyPrice(
+            userInfoId: userInfoId,
+            timestamp: startTime,
+            buyPrice: buyPrice,
+            sellPrice: sellPrice,
+            currency: 'PLN',
+          ),
         );
-        await EnergyPrice.db.insertRow(session, newPrice);
       }
+      stored++;
     }
-    
-    session.log('Successfully updated Pstryk prices.');
+
+    session.log('Pstryk: stored $stored price frames (today + tomorrow).');
+  }
+
+  static String _fmtUtc(DateTime dt) {
+    final iso = dt.toIso8601String();
+    final trimmed =
+        iso.contains('.') ? iso.substring(0, iso.indexOf('.')) : iso.replaceAll('Z', '');
+    return '${trimmed}Z';
   }
 }

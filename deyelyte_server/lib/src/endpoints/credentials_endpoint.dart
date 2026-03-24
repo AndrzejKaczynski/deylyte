@@ -56,12 +56,13 @@ class CredentialsEndpoint extends Endpoint {
         (c) => c.copyWith(solcastApiKey: apiKey, solcastSiteId: siteId));
   }
 
-  /// Save Pstryk energy pricing token.
+  /// Save Pstryk energy pricing token and enable the integration.
   Future<void> savePstryk(Session session, String token) async {
     final userInfoId = _requireUserInfoId(session);
     final existing = await _loadCredentials(session, userInfoId);
     await _upsert(session, userInfoId, existing,
         (c) => c.copyWith(pstrykToken: token));
+    await _setPstrykEnabled(session, userInfoId, true);
   }
 
   // ---------------------------------------------------------------------------
@@ -100,13 +101,14 @@ class CredentialsEndpoint extends Endpoint {
         (c) => c.copyWith(solcastApiKey: null, solcastSiteId: null));
   }
 
-  /// Remove Pstryk credentials.
+  /// Remove Pstryk credentials and disable the integration.
   Future<void> removePstryk(Session session) async {
     final userInfoId = _requireUserInfoId(session);
     final existing = await _loadCredentials(session, userInfoId);
     if (existing == null) return;
     await _upsert(session, userInfoId, existing,
         (c) => c.copyWith(pstrykToken: null));
+    await _setPstrykEnabled(session, userInfoId, false);
   }
 
   // ---------------------------------------------------------------------------
@@ -140,6 +142,18 @@ class CredentialsEndpoint extends Endpoint {
       session,
       where: (t) => t.userInfoId.equals(userInfoId),
     );
+  }
+
+  Future<void> _setPstrykEnabled(
+      Session session, int userInfoId, bool enabled) async {
+    final config = await AppConfig.db.findFirstRow(
+      session,
+      where: (t) => t.userInfoId.equals(userInfoId),
+    );
+    if (config != null) {
+      await AppConfig.db.updateRow(
+          session, config.copyWith(pstrykEnabled: enabled));
+    }
   }
 
   Future<void> _upsert(

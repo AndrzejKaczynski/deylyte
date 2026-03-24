@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../theme/theme.dart';
 import '../../components/components.dart';
 import '../../components/solcast_credentials_dialog.dart';
+import '../../components/pstryk_credentials_dialog.dart';
 import '../../providers/app_providers.dart';
 import '../../utils/date_format.dart';
 
@@ -16,6 +17,7 @@ class ApiIntegrationsCard extends ConsumerStatefulWidget {
     required this.pstryk,
     required this.cityName,
     required this.onSolcastChanged,
+    required this.onPstrykChanged,
     required this.onCityNameChanged,
   });
 
@@ -23,6 +25,7 @@ class ApiIntegrationsCard extends ConsumerStatefulWidget {
   final bool pstryk;
   final String? cityName;
   final ValueChanged<bool> onSolcastChanged;
+  final ValueChanged<bool> onPstrykChanged;
   final ValueChanged<String?> onCityNameChanged;
 
   @override
@@ -32,6 +35,7 @@ class ApiIntegrationsCard extends ConsumerStatefulWidget {
 
 class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
   bool _solcastBusy = false;
+  bool _pstrykBusy = false;
 
   /// Shows a confirmation dialog before disabling an integration.
   /// Returns true if the user confirmed, false if they cancelled.
@@ -70,6 +74,45 @@ class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
       ),
     );
     return confirmed == true;
+  }
+
+  Future<void> _onPstrykToggle(bool enable) async {
+    if (_pstrykBusy) return;
+    if (enable) {
+      bool saved = false;
+      await PstrykCredentialsDialog.show(
+        context,
+        onSave: (apiKey) async {
+          await ref.read(clientProvider).credentials.savePstryk(apiKey);
+          try {
+            await ref.read(clientProvider).price.triggerFetch();
+          } catch (e) {
+            await ref.read(clientProvider).credentials.removePstryk();
+            throw Exception('Could not connect to Pstryk: $e');
+          }
+          saved = true;
+        },
+      );
+      if (!saved || !mounted) return;
+      widget.onPstrykChanged(true);
+      ref.invalidate(integrationStatusProvider);
+      ref.invalidate(todayPricesProvider);
+    } else {
+      if (!mounted) return;
+      final confirmed = await _confirmDisable(context, 'Pstryk');
+      if (!confirmed || !mounted) return;
+      setState(() => _pstrykBusy = true);
+      try {
+        await ref.read(clientProvider).credentials.removePstryk();
+        if (mounted) {
+          widget.onPstrykChanged(false);
+          ref.invalidate(integrationStatusProvider);
+          ref.invalidate(todayPricesProvider);
+        }
+      } finally {
+        if (mounted) setState(() => _pstrykBusy = false);
+      }
+    }
   }
 
   Future<void> _onSolcastToggle(bool enable) async {
@@ -132,9 +175,9 @@ class _ApiIntegrationsCardState extends ConsumerState<ApiIntegrationsCard> {
         _IntegrationRow(
           icon: Icons.price_change_rounded,
           label: 'Pstryk Pricing Hub',
-          detail: widget.pstryk ? 'Prices loading hourly' : 'Managed by admin',
+          detail: widget.pstryk ? 'Prices loading hourly' : 'Not configured',
           enabled: widget.pstryk,
-          onChanged: null,
+          onChanged: _pstrykBusy ? null : _onPstrykToggle,
           color: AppColors.primary,
         ),
         const SizedBox(height: 16),
