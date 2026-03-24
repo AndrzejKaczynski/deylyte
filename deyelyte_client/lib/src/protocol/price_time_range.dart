@@ -19,7 +19,6 @@ abstract class PriceTimeRange implements _i1.SerializableModel {
     required this.hourStart,
     required this.hourEnd,
     required this.distributionRatePln,
-    this.sellRatePln,
   });
 
   factory PriceTimeRange({
@@ -28,7 +27,6 @@ abstract class PriceTimeRange implements _i1.SerializableModel {
     required int hourStart,
     required int hourEnd,
     required double distributionRatePln,
-    double? sellRatePln,
   }) = _PriceTimeRangeImpl;
 
   factory PriceTimeRange.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -39,7 +37,6 @@ abstract class PriceTimeRange implements _i1.SerializableModel {
       hourEnd: jsonSerialization['hourEnd'] as int,
       distributionRatePln: (jsonSerialization['distributionRatePln'] as num)
           .toDouble(),
-      sellRatePln: (jsonSerialization['sellRatePln'] as num?)?.toDouble(),
     );
   }
 
@@ -56,8 +53,6 @@ abstract class PriceTimeRange implements _i1.SerializableModel {
 
   double distributionRatePln;
 
-  double? sellRatePln;
-
   /// Returns a shallow copy of this [PriceTimeRange]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -67,7 +62,6 @@ abstract class PriceTimeRange implements _i1.SerializableModel {
     int? hourStart,
     int? hourEnd,
     double? distributionRatePln,
-    double? sellRatePln,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -78,7 +72,6 @@ abstract class PriceTimeRange implements _i1.SerializableModel {
       'hourStart': hourStart,
       'hourEnd': hourEnd,
       'distributionRatePln': distributionRatePln,
-      if (sellRatePln != null) 'sellRatePln': sellRatePln,
     };
   }
 
@@ -97,14 +90,12 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
     required int hourStart,
     required int hourEnd,
     required double distributionRatePln,
-    double? sellRatePln,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
          hourStart: hourStart,
          hourEnd: hourEnd,
          distributionRatePln: distributionRatePln,
-         sellRatePln: sellRatePln,
        );
 
   /// Returns a shallow copy of this [PriceTimeRange]
@@ -117,7 +108,6 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
     int? hourStart,
     int? hourEnd,
     double? distributionRatePln,
-    Object? sellRatePln = _Undefined,
   }) {
     return PriceTimeRange(
       id: id is int? ? id : this.id,
@@ -125,7 +115,6 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
       hourStart: hourStart ?? this.hourStart,
       hourEnd: hourEnd ?? this.hourEnd,
       distributionRatePln: distributionRatePln ?? this.distributionRatePln,
-      sellRatePln: sellRatePln is double? ? sellRatePln : this.sellRatePln,
     );
   }
 }

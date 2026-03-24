@@ -27,7 +27,6 @@ class PriceTimeRangesEndpoint extends Endpoint {
                 hourStart: r.hourStart,
                 hourEnd: r.hourEnd,
                 distributionRatePln: r.distributionRatePln,
-                sellRatePln: r.sellRatePln,
               ))
           .toList();
       await PriceTimeRange.db.insert(session, toInsert);

@@ -84,21 +84,27 @@ class PollEnergyPricesCall extends FutureCall {
     }
   }
 
-  /// Writes fixed buy/sell rates for the next 48 hours.
+  /// Writes fixed buy rates for the next 48 hours, with sell prices sourced from RCE.
   /// For each hour, finds the matching PriceTimeRange (if any);
-  /// falls back to config.fixedBuyRatePln / fixedSellRatePln if no range covers it.
+  /// falls back to config.fixedBuyRatePln if no range covers it.
+  /// Sell prices always use RCE market rates (Polish net-billing).
   Future<void> _writeFixedRates(
     Session session,
     AppConfig config,
     List<PriceTimeRange> ranges,
   ) async {
     final fallbackBuy = config.fixedBuyRatePln;
-    final fallbackSell = config.fixedSellRatePln;
     if (fallbackBuy == null && ranges.isEmpty) return;
 
     final userInfoId = config.userInfoId;
     final now = DateTime.now().toUtc();
     final hourStart = DateTime.utc(now.year, now.month, now.day, now.hour);
+
+    // Sell prices always come from RCE regardless of the fixed-rate setting.
+    final rceSellPrices = await RceClient(
+      userInfoId: userInfoId,
+      timeRanges: const [],
+    ).fetchSellPrices(session);
 
     for (int i = 0; i < 48; i++) {
       final ts = hourStart.add(Duration(hours: i));
@@ -117,8 +123,8 @@ class PollEnergyPricesCall extends FutureCall {
       }
 
       final buyRate = match?.distributionRatePln ?? fallbackBuy;
-      final sellRate = match?.sellRatePln ?? fallbackSell;
       if (buyRate == null) continue;
+      final sellRate = rceSellPrices[ts] ?? 0.0;
 
       final existing = await EnergyPrice.db.findFirstRow(
         session,
@@ -128,7 +134,7 @@ class PollEnergyPricesCall extends FutureCall {
 
       if (existing != null) {
         existing.buyPrice = buyRate;
-        existing.sellPrice = sellRate ?? 0.0;
+        existing.sellPrice = sellRate;
         await EnergyPrice.db.updateRow(session, existing);
       } else {
         await EnergyPrice.db.insertRow(
@@ -137,7 +143,7 @@ class PollEnergyPricesCall extends FutureCall {
             userInfoId: userInfoId,
             timestamp: ts,
             buyPrice: buyRate,
-            sellPrice: sellRate ?? 0.0,
+            sellPrice: sellRate,
             currency: 'PLN',
           ),
         );

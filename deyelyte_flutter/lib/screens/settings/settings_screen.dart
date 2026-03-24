@@ -221,11 +221,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   PricingSourceCard(
                     priceSource: settings.priceSource,
                     fixedBuyRate: settings.fixedBuyRatePln,
-                    fixedSellRate: settings.fixedSellRatePln,
                     priceTimeRanges: settings.priceTimeRanges,
                     onSourceChanged: notifier.setPriceSource,
                     onFixedBuyChanged: notifier.setFixedBuyRatePln,
-                    onFixedSellChanged: notifier.setFixedSellRatePln,
                     onRangesChanged: notifier.setPriceTimeRanges,
                   ),
                   const SizedBox(height: AppSpacing.sp4),
@@ -300,7 +298,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         longitude: existing?.longitude,
         priceSource: s.priceSource,
         fixedBuyRatePln: s.fixedBuyRatePln,
-        fixedSellRatePln: s.fixedSellRatePln,
         planningOnly: s.planningOnly,
         pstrykEnabled: existing?.pstrykEnabled ?? false,
       );

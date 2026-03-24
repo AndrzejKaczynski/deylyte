@@ -9,21 +9,17 @@ class PricingSourceCard extends StatefulWidget {
     super.key,
     required this.priceSource,
     required this.fixedBuyRate,
-    required this.fixedSellRate,
     required this.priceTimeRanges,
     required this.onSourceChanged,
     required this.onFixedBuyChanged,
-    required this.onFixedSellChanged,
     required this.onRangesChanged,
   });
 
   final String priceSource;
   final double? fixedBuyRate;
-  final double? fixedSellRate;
   final List<PriceTimeRange> priceTimeRanges;
   final ValueChanged<String> onSourceChanged;
   final ValueChanged<double?> onFixedBuyChanged;
-  final ValueChanged<double?> onFixedSellChanged;
   final ValueChanged<List<PriceTimeRange>> onRangesChanged;
 
   @override
@@ -32,30 +28,24 @@ class PricingSourceCard extends StatefulWidget {
 
 class _PricingSourceCardState extends State<PricingSourceCard> {
   late final TextEditingController _fixedBuyCtrl;
-  late final TextEditingController _fixedSellCtrl;
 
   @override
   void initState() {
     super.initState();
     _fixedBuyCtrl = TextEditingController(
         text: widget.fixedBuyRate?.toStringAsFixed(4) ?? '');
-    _fixedSellCtrl = TextEditingController(
-        text: widget.fixedSellRate?.toStringAsFixed(4) ?? '');
   }
 
   @override
   void dispose() {
     _fixedBuyCtrl.dispose();
-    _fixedSellCtrl.dispose();
     super.dispose();
   }
 
   void _addRange() async {
     final result = await showDialog<PriceTimeRange>(
       context: context,
-      builder: (_) => _RangeEditorDialog(
-        showSellRate: widget.priceSource == 'fixed',
-      ),
+      builder: (_) => const _RangeEditorDialog(),
     );
     if (result != null) {
       widget.onRangesChanged([...widget.priceTimeRanges, result]);
@@ -87,10 +77,24 @@ class _PricingSourceCardState extends State<PricingSourceCard> {
             'pstryk' => 'Hourly buy/sell prices from the Pstryk API.',
             'rce' =>
               'RCE wholesale market prices (PSE) plus per-range distribution charges.',
-            _ => 'Fixed buy/sell rates, optionally varied by time range.',
+            _ => 'Fixed buy rates, optionally varied by time range.',
           },
           style: tt.bodySmall?.copyWith(color: AppColors.outline),
         ),
+        if (widget.priceSource == 'rce' || widget.priceSource == 'fixed') ...[
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Icon(Icons.info_outline_rounded,
+                size: 13, color: AppColors.outline),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                'Sell prices always use RCE market rates regardless of this setting.',
+                style: tt.bodySmall?.copyWith(color: AppColors.outline),
+              ),
+            ),
+          ]),
+        ],
 
         // ── Fixed: fallback rates ──────────────────────────────────────────
         if (widget.priceSource == 'fixed' || widget.priceSource == 'manual') ...[
@@ -109,14 +113,6 @@ class _PricingSourceCardState extends State<PricingSourceCard> {
             onChanged: (v) => widget.onFixedBuyChanged(v),
           ),
           const SizedBox(height: 12),
-          PriceField(
-            label: 'Sell rate',
-            controller: _fixedSellCtrl,
-            suffix: 'PLN/kWh',
-            hint: '0.0000',
-            detail: 'Default sell price when no time range covers that hour.',
-            onChanged: (v) => widget.onFixedSellChanged(v),
-          ),
         ],
 
         // ── RCE / Fixed: time ranges ───────────────────────────────────────
@@ -134,7 +130,7 @@ class _PricingSourceCardState extends State<PricingSourceCard> {
           Text(
             widget.priceSource == 'rce'
                 ? 'Each range adds a distribution charge on top of the RCE price for those hours.'
-                : 'Each range sets buy (and optionally sell) rates for those hours.',
+                : 'Each range sets a buy rate for those hours.',
             style: tt.bodySmall?.copyWith(color: AppColors.outline),
           ),
           const SizedBox(height: 8),
@@ -150,9 +146,6 @@ class _PricingSourceCardState extends State<PricingSourceCard> {
             ...widget.priceTimeRanges.asMap().entries.map((entry) {
               final i = entry.key;
               final r = entry.value;
-              final sellLabel = r.sellRatePln != null
-                  ? ' / sell ${r.sellRatePln!.toStringAsFixed(4)}'
-                  : '';
               return Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Container(
@@ -167,7 +160,7 @@ class _PricingSourceCardState extends State<PricingSourceCard> {
                       child: Text(
                         'Hour ${r.hourStart.toString().padLeft(2, '0')}–'
                         '${r.hourEnd.toString().padLeft(2, '0')}  '
-                        '${r.distributionRatePln.toStringAsFixed(4)} PLN/kWh$sellLabel',
+                        '${r.distributionRatePln.toStringAsFixed(4)} PLN/kWh',
                         style: tt.bodySmall,
                       ),
                     ),
@@ -255,8 +248,7 @@ class _PriceSourcePicker extends StatelessWidget {
 }
 
 class _RangeEditorDialog extends StatefulWidget {
-  const _RangeEditorDialog({required this.showSellRate});
-  final bool showSellRate;
+  const _RangeEditorDialog();
 
   @override
   State<_RangeEditorDialog> createState() => _RangeEditorDialogState();
@@ -266,14 +258,12 @@ class _RangeEditorDialogState extends State<_RangeEditorDialog> {
   final _fromCtrl = TextEditingController();
   final _toCtrl = TextEditingController();
   final _rateCtrl = TextEditingController();
-  final _sellCtrl = TextEditingController();
 
   @override
   void dispose() {
     _fromCtrl.dispose();
     _toCtrl.dispose();
     _rateCtrl.dispose();
-    _sellCtrl.dispose();
     super.dispose();
   }
 
@@ -306,23 +296,9 @@ class _RangeEditorDialogState extends State<_RangeEditorDialog> {
           controller: _rateCtrl,
           suffix: 'PLN/kWh',
           hint: '0.0000',
-          detail: widget.showSellRate
-              ? 'Buy rate for this window.'
-              : 'Distribution charge for this window.',
+          detail: 'Buy rate for this window.',
           onChanged: (_) {},
         ),
-        if (widget.showSellRate) ...[
-          const SizedBox(height: 12),
-          PriceField(
-            label: 'Sell rate (optional)',
-            controller: _sellCtrl,
-            suffix: 'PLN/kWh',
-            hint: '0.0000',
-            optional: true,
-            detail: 'Sell rate for this window.',
-            onChanged: (_) {},
-          ),
-        ],
       ]),
       actions: [
         TextButton(
@@ -335,13 +311,11 @@ class _RangeEditorDialogState extends State<_RangeEditorDialog> {
             final to = int.tryParse(_toCtrl.text);
             final rate = double.tryParse(_rateCtrl.text);
             if (from == null || to == null || rate == null) return;
-            final sellRate = double.tryParse(_sellCtrl.text);
             Navigator.of(context).pop(PriceTimeRange(
               userInfoId: 0, // server overwrites
               hourStart: from,
               hourEnd: to,
               distributionRatePln: rate,
-              sellRatePln: sellRate,
             ));
           },
           style: FilledButton.styleFrom(

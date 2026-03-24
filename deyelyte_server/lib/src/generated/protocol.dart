@@ -243,12 +243,6 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'double?',
         ),
         _i2.ColumnDefinition(
-          name: 'fixedSellRatePln',
-          columnType: _i2.ColumnType.doublePrecision,
-          isNullable: true,
-          dartType: 'double?',
-        ),
-        _i2.ColumnDefinition(
           name: 'energyVatRate',
           columnType: _i2.ColumnType.doublePrecision,
           isNullable: true,
@@ -1179,12 +1173,6 @@ class Protocol extends _i1.SerializationManagerServer {
           columnType: _i2.ColumnType.doublePrecision,
           isNullable: false,
           dartType: 'double',
-        ),
-        _i2.ColumnDefinition(
-          name: 'sellRatePln',
-          columnType: _i2.ColumnType.doublePrecision,
-          isNullable: true,
-          dartType: 'double?',
         ),
       ],
       foreignKeys: [],

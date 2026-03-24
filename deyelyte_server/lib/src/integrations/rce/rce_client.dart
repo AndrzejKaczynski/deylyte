@@ -48,6 +48,44 @@ class RceClient {
     await _fetchDay(session, now.add(const Duration(days: 1)));
   }
 
+  /// Returns RCE sell prices (PLN/kWh) keyed by UTC timestamp for the next 48 h.
+  /// Used by 'fixed' mode to source sell prices from RCE while buy prices stay fixed.
+  Future<Map<DateTime, double>> fetchSellPrices(Session session) async {
+    final now = DateTime.now().toUtc();
+    final result = <DateTime, double>{};
+    result.addAll(await _fetchSellPricesForDay(session, now));
+    result.addAll(await _fetchSellPricesForDay(session, now.add(const Duration(days: 1))));
+    return result;
+  }
+
+  Future<Map<DateTime, double>> _fetchSellPricesForDay(
+      Session session, DateTime date) async {
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final uri = Uri.parse("$_baseUrl?\$filter=doba eq '$dateStr'");
+
+    final response =
+        await http.get(uri, headers: {'Accept': 'application/json'});
+
+    if (response.statusCode != 200) {
+      session.log(
+        'RCE: sell-price fetch failed for $dateStr — HTTP ${response.statusCode}',
+        level: LogLevel.warning,
+      );
+      return {};
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final values = data['value'] as List?;
+    if (values == null || values.isEmpty) return {};
+
+    return {
+      for (final item in values)
+        DateTime.utc(date.year, date.month, date.day, (item['periodId'] as int) - 1):
+            (item['rce_pln'] as num).toDouble() / 1000.0,
+    };
+  }
+
   Future<void> _fetchDay(Session session, DateTime date) async {
     final dateStr =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';

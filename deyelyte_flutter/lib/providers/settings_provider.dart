@@ -15,7 +15,6 @@ class SettingsState {
     this.cityName,
     this.priceSource = 'pstryk',
     this.fixedBuyRatePln,
-    this.fixedSellRatePln,
     this.priceTimeRanges = const [],
     this.baselineChargingEnabled,
     this.baselineSellingEnabled,
@@ -58,9 +57,6 @@ class SettingsState {
   /// Fixed buy rate (PLN/kWh). Used when priceSource = 'fixed' as fallback.
   final double? fixedBuyRatePln;
 
-  /// Fixed sell rate (PLN/kWh). Used when priceSource = 'fixed' as fallback.
-  final double? fixedSellRatePln;
-
   /// User-defined price time ranges (for RCE distribution or fixed per-hour rates).
   final List<PriceTimeRange> priceTimeRanges;
 
@@ -87,7 +83,7 @@ class SettingsState {
         return priceTimeRanges.isNotEmpty; // requires at least one distribution charge range
       case 'fixed':
       case 'manual':
-        return fixedBuyRatePln != null && fixedSellRatePln != null;
+        return fixedBuyRatePln != null;
       default:
         return false;
     }
@@ -106,7 +102,6 @@ class SettingsState {
     Object? cityName = _sentinel,
     String? priceSource,
     Object? fixedBuyRatePln = _sentinel,
-    Object? fixedSellRatePln = _sentinel,
     List<PriceTimeRange>? priceTimeRanges,
     Object? baselineChargingEnabled = _sentinel,
     Object? baselineSellingEnabled = _sentinel,
@@ -131,9 +126,6 @@ class SettingsState {
         fixedBuyRatePln: fixedBuyRatePln == _sentinel
             ? this.fixedBuyRatePln
             : fixedBuyRatePln as double?,
-        fixedSellRatePln: fixedSellRatePln == _sentinel
-            ? this.fixedSellRatePln
-            : fixedSellRatePln as double?,
         priceTimeRanges: priceTimeRanges ?? this.priceTimeRanges,
         baselineChargingEnabled: baselineChargingEnabled == _sentinel
             ? this.baselineChargingEnabled
@@ -173,8 +165,6 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setPriceSource(String v) => state = state.copyWith(priceSource: v);
   void setFixedBuyRatePln(double? v) =>
       state = state.copyWith(fixedBuyRatePln: v);
-  void setFixedSellRatePln(double? v) =>
-      state = state.copyWith(fixedSellRatePln: v);
   void setPriceTimeRanges(List<PriceTimeRange> v) =>
       state = state.copyWith(priceTimeRanges: v);
 
@@ -195,7 +185,6 @@ class SettingsNotifier extends Notifier<SettingsState> {
         cityName: c.cityName,
         priceSource: c.priceSource ?? 'pstryk',
         fixedBuyRatePln: c.fixedBuyRatePln,
-        fixedSellRatePln: c.fixedSellRatePln,
         priceTimeRanges: state.priceTimeRanges,
         solcast: state.solcast, // managed separately via loadIntegrationStatus
         pstryk: c.pstrykEnabled,

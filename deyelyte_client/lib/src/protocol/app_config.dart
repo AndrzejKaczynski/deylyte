@@ -35,7 +35,6 @@ abstract class AppConfig implements _i1.SerializableModel {
     this.longitude,
     this.priceSource,
     this.fixedBuyRatePln,
-    this.fixedSellRatePln,
     this.energyVatRate,
     required this.planningOnly,
     required this.pstrykEnabled,
@@ -70,7 +69,6 @@ abstract class AppConfig implements _i1.SerializableModel {
     double? longitude,
     String? priceSource,
     double? fixedBuyRatePln,
-    double? fixedSellRatePln,
     double? energyVatRate,
     required bool planningOnly,
     required bool pstrykEnabled,
@@ -125,8 +123,6 @@ abstract class AppConfig implements _i1.SerializableModel {
       longitude: (jsonSerialization['longitude'] as num?)?.toDouble(),
       priceSource: jsonSerialization['priceSource'] as String?,
       fixedBuyRatePln: (jsonSerialization['fixedBuyRatePln'] as num?)
-          ?.toDouble(),
-      fixedSellRatePln: (jsonSerialization['fixedSellRatePln'] as num?)
           ?.toDouble(),
       energyVatRate: (jsonSerialization['energyVatRate'] as num?)?.toDouble(),
       planningOnly: _i1.BoolJsonExtension.fromJson(
@@ -202,8 +198,6 @@ abstract class AppConfig implements _i1.SerializableModel {
 
   double? fixedBuyRatePln;
 
-  double? fixedSellRatePln;
-
   double? energyVatRate;
 
   bool planningOnly;
@@ -249,7 +243,6 @@ abstract class AppConfig implements _i1.SerializableModel {
     double? longitude,
     String? priceSource,
     double? fixedBuyRatePln,
-    double? fixedSellRatePln,
     double? energyVatRate,
     bool? planningOnly,
     bool? pstrykEnabled,
@@ -288,7 +281,6 @@ abstract class AppConfig implements _i1.SerializableModel {
       if (longitude != null) 'longitude': longitude,
       if (priceSource != null) 'priceSource': priceSource,
       if (fixedBuyRatePln != null) 'fixedBuyRatePln': fixedBuyRatePln,
-      if (fixedSellRatePln != null) 'fixedSellRatePln': fixedSellRatePln,
       if (energyVatRate != null) 'energyVatRate': energyVatRate,
       'planningOnly': planningOnly,
       'pstrykEnabled': pstrykEnabled,
@@ -338,7 +330,6 @@ class _AppConfigImpl extends AppConfig {
     double? longitude,
     String? priceSource,
     double? fixedBuyRatePln,
-    double? fixedSellRatePln,
     double? energyVatRate,
     required bool planningOnly,
     required bool pstrykEnabled,
@@ -371,7 +362,6 @@ class _AppConfigImpl extends AppConfig {
          longitude: longitude,
          priceSource: priceSource,
          fixedBuyRatePln: fixedBuyRatePln,
-         fixedSellRatePln: fixedSellRatePln,
          energyVatRate: energyVatRate,
          planningOnly: planningOnly,
          pstrykEnabled: pstrykEnabled,
@@ -410,7 +400,6 @@ class _AppConfigImpl extends AppConfig {
     Object? longitude = _Undefined,
     Object? priceSource = _Undefined,
     Object? fixedBuyRatePln = _Undefined,
-    Object? fixedSellRatePln = _Undefined,
     Object? energyVatRate = _Undefined,
     bool? planningOnly,
     bool? pstrykEnabled,
@@ -463,9 +452,6 @@ class _AppConfigImpl extends AppConfig {
       fixedBuyRatePln: fixedBuyRatePln is double?
           ? fixedBuyRatePln
           : this.fixedBuyRatePln,
-      fixedSellRatePln: fixedSellRatePln is double?
-          ? fixedSellRatePln
-          : this.fixedSellRatePln,
       energyVatRate: energyVatRate is double?
           ? energyVatRate
           : this.energyVatRate,

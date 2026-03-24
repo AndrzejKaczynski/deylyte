@@ -20,7 +20,6 @@ abstract class PriceTimeRange
     required this.hourStart,
     required this.hourEnd,
     required this.distributionRatePln,
-    this.sellRatePln,
   });
 
   factory PriceTimeRange({
@@ -29,7 +28,6 @@ abstract class PriceTimeRange
     required int hourStart,
     required int hourEnd,
     required double distributionRatePln,
-    double? sellRatePln,
   }) = _PriceTimeRangeImpl;
 
   factory PriceTimeRange.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -40,7 +38,6 @@ abstract class PriceTimeRange
       hourEnd: jsonSerialization['hourEnd'] as int,
       distributionRatePln: (jsonSerialization['distributionRatePln'] as num)
           .toDouble(),
-      sellRatePln: (jsonSerialization['sellRatePln'] as num?)?.toDouble(),
     );
   }
 
@@ -59,8 +56,6 @@ abstract class PriceTimeRange
 
   double distributionRatePln;
 
-  double? sellRatePln;
-
   @override
   _i1.Table<int?> get table => t;
 
@@ -73,7 +68,6 @@ abstract class PriceTimeRange
     int? hourStart,
     int? hourEnd,
     double? distributionRatePln,
-    double? sellRatePln,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -84,7 +78,6 @@ abstract class PriceTimeRange
       'hourStart': hourStart,
       'hourEnd': hourEnd,
       'distributionRatePln': distributionRatePln,
-      if (sellRatePln != null) 'sellRatePln': sellRatePln,
     };
   }
 
@@ -97,7 +90,6 @@ abstract class PriceTimeRange
       'hourStart': hourStart,
       'hourEnd': hourEnd,
       'distributionRatePln': distributionRatePln,
-      if (sellRatePln != null) 'sellRatePln': sellRatePln,
     };
   }
 
@@ -140,14 +132,12 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
     required int hourStart,
     required int hourEnd,
     required double distributionRatePln,
-    double? sellRatePln,
   }) : super._(
          id: id,
          userInfoId: userInfoId,
          hourStart: hourStart,
          hourEnd: hourEnd,
          distributionRatePln: distributionRatePln,
-         sellRatePln: sellRatePln,
        );
 
   /// Returns a shallow copy of this [PriceTimeRange]
@@ -160,7 +150,6 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
     int? hourStart,
     int? hourEnd,
     double? distributionRatePln,
-    Object? sellRatePln = _Undefined,
   }) {
     return PriceTimeRange(
       id: id is int? ? id : this.id,
@@ -168,7 +157,6 @@ class _PriceTimeRangeImpl extends PriceTimeRange {
       hourStart: hourStart ?? this.hourStart,
       hourEnd: hourEnd ?? this.hourEnd,
       distributionRatePln: distributionRatePln ?? this.distributionRatePln,
-      sellRatePln: sellRatePln is double? ? sellRatePln : this.sellRatePln,
     );
   }
 }
@@ -196,11 +184,6 @@ class PriceTimeRangeUpdateTable extends _i1.UpdateTable<PriceTimeRangeTable> {
         table.distributionRatePln,
         value,
       );
-
-  _i1.ColumnValue<double, double> sellRatePln(double? value) => _i1.ColumnValue(
-    table.sellRatePln,
-    value,
-  );
 }
 
 class PriceTimeRangeTable extends _i1.Table<int?> {
@@ -223,10 +206,6 @@ class PriceTimeRangeTable extends _i1.Table<int?> {
       'distributionRatePln',
       this,
     );
-    sellRatePln = _i1.ColumnDouble(
-      'sellRatePln',
-      this,
-    );
   }
 
   late final PriceTimeRangeUpdateTable updateTable;
@@ -239,8 +218,6 @@ class PriceTimeRangeTable extends _i1.Table<int?> {
 
   late final _i1.ColumnDouble distributionRatePln;
 
-  late final _i1.ColumnDouble sellRatePln;
-
   @override
   List<_i1.Column> get columns => [
     id,
@@ -248,7 +225,6 @@ class PriceTimeRangeTable extends _i1.Table<int?> {
     hourStart,
     hourEnd,
     distributionRatePln,
-    sellRatePln,
   ];
 }
 

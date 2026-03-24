@@ -45,6 +45,7 @@ optimizer:
   - getOutageReserves:
 price:
   - updatePrices:
+  - triggerFetch:
   - getTodayPrices:
 priceTimeRanges:
   - getTimeRanges:

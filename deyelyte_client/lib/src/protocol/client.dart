@@ -191,7 +191,7 @@ class EndpointCredentials extends _i1.EndpointRef {
     },
   );
 
-  /// Save Pstryk energy pricing token.
+  /// Save Pstryk energy pricing token and enable the integration.
   _i2.Future<void> savePstryk(String token) => caller.callServerEndpoint<void>(
     'credentials',
     'savePstryk',
@@ -212,7 +212,7 @@ class EndpointCredentials extends _i1.EndpointRef {
     {},
   );
 
-  /// Remove Pstryk credentials.
+  /// Remove Pstryk credentials and disable the integration.
   _i2.Future<void> removePstryk() => caller.callServerEndpoint<void>(
     'credentials',
     'removePstryk',
@@ -477,13 +477,13 @@ class EndpointPrice extends _i1.EndpointRef {
     },
   );
 
-  /// Fetches prices immediately using the stored Pstryk token.
-  /// Used after saving credentials to verify they are valid.
+  /// Fetches prices immediately using the authenticated user's stored Pstryk token.
+  /// Used after saving credentials to verify they are valid and populate initial data.
   _i2.Future<void> triggerFetch() => caller.callServerEndpoint<void>(
-        'price',
-        'triggerFetch',
-        {},
-      );
+    'price',
+    'triggerFetch',
+    {},
+  );
 
   /// Returns today's energy prices (UTC day boundary) for the authenticated user.
   _i2.Future<List<_i7.EnergyPrice>> getTodayPrices() =>
