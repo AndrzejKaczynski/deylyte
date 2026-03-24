@@ -13,10 +13,4 @@ class ServerpodHistoryRepository implements HistoryRepository {
     final json = await _client.history.getSummary(from.toUtc(), to.toUtc());
     return jsonDecode(json) as Map<String, dynamic>;
   }
-
-  @override
-  Future<List<Map<String, dynamic>>> getEvents(DateTime from, DateTime to) async {
-    final json = await _client.history.getEvents(from.toUtc(), to.toUtc());
-    return (jsonDecode(json) as List).cast<Map<String, dynamic>>();
-  }
 }

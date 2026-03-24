@@ -7,7 +7,6 @@ import 'history_header.dart';
 import 'history_kpi_row.dart';
 import 'history_day_navigator.dart';
 import 'net_profit_card.dart';
-import 'recent_events_card.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -45,8 +44,6 @@ class HistoryScreen extends ConsumerWidget {
                 primary: _HistoryChartSection(),
                 sidebar: Column(children: [
                   NetProfitCard(),
-                  SizedBox(height: AppSpacing.sp4),
-                  RecentEventsCard(),
                 ]),
               ),
             ],

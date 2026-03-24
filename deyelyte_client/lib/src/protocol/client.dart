@@ -355,19 +355,6 @@ class EndpointHistory extends _i1.EndpointRef {
       'to': to,
     },
   );
-
-  /// Notable events for [from]..[to]. Stub — returns empty list.
-  _i2.Future<String> getEvents(
-    DateTime from,
-    DateTime to,
-  ) => caller.callServerEndpoint<String>(
-    'history',
-    'getEvents',
-    {
-      'from': from,
-      'to': to,
-    },
-  );
 }
 
 /// License key validation. Called during onboarding (user is authenticated

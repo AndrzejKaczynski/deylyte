@@ -309,14 +309,4 @@ class HistoryEndpoint extends Endpoint {
   static double _r2(double v) => double.parse(v.toStringAsFixed(2));
   static double _r4(double v) => double.parse(v.toStringAsFixed(4));
 
-  // ── Events ────────────────────────────────────────────────────────────────
-
-  /// Notable events for [from]..[to]. Stub — returns empty list.
-  Future<String> getEvents(
-    Session session,
-    DateTime from,
-    DateTime to,
-  ) async {
-    return jsonEncode([]);
-  }
 }

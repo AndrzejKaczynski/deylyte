@@ -33,7 +33,6 @@ history:
   - getDayData:
   - getPeriodData:
   - getSummary:
-  - getEvents:
 license:
   - validate:
   - getUserLicense:

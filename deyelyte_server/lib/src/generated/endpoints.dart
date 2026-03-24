@@ -603,31 +603,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['to'],
                   ),
         ),
-        'getEvents': _i1.MethodConnector(
-          name: 'getEvents',
-          params: {
-            'from': _i1.ParameterDescription(
-              name: 'from',
-              type: _i1.getType<DateTime>(),
-              nullable: false,
-            ),
-            'to': _i1.ParameterDescription(
-              name: 'to',
-              type: _i1.getType<DateTime>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['history'] as _i9.HistoryEndpoint).getEvents(
-                    session,
-                    params['from'],
-                    params['to'],
-                  ),
-        ),
       },
     );
     connectors['license'] = _i1.EndpointConnector(

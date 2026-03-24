@@ -50,24 +50,3 @@ final Map<String, dynamic> mockHistorySummary = {
   'storageEfficiencyPercent': 94.0,
   'peakDemandKw': 4.2,
 };
-
-final List<Map<String, dynamic>> mockHistoryEvents = [
-  {
-    'type': 'feed_in',
-    'label': 'Feed-in Export',
-    'valuePln': 18.40,
-    'timestamp': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
-  },
-  {
-    'type': 'charge',
-    'label': 'Smart Charging',
-    'valuePln': -4.20,
-    'timestamp': DateTime.now().subtract(const Duration(hours: 8)).toIso8601String(),
-  },
-  {
-    'type': 'peak_shaving',
-    'label': 'Peak Shaving',
-    'valuePln': 6.80,
-    'timestamp': DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
-  },
-];

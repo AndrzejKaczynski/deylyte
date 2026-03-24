@@ -294,9 +294,3 @@ final historySummaryProvider = FutureProvider.family<Map<String, dynamic>,
     ({DateTime from, DateTime to})>((ref, range) {
   return ref.read(historyRepositoryProvider).getSummary(range.from, range.to);
 });
-
-/// History events for a date range.
-final historyEventsProvider = FutureProvider.family<List<Map<String, dynamic>>,
-    ({DateTime from, DateTime to})>((ref, range) {
-  return ref.read(historyRepositoryProvider).getEvents(range.from, range.to);
-});
