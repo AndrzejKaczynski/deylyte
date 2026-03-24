@@ -12,6 +12,7 @@ class _HourData {
     required this.hour,
     required this.pvKw,
     required this.pvIsActual,
+    this.pvActualKw,
     this.buyPrice,
     this.sellPrice,
     this.socPct,
@@ -20,6 +21,7 @@ class _HourData {
   final int hour; // 0-23 local time
   final double pvKw; // kW — actual measurement for past hours, forecast for future
   final bool pvIsActual; // true = measured telemetry, false = forecast estimate
+  final double? pvActualKw; // partial actual reading for the current hour only
   final double? buyPrice; // PLN/kWh
   final double? sellPrice;
   final double? socPct; // 0-100
@@ -105,12 +107,18 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
       } else {
         pvKw = 0.0;
       }
+      // For the current hour: also capture partial actual so the bar can show
+      // both forecast height and real intake simultaneously.
+      final double? pvActualKw = (h == nowHour && actualPvCount[h] > 0)
+          ? (actualPvSum[h] / actualPvCount[h] / 1000.0).clamp(0.0, double.infinity)
+          : null;
       final price = priceByHour[h];
       final frame = frameByHour[h];
       return _HourData(
         hour: h,
         pvKw: pvKw,
         pvIsActual: isActual,
+        pvActualKw: pvActualKw,
         buyPrice: price?.buyPrice,
         sellPrice: price?.sellPrice,
         socPct: frame?.estimatedSocAtStart,
@@ -144,18 +152,7 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
     final hours = _buildHours(forecast, prices, frames, telemetry);
     final peak = hours.fold(0.0, (m, h) => h.pvKw > m ? h.pvKw : m);
 
-    // Today's total PV estimate (kWh) across all 30-min periods
     final now = DateTime.now().toLocal();
-    final todayMidnight = DateTime(now.year, now.month, now.day);
-    final tomorrowMidnight = todayMidnight.add(const Duration(days: 1));
-    final todayForecastKwh = forecast.fold(0.0, (sum, r) {
-      final t = r.timestamp.toLocal();
-      if (t.isBefore(todayMidnight) || !t.isBefore(tomorrowMidnight)) {
-        return sum;
-      }
-      return sum + r.expectedYieldWatts * 0.5 / 1000;
-    });
-
     final nowHour = now.hour;
     final hoveredData = _hoveredHour != null ? hours[_hoveredHour!] : null;
 
@@ -180,27 +177,6 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
                   ],
                 ),
               ),
-              if (todayForecastKwh > 0)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.tertiary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.wb_sunny_rounded,
-                        size: 12, color: AppColors.tertiary),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${todayForecastKwh.toStringAsFixed(1)} kWh est.',
-                      style: tt.labelSmall?.copyWith(
-                        color: AppColors.tertiary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ]),
-                ),
             ],
           ),
 
@@ -299,10 +275,13 @@ class _ForecastBarCardState extends ConsumerState<ForecastBarCard> {
                             ),
                             if (_layers.showPv)
                               _TipChip(
-                                label: hoveredData.pvKw > 0
-                                    ? '${hoveredData.pvKw.toStringAsFixed(2)} kW '
-                                        '${hoveredData.pvIsActual ? 'solar (actual)' : 'solar (est.)'}'
-                                    : 'No solar',
+                                label: hoveredData.pvActualKw != null
+                                    ? '${hoveredData.pvActualKw!.toStringAsFixed(2)} kW actual'
+                                        ' · ${hoveredData.pvKw.toStringAsFixed(2)} kW forecast'
+                                    : hoveredData.pvKw > 0
+                                        ? '${hoveredData.pvKw.toStringAsFixed(2)} kW '
+                                            '${hoveredData.pvIsActual ? 'solar' : 'solar (est.)'}'
+                                        : 'No solar',
                                 color: AppColors.tertiary,
                               ),
                             if (_layers.showPrice &&
@@ -559,21 +538,64 @@ class _DailyPlanPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // 4 ── PV bars: solid amber = actual telemetry, lighter = forecast
+    // 4 ── PV bars: solid fill = actual telemetry, lighter fill + border = forecast
+    // Current hour: forecast bar (light + border) with actual intake overlaid (solid).
     if (layers.showPv && peak > 0) {
       final actualPaint = Paint()..color = AppColors.tertiary.withValues(alpha: 0.90);
-      final forecastPaint = Paint()..color = AppColors.tertiary.withValues(alpha: 0.45);
+      final forecastFill = Paint()..color = AppColors.tertiary.withValues(alpha: 0.20);
+      final forecastBorder = Paint()
+        ..color = AppColors.tertiary.withValues(alpha: 0.60)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
       for (var i = 0; i < _n; i++) {
-        final kw = hours[i].pvKw;
+        final d = hours[i];
+        final kw = d.pvKw;
         if (kw <= 0) continue;
         final barH = (kw / peak).clamp(0.0, 1.0) * chartH;
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(i * colW + 2, chartH - barH, colW - 4, barH),
-            const Radius.circular(3),
-          ),
-          hours[i].pvIsActual ? actualPaint : forecastPaint,
+        final rrect = RRect.fromRectAndRadius(
+          Rect.fromLTWH(i * colW + 2, chartH - barH, colW - 4, barH),
+          const Radius.circular(3),
         );
+        if (d.pvActualKw != null) {
+          // Current hour: forecast outline, then actual solid fill on top
+          canvas.drawRRect(rrect, forecastFill);
+          canvas.drawRRect(rrect, forecastBorder);
+          final actualH = (d.pvActualKw! / peak).clamp(0.0, 1.0) * chartH;
+          if (actualH > 0) {
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                Rect.fromLTWH(i * colW + 2, chartH - actualH, colW - 4, actualH),
+                const Radius.circular(3),
+              ),
+              actualPaint,
+            );
+            // White glowing line marking where actual intake ends —
+            // only shown when actual is below forecast (progress not yet complete)
+            if (actualH < barH) {
+              final tickY = chartH - actualH;
+              canvas.drawLine(
+                Offset(i * colW + 2, tickY),
+                Offset(i * colW + colW - 2, tickY),
+                Paint()
+                  ..color = Colors.white.withValues(alpha: 0.45)
+                  ..strokeWidth = 4
+                  ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+              );
+              canvas.drawLine(
+                Offset(i * colW + 2, tickY),
+                Offset(i * colW + colW - 2, tickY),
+                Paint()
+                  ..color = Colors.white.withValues(alpha: 0.90)
+                  ..strokeWidth = 1.5,
+              );
+            }
+          }
+        } else if (d.pvIsActual) {
+          canvas.drawRRect(rrect, actualPaint);
+        } else {
+          canvas.drawRRect(rrect, forecastFill);
+          canvas.drawRRect(rrect, forecastBorder);
+        }
       }
     }
 
@@ -646,14 +668,14 @@ class _DailyPlanPainter extends CustomPainter {
       }
     }
 
-    // 7 ── "Now" dashed vertical marker
+    // 7 ── "Now" dashed vertical marker (full chart height)
     final nowX = nowHour * colW + colW / 2;
     final nowPaint = Paint()
       ..color = AppColors.onSurface.withValues(alpha: 0.35)
       ..strokeWidth = 1;
     var dashY = 0.0;
-    while (dashY < chartH) {
-      final end = (dashY + 4.0).clamp(0.0, chartH);
+    while (dashY < size.height) {
+      final end = (dashY + 4.0).clamp(0.0, size.height);
       canvas.drawLine(Offset(nowX, dashY), Offset(nowX, end), nowPaint);
       dashY += 7.0;
     }
