@@ -1402,13 +1402,6 @@
           "columnType": 6,
           "isNullable": false,
           "dartType": "int"
-        },
-        {
-          "__className__": "serverpod.ColumnDefinition",
-          "name": "historyDurationDays",
-          "columnType": 6,
-          "isNullable": false,
-          "dartType": "int"
         }
       ],
       "foreignKeys": [],
@@ -3415,7 +3408,7 @@
     {
       "__className__": "serverpod.DatabaseMigrationVersion",
       "module": "deyelyte",
-      "version": "20260324130946697"
+      "version": "20260324171748605"
     },
     {
       "__className__": "serverpod.DatabaseMigrationVersion",

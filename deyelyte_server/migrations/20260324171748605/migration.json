@@ -1456,13 +1456,6 @@
             "columnType": 6,
             "isNullable": false,
             "dartType": "int"
-          },
-          {
-            "__className__": "serverpod.ColumnDefinition",
-            "name": "historyDurationDays",
-            "columnType": 6,
-            "isNullable": false,
-            "dartType": "int"
           }
         ],
         "foreignKeys": [],

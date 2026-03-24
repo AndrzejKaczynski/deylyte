@@ -12,7 +12,34 @@ void run(List<String> args) async {
     args,
     Protocol(),
     Endpoints(),
-    authenticationHandler: auth.authenticationHandler,
+    authenticationHandler: (session, key) async {
+      final result = await auth.authenticationHandler(session, key);
+      if (result == null) return null;
+
+      // Enforce 30-day token expiry. The createdAt column is added by
+      // _ensureAuthKeySchema() at startup; if it doesn't exist yet
+      // (first boot race), let the request through.
+      final keyId = int.tryParse(result.authId);
+      if (keyId == null) return result;
+
+      try {
+        final rows = await session.db.unsafeQuery(
+          'SELECT "createdAt" FROM "serverpod_auth_key" WHERE "id" = $keyId',
+        );
+        if (rows.isNotEmpty && rows.first.first != null) {
+          final createdAt = rows.first.first as DateTime;
+          if (DateTime.now().toUtc().difference(createdAt).inDays > 30) {
+            await session.db.unsafeExecute(
+              'DELETE FROM "serverpod_auth_key" WHERE "id" = $keyId',
+            );
+            return null;
+          }
+        }
+      } catch (_) {
+        // Column may not exist on first boot before _ensureAuthKeySchema runs.
+      }
+      return result;
+    },
   );
 
   await AppValues.load(runMode: pod.runMode);
@@ -92,6 +119,11 @@ void run(List<String> args) async {
 
 
   await pod.start();
+
+  // Add createdAt column to serverpod_auth_key for 30-day token expiry.
+  // Idempotent — safe on every startup. Uses raw SQL because the table is
+  // managed by serverpod_auth_server, not by project YAML models.
+  await _ensureAuthKeySchema(pod);
 
   // Seed static reference data (idempotent — skipped if already present).
   await _seedInverterModels(pod);
@@ -184,6 +216,22 @@ const _inverterModels = [
     measurePointsFingerprintJson: null,
   ),
 ];
+
+/// Adds a `createdAt` column to the Serverpod-managed `serverpod_auth_key`
+/// table so the auth handler can enforce 30-day token expiry.
+Future<void> _ensureAuthKeySchema(Serverpod pod) async {
+  final session = await pod.createSession();
+  try {
+    await session.db.unsafeExecute(
+      'ALTER TABLE "serverpod_auth_key" '
+      'ADD COLUMN IF NOT EXISTS "createdAt" timestamp without time zone DEFAULT now()',
+    );
+  } catch (e) {
+    print('Auth key schema update error: $e');
+  } finally {
+    await session.close();
+  }
+}
 
 /// Inserts any missing inverter model rows. Safe to call on every startup —
 /// existing rows are left untouched; only absent ones are inserted.

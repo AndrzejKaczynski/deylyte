@@ -231,8 +231,7 @@ CREATE UNIQUE INDEX "pv_forecast_user_timestamp_idx" ON "pv_forecast" USING btre
 CREATE TABLE "tier_sync_configs" (
     "id" bigserial PRIMARY KEY,
     "tier" text NOT NULL,
-    "syncIntervalSeconds" bigint NOT NULL,
-    "historyDurationDays" bigint NOT NULL
+    "syncIntervalSeconds" bigint NOT NULL
 );
 
 -- Indexes
@@ -593,9 +592,9 @@ ALTER TABLE ONLY "serverpod_query_log"
 -- MIGRATION VERSION FOR deyelyte
 --
 INSERT INTO "serverpod_migrations" ("module", "version", "timestamp")
-    VALUES ('deyelyte', '20260324130946697', now())
+    VALUES ('deyelyte', '20260324171748605', now())
     ON CONFLICT ("module")
-    DO UPDATE SET "version" = '20260324130946697', "timestamp" = now();
+    DO UPDATE SET "version" = '20260324171748605', "timestamp" = now();
 
 --
 -- MIGRATION VERSION FOR serverpod

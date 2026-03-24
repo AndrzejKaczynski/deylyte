@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../providers/app_providers.dart';
 import '../../theme/theme.dart';
 import 'onboarding_shared.dart';
 import 'setup_hero_panel.dart';
@@ -12,7 +14,10 @@ import 'setup_content.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class OnboardingSetupScreen extends ConsumerStatefulWidget {
-  const OnboardingSetupScreen({super.key});
+  const OnboardingSetupScreen({super.key, this.licenseKey});
+
+  /// Passed via GoRouter extra from the license screen. Null on page refresh.
+  final String? licenseKey;
 
   @override
   ConsumerState<OnboardingSetupScreen> createState() =>
@@ -25,13 +30,21 @@ class _OnboardingSetupScreenState extends ConsumerState<OnboardingSetupScreen> {
   @override
   void initState() {
     super.initState();
-    _loadKey();
+    if (widget.licenseKey != null) {
+      _licenseKey = widget.licenseKey;
+    } else {
+      _loadKeyFromServer();
+    }
   }
 
-  Future<void> _loadKey() async {
-    const storage = FlutterSecureStorage();
-    final key = await storage.read(key: 'license_key');
-    if (mounted) setState(() => _licenseKey = key ?? '—');
+  Future<void> _loadKeyFromServer() async {
+    try {
+      final raw = await ref.read(clientProvider).license.getUserLicense();
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      if (mounted) setState(() => _licenseKey = data['licenseKey'] as String? ?? '—');
+    } catch (_) {
+      if (mounted) setState(() => _licenseKey = '—');
+    }
   }
 
   @override

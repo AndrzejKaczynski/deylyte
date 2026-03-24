@@ -34,6 +34,8 @@ resource "aws_cloudfront_distribution" "web_staging" {
       headers = ["*"]
     }
 
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 0

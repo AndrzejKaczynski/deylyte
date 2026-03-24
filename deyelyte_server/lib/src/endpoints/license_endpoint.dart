@@ -125,6 +125,7 @@ class LicenseEndpoint extends Endpoint {
 
     return jsonEncode({
       'tier': row.tier,
+      'licenseKey': row.licenseKey,
       'expiresAt': row.expiresAt?.toIso8601String(),
       'earliestAllowedDate': earliestAllowedDate.toIso8601String(),
     });

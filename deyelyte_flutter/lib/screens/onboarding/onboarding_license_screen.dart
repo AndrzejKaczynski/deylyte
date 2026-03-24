@@ -71,10 +71,12 @@ class _OnboardingLicenseScreenState
       if (result['valid'] == true) {
         const storage = FlutterSecureStorage();
         await storage.write(
-          key: 'license_key',
-          value: _keyController.text.trim(),
+          key: 'onboarding_license_done',
+          value: 'true',
         );
-        if (mounted) context.go('/onboarding/setup');
+        if (mounted) {
+          context.go('/onboarding/setup', extra: _keyController.text.trim());
+        }
       } else {
         setState(() {
           _errorMessage = result['reason'] as String? ?? 'Invalid license key.';

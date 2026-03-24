@@ -52,10 +52,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isAdmin ? null : '/';
       }
 
-      // Check license key — local storage first, then server fallback.
+      // Check license — local flag first, then server fallback.
       const storage = FlutterSecureStorage();
-      final localKey = await storage.read(key: 'license_key');
-      final hasLocalLicense = localKey?.isNotEmpty ?? false;
+      final localFlag = await storage.read(key: 'onboarding_license_done');
+      final hasLocalLicense = localFlag == 'true';
 
       if (!hasLocalLicense) {
         // Local key missing — check server directly (bypass cached provider).
@@ -92,7 +92,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding/setup',
-        builder: (_, __) => const OnboardingSetupScreen(),
+        builder: (_, state) =>
+            OnboardingSetupScreen(licenseKey: state.extra as String?),
       ),
       // ── Admin section (role gated in top-level redirect above) ────────
       ShellRoute(
