@@ -11,16 +11,22 @@ class HoverCard extends StatelessWidget {
     required this.data,
     required this.layers,
     this.isLive = false,
+    this.columnLabel,
   });
 
   final HourData data;
   final Layers layers;
   final bool isLive;
 
+  /// Override label shown in the card header.
+  /// When null, defaults to "HH:00 STATS" from data.hour.
+  final String? columnLabel;
+
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final hour = data.hour.toString().padLeft(2, '0');
+    final title = columnLabel ?? '$hour:00 STATS';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 168),
@@ -45,7 +51,7 @@ class HoverCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$hour:00 STATS',
+                title,
                 style: tt.labelSmall?.copyWith(
                   color: AppColors.onSurfaceVariant,
                   fontWeight: FontWeight.w600,

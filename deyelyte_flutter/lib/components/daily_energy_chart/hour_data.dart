@@ -280,6 +280,21 @@ class HourData {
     });
   }
 
+  /// Returns one label per day in [from]..[to] for use in hover card headers.
+  static List<String> buildDayHoverLabels(DateTime from, DateTime to) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final fromDate = DateTime(from.year, from.month, from.day);
+    final toDate = DateTime(to.year, to.month, to.day);
+    final days = toDate.difference(fromDate).inDays + 1;
+    return List.generate(days, (i) {
+      final d = fromDate.add(Duration(days: i));
+      return '${d.day} ${months[d.month - 1]} STATS';
+    });
+  }
+
   /// Returns 7 evenly-spaced axis labels (e.g. "18 Mar") for a date range.
   static List<String> buildPeriodAxisLabels(DateTime from, DateTime to) {
     const months = [

@@ -34,6 +34,7 @@ class DailyEnergyChart extends StatefulWidget {
     this.commandStripLabel = 'PLANNED BATTERY ACTION',
     this.columnCount = 24,
     this.axisLabels,
+    this.hoverLabels,
   });
 
   final String title;
@@ -65,6 +66,10 @@ class DailyEnergyChart extends StatefulWidget {
 
   /// 7 axis labels shown at the bottom. Null = default hour labels (00:00…20:00).
   final List<String>? axisLabels;
+
+  /// One label per column shown in the hover card header.
+  /// Null = default "HH:00 STATS" derived from data.hour.
+  final List<String>? hoverLabels;
 
   @override
   State<DailyEnergyChart> createState() => _DailyEnergyChartState();
@@ -126,17 +131,18 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
           else ...[
             // ── Chart ──────────────────────────────────────────────────────
             LayoutBuilder(builder: (context, constraints) {
-              final colW = constraints.maxWidth / 24;
+              final colW = constraints.maxWidth / widget.columnCount;
+              final lastCol = widget.columnCount - 1;
               return MouseRegion(
                 cursor: SystemMouseCursors.click,
                 onHover: (e) {
-                  final h = (e.localPosition.dx / colW).floor().clamp(0, 23);
+                  final h = (e.localPosition.dx / colW).floor().clamp(0, lastCol);
                   if (_hoveredHour != h) setState(() => _hoveredHour = h);
                 },
                 onExit: (_) => setState(() => _hoveredHour = null),
                 child: GestureDetector(
                   onTapDown: (e) {
-                    final h = (e.localPosition.dx / colW).floor().clamp(0, 23);
+                    final h = (e.localPosition.dx / colW).floor().clamp(0, lastCol);
                     setState(() => _hoveredHour = _hoveredHour == h ? null : h);
                   },
                   child: Stack(
@@ -169,6 +175,7 @@ class _DailyEnergyChartState extends State<DailyEnergyChart> {
                             data: hoveredData,
                             layers: _layers,
                             isLive: widget.nowHour != null && _hoveredHour == widget.nowHour,
+                            columnLabel: widget.hoverLabels?[_hoveredHour!],
                           ),
                         ),
                     ],

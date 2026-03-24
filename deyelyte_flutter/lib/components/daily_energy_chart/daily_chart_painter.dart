@@ -222,7 +222,7 @@ class DailyPlanPainter extends CustomPainter {
       // 6 ── PV Intake filled area
       // Schedule: up to current hour. History (nowHour == null): all 24 hours.
       if (layers.showPvIntake) {
-        final intakeEnd = nowHour ?? 23;
+        final intakeEnd = nowHour ?? (columnCount - 1);
         final intakePoints = <Offset>[];
         for (var i = 0; i <= intakeEnd; i++) {
           final kw = (nowHour != null && i == nowHour)

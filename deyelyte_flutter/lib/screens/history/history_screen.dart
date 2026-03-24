@@ -146,19 +146,22 @@ class _HistoryChartSection extends ConsumerWidget {
     // Build chart data for the current window.
     final List<HourData> hours;
     final List<String>? axisLabels;
+    final List<String>? hoverLabels;
     final int columnCount;
 
     if (rangeIndex == 0) {
       // Single-day 24h view — raw telemetry for this specific date.
       final telemetry = dayTelemetryAsync?.valueOrNull ?? [];
       hours = HourData.buildForDate(effectiveEnd, prices, frames, telemetry);
-      axisLabels = null; // default hour labels
+      axisLabels = null;
+      hoverLabels = null; // default "HH:00 STATS"
       columnCount = 24;
     } else {
       // Multi-day aggregated view (up to 30 columns).
       final aggregates = aggregatesAsync?.valueOrNull ?? [];
       hours = HourData.buildFromAggregates(windowStart, effectiveEnd, aggregates, prices, frames);
       axisLabels = HourData.buildPeriodAxisLabels(windowStart, effectiveEnd);
+      hoverLabels = HourData.buildDayHoverLabels(windowStart, effectiveEnd);
       columnCount = winSize;
     }
 
@@ -183,6 +186,7 @@ class _HistoryChartSection extends ConsumerWidget {
           commandStripLabel: 'EXECUTED PLAN',
           columnCount: columnCount,
           axisLabels: axisLabels,
+          hoverLabels: hoverLabels,
           // No nowHour/nowMinute — history mode.
         ),
       ],
