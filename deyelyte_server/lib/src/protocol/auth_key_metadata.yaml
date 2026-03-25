@@ -1,0 +1,9 @@
+class: AuthKeyMetadata
+table: auth_key_metadata
+fields:
+  keyId: int
+  createdAt: DateTime
+indexes:
+  auth_key_metadata_key_idx:
+    fields: keyId
+    unique: true

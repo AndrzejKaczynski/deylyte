@@ -15,31 +15,33 @@ import 'package:serverpod/protocol.dart' as _i2;
 import 'package:serverpod_auth_server/serverpod_auth_server.dart' as _i3;
 import 'admin_user.dart' as _i4;
 import 'app_config.dart' as _i5;
-import 'daily_avg_price.dart' as _i6;
-import 'daily_energy_aggregate.dart' as _i7;
-import 'device.dart' as _i8;
-import 'device_telemetry.dart' as _i9;
-import 'energy_price.dart' as _i10;
-import 'example.dart' as _i11;
-import 'history_day_data.dart' as _i12;
-import 'history_period_data.dart' as _i13;
-import 'integration_credentials.dart' as _i14;
-import 'inverter_data.dart' as _i15;
-import 'inverter_model.dart' as _i16;
-import 'license_key.dart' as _i17;
-import 'optimization_frame.dart' as _i18;
-import 'outage_reserve.dart' as _i19;
-import 'price_time_range.dart' as _i20;
-import 'pv_forecast.dart' as _i21;
-import 'tier_sync_config.dart' as _i22;
-import 'package:deyelyte_server/src/generated/pv_forecast.dart' as _i23;
-import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i24;
-import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i25;
-import 'package:deyelyte_server/src/generated/energy_price.dart' as _i26;
-import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i27;
-import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i28;
+import 'auth_key_metadata.dart' as _i6;
+import 'daily_avg_price.dart' as _i7;
+import 'daily_energy_aggregate.dart' as _i8;
+import 'device.dart' as _i9;
+import 'device_telemetry.dart' as _i10;
+import 'energy_price.dart' as _i11;
+import 'example.dart' as _i12;
+import 'history_day_data.dart' as _i13;
+import 'history_period_data.dart' as _i14;
+import 'integration_credentials.dart' as _i15;
+import 'inverter_data.dart' as _i16;
+import 'inverter_model.dart' as _i17;
+import 'license_key.dart' as _i18;
+import 'optimization_frame.dart' as _i19;
+import 'outage_reserve.dart' as _i20;
+import 'price_time_range.dart' as _i21;
+import 'pv_forecast.dart' as _i22;
+import 'tier_sync_config.dart' as _i23;
+import 'package:deyelyte_server/src/generated/pv_forecast.dart' as _i24;
+import 'package:deyelyte_server/src/generated/optimization_frame.dart' as _i25;
+import 'package:deyelyte_server/src/generated/outage_reserve.dart' as _i26;
+import 'package:deyelyte_server/src/generated/energy_price.dart' as _i27;
+import 'package:deyelyte_server/src/generated/price_time_range.dart' as _i28;
+import 'package:deyelyte_server/src/generated/device_telemetry.dart' as _i29;
 export 'admin_user.dart';
 export 'app_config.dart';
+export 'auth_key_metadata.dart';
 export 'daily_avg_price.dart';
 export 'daily_energy_aggregate.dart';
 export 'device.dart';
@@ -325,6 +327,63 @@ class Protocol extends _i1.SerializationManagerServer {
           type: 'btree',
           isUnique: true,
           isPrimary: true,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'auth_key_metadata',
+      dartName: 'AuthKeyMetadata',
+      schema: 'public',
+      module: 'deyelyte',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'auth_key_metadata_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'keyId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'auth_key_metadata_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'auth_key_metadata_key_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'keyId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
         ),
       ],
       managed: true,
@@ -1375,56 +1434,59 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i5.AppConfig) {
       return _i5.AppConfig.fromJson(data) as T;
     }
-    if (t == _i6.DailyAvgPrice) {
-      return _i6.DailyAvgPrice.fromJson(data) as T;
+    if (t == _i6.AuthKeyMetadata) {
+      return _i6.AuthKeyMetadata.fromJson(data) as T;
     }
-    if (t == _i7.DailyEnergyAggregate) {
-      return _i7.DailyEnergyAggregate.fromJson(data) as T;
+    if (t == _i7.DailyAvgPrice) {
+      return _i7.DailyAvgPrice.fromJson(data) as T;
     }
-    if (t == _i8.Device) {
-      return _i8.Device.fromJson(data) as T;
+    if (t == _i8.DailyEnergyAggregate) {
+      return _i8.DailyEnergyAggregate.fromJson(data) as T;
     }
-    if (t == _i9.DeviceTelemetry) {
-      return _i9.DeviceTelemetry.fromJson(data) as T;
+    if (t == _i9.Device) {
+      return _i9.Device.fromJson(data) as T;
     }
-    if (t == _i10.EnergyPrice) {
-      return _i10.EnergyPrice.fromJson(data) as T;
+    if (t == _i10.DeviceTelemetry) {
+      return _i10.DeviceTelemetry.fromJson(data) as T;
     }
-    if (t == _i11.Example) {
-      return _i11.Example.fromJson(data) as T;
+    if (t == _i11.EnergyPrice) {
+      return _i11.EnergyPrice.fromJson(data) as T;
     }
-    if (t == _i12.HistoryDayData) {
-      return _i12.HistoryDayData.fromJson(data) as T;
+    if (t == _i12.Example) {
+      return _i12.Example.fromJson(data) as T;
     }
-    if (t == _i13.HistoryPeriodData) {
-      return _i13.HistoryPeriodData.fromJson(data) as T;
+    if (t == _i13.HistoryDayData) {
+      return _i13.HistoryDayData.fromJson(data) as T;
     }
-    if (t == _i14.IntegrationCredentials) {
-      return _i14.IntegrationCredentials.fromJson(data) as T;
+    if (t == _i14.HistoryPeriodData) {
+      return _i14.HistoryPeriodData.fromJson(data) as T;
     }
-    if (t == _i15.InverterData) {
-      return _i15.InverterData.fromJson(data) as T;
+    if (t == _i15.IntegrationCredentials) {
+      return _i15.IntegrationCredentials.fromJson(data) as T;
     }
-    if (t == _i16.InverterModel) {
-      return _i16.InverterModel.fromJson(data) as T;
+    if (t == _i16.InverterData) {
+      return _i16.InverterData.fromJson(data) as T;
     }
-    if (t == _i17.LicenseKey) {
-      return _i17.LicenseKey.fromJson(data) as T;
+    if (t == _i17.InverterModel) {
+      return _i17.InverterModel.fromJson(data) as T;
     }
-    if (t == _i18.OptimizationFrame) {
-      return _i18.OptimizationFrame.fromJson(data) as T;
+    if (t == _i18.LicenseKey) {
+      return _i18.LicenseKey.fromJson(data) as T;
     }
-    if (t == _i19.OutageReserve) {
-      return _i19.OutageReserve.fromJson(data) as T;
+    if (t == _i19.OptimizationFrame) {
+      return _i19.OptimizationFrame.fromJson(data) as T;
     }
-    if (t == _i20.PriceTimeRange) {
-      return _i20.PriceTimeRange.fromJson(data) as T;
+    if (t == _i20.OutageReserve) {
+      return _i20.OutageReserve.fromJson(data) as T;
     }
-    if (t == _i21.PvForecast) {
-      return _i21.PvForecast.fromJson(data) as T;
+    if (t == _i21.PriceTimeRange) {
+      return _i21.PriceTimeRange.fromJson(data) as T;
     }
-    if (t == _i22.TierSyncConfig) {
-      return _i22.TierSyncConfig.fromJson(data) as T;
+    if (t == _i22.PvForecast) {
+      return _i22.PvForecast.fromJson(data) as T;
+    }
+    if (t == _i23.TierSyncConfig) {
+      return _i23.TierSyncConfig.fromJson(data) as T;
     }
     if (t == _i1.getType<_i4.AdminUser?>()) {
       return (data != null ? _i4.AdminUser.fromJson(data) : null) as T;
@@ -1432,86 +1494,89 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i5.AppConfig?>()) {
       return (data != null ? _i5.AppConfig.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i6.DailyAvgPrice?>()) {
-      return (data != null ? _i6.DailyAvgPrice.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i6.AuthKeyMetadata?>()) {
+      return (data != null ? _i6.AuthKeyMetadata.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.DailyEnergyAggregate?>()) {
-      return (data != null ? _i7.DailyEnergyAggregate.fromJson(data) : null)
+    if (t == _i1.getType<_i7.DailyAvgPrice?>()) {
+      return (data != null ? _i7.DailyAvgPrice.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i8.DailyEnergyAggregate?>()) {
+      return (data != null ? _i8.DailyEnergyAggregate.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i8.Device?>()) {
-      return (data != null ? _i8.Device.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i9.Device?>()) {
+      return (data != null ? _i9.Device.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i9.DeviceTelemetry?>()) {
-      return (data != null ? _i9.DeviceTelemetry.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i10.DeviceTelemetry?>()) {
+      return (data != null ? _i10.DeviceTelemetry.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i10.EnergyPrice?>()) {
-      return (data != null ? _i10.EnergyPrice.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.EnergyPrice?>()) {
+      return (data != null ? _i11.EnergyPrice.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i11.Example?>()) {
-      return (data != null ? _i11.Example.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.Example?>()) {
+      return (data != null ? _i12.Example.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.HistoryDayData?>()) {
-      return (data != null ? _i12.HistoryDayData.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.HistoryDayData?>()) {
+      return (data != null ? _i13.HistoryDayData.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.HistoryPeriodData?>()) {
-      return (data != null ? _i13.HistoryPeriodData.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.HistoryPeriodData?>()) {
+      return (data != null ? _i14.HistoryPeriodData.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.IntegrationCredentials?>()) {
-      return (data != null ? _i14.IntegrationCredentials.fromJson(data) : null)
+    if (t == _i1.getType<_i15.IntegrationCredentials?>()) {
+      return (data != null ? _i15.IntegrationCredentials.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i15.InverterData?>()) {
-      return (data != null ? _i15.InverterData.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.InverterData?>()) {
+      return (data != null ? _i16.InverterData.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.InverterModel?>()) {
-      return (data != null ? _i16.InverterModel.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.InverterModel?>()) {
+      return (data != null ? _i17.InverterModel.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.LicenseKey?>()) {
-      return (data != null ? _i17.LicenseKey.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i18.LicenseKey?>()) {
+      return (data != null ? _i18.LicenseKey.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i18.OptimizationFrame?>()) {
-      return (data != null ? _i18.OptimizationFrame.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.OptimizationFrame?>()) {
+      return (data != null ? _i19.OptimizationFrame.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.OutageReserve?>()) {
-      return (data != null ? _i19.OutageReserve.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i20.OutageReserve?>()) {
+      return (data != null ? _i20.OutageReserve.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i20.PriceTimeRange?>()) {
-      return (data != null ? _i20.PriceTimeRange.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i21.PriceTimeRange?>()) {
+      return (data != null ? _i21.PriceTimeRange.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i21.PvForecast?>()) {
-      return (data != null ? _i21.PvForecast.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i22.PvForecast?>()) {
+      return (data != null ? _i22.PvForecast.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i22.TierSyncConfig?>()) {
-      return (data != null ? _i22.TierSyncConfig.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i23.TierSyncConfig?>()) {
+      return (data != null ? _i23.TierSyncConfig.fromJson(data) : null) as T;
     }
-    if (t == List<_i9.DeviceTelemetry>) {
+    if (t == List<_i10.DeviceTelemetry>) {
       return (data as List)
-              .map((e) => deserialize<_i9.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i10.DeviceTelemetry>(e))
               .toList()
           as T;
     }
-    if (t == List<_i10.EnergyPrice>) {
+    if (t == List<_i11.EnergyPrice>) {
       return (data as List)
-              .map((e) => deserialize<_i10.EnergyPrice>(e))
+              .map((e) => deserialize<_i11.EnergyPrice>(e))
               .toList()
           as T;
     }
-    if (t == List<_i18.OptimizationFrame>) {
+    if (t == List<_i19.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i18.OptimizationFrame>(e))
+              .map((e) => deserialize<_i19.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i7.DailyEnergyAggregate>) {
+    if (t == List<_i8.DailyEnergyAggregate>) {
       return (data as List)
-              .map((e) => deserialize<_i7.DailyEnergyAggregate>(e))
+              .map((e) => deserialize<_i8.DailyEnergyAggregate>(e))
               .toList()
           as T;
     }
-    if (t == List<_i6.DailyAvgPrice>) {
+    if (t == List<_i7.DailyAvgPrice>) {
       return (data as List)
-              .map((e) => deserialize<_i6.DailyAvgPrice>(e))
+              .map((e) => deserialize<_i7.DailyAvgPrice>(e))
               .toList()
           as T;
     }
@@ -1521,37 +1586,37 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
-    if (t == List<_i23.PvForecast>) {
-      return (data as List).map((e) => deserialize<_i23.PvForecast>(e)).toList()
+    if (t == List<_i24.PvForecast>) {
+      return (data as List).map((e) => deserialize<_i24.PvForecast>(e)).toList()
           as T;
     }
-    if (t == List<_i24.OptimizationFrame>) {
+    if (t == List<_i25.OptimizationFrame>) {
       return (data as List)
-              .map((e) => deserialize<_i24.OptimizationFrame>(e))
+              .map((e) => deserialize<_i25.OptimizationFrame>(e))
               .toList()
           as T;
     }
-    if (t == List<_i25.OutageReserve>) {
+    if (t == List<_i26.OutageReserve>) {
       return (data as List)
-              .map((e) => deserialize<_i25.OutageReserve>(e))
+              .map((e) => deserialize<_i26.OutageReserve>(e))
               .toList()
           as T;
     }
-    if (t == List<_i26.EnergyPrice>) {
+    if (t == List<_i27.EnergyPrice>) {
       return (data as List)
-              .map((e) => deserialize<_i26.EnergyPrice>(e))
+              .map((e) => deserialize<_i27.EnergyPrice>(e))
               .toList()
           as T;
     }
-    if (t == List<_i27.PriceTimeRange>) {
+    if (t == List<_i28.PriceTimeRange>) {
       return (data as List)
-              .map((e) => deserialize<_i27.PriceTimeRange>(e))
+              .map((e) => deserialize<_i28.PriceTimeRange>(e))
               .toList()
           as T;
     }
-    if (t == List<_i28.DeviceTelemetry>) {
+    if (t == List<_i29.DeviceTelemetry>) {
       return (data as List)
-              .map((e) => deserialize<_i28.DeviceTelemetry>(e))
+              .map((e) => deserialize<_i29.DeviceTelemetry>(e))
               .toList()
           as T;
     }
@@ -1568,23 +1633,24 @@ class Protocol extends _i1.SerializationManagerServer {
     return switch (type) {
       _i4.AdminUser => 'AdminUser',
       _i5.AppConfig => 'AppConfig',
-      _i6.DailyAvgPrice => 'DailyAvgPrice',
-      _i7.DailyEnergyAggregate => 'DailyEnergyAggregate',
-      _i8.Device => 'Device',
-      _i9.DeviceTelemetry => 'DeviceTelemetry',
-      _i10.EnergyPrice => 'EnergyPrice',
-      _i11.Example => 'Example',
-      _i12.HistoryDayData => 'HistoryDayData',
-      _i13.HistoryPeriodData => 'HistoryPeriodData',
-      _i14.IntegrationCredentials => 'IntegrationCredentials',
-      _i15.InverterData => 'InverterData',
-      _i16.InverterModel => 'InverterModel',
-      _i17.LicenseKey => 'LicenseKey',
-      _i18.OptimizationFrame => 'OptimizationFrame',
-      _i19.OutageReserve => 'OutageReserve',
-      _i20.PriceTimeRange => 'PriceTimeRange',
-      _i21.PvForecast => 'PvForecast',
-      _i22.TierSyncConfig => 'TierSyncConfig',
+      _i6.AuthKeyMetadata => 'AuthKeyMetadata',
+      _i7.DailyAvgPrice => 'DailyAvgPrice',
+      _i8.DailyEnergyAggregate => 'DailyEnergyAggregate',
+      _i9.Device => 'Device',
+      _i10.DeviceTelemetry => 'DeviceTelemetry',
+      _i11.EnergyPrice => 'EnergyPrice',
+      _i12.Example => 'Example',
+      _i13.HistoryDayData => 'HistoryDayData',
+      _i14.HistoryPeriodData => 'HistoryPeriodData',
+      _i15.IntegrationCredentials => 'IntegrationCredentials',
+      _i16.InverterData => 'InverterData',
+      _i17.InverterModel => 'InverterModel',
+      _i18.LicenseKey => 'LicenseKey',
+      _i19.OptimizationFrame => 'OptimizationFrame',
+      _i20.OutageReserve => 'OutageReserve',
+      _i21.PriceTimeRange => 'PriceTimeRange',
+      _i22.PvForecast => 'PvForecast',
+      _i23.TierSyncConfig => 'TierSyncConfig',
       _ => null,
     };
   }
@@ -1603,39 +1669,41 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'AdminUser';
       case _i5.AppConfig():
         return 'AppConfig';
-      case _i6.DailyAvgPrice():
+      case _i6.AuthKeyMetadata():
+        return 'AuthKeyMetadata';
+      case _i7.DailyAvgPrice():
         return 'DailyAvgPrice';
-      case _i7.DailyEnergyAggregate():
+      case _i8.DailyEnergyAggregate():
         return 'DailyEnergyAggregate';
-      case _i8.Device():
+      case _i9.Device():
         return 'Device';
-      case _i9.DeviceTelemetry():
+      case _i10.DeviceTelemetry():
         return 'DeviceTelemetry';
-      case _i10.EnergyPrice():
+      case _i11.EnergyPrice():
         return 'EnergyPrice';
-      case _i11.Example():
+      case _i12.Example():
         return 'Example';
-      case _i12.HistoryDayData():
+      case _i13.HistoryDayData():
         return 'HistoryDayData';
-      case _i13.HistoryPeriodData():
+      case _i14.HistoryPeriodData():
         return 'HistoryPeriodData';
-      case _i14.IntegrationCredentials():
+      case _i15.IntegrationCredentials():
         return 'IntegrationCredentials';
-      case _i15.InverterData():
+      case _i16.InverterData():
         return 'InverterData';
-      case _i16.InverterModel():
+      case _i17.InverterModel():
         return 'InverterModel';
-      case _i17.LicenseKey():
+      case _i18.LicenseKey():
         return 'LicenseKey';
-      case _i18.OptimizationFrame():
+      case _i19.OptimizationFrame():
         return 'OptimizationFrame';
-      case _i19.OutageReserve():
+      case _i20.OutageReserve():
         return 'OutageReserve';
-      case _i20.PriceTimeRange():
+      case _i21.PriceTimeRange():
         return 'PriceTimeRange';
-      case _i21.PvForecast():
+      case _i22.PvForecast():
         return 'PvForecast';
-      case _i22.TierSyncConfig():
+      case _i23.TierSyncConfig():
         return 'TierSyncConfig';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1661,56 +1729,59 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'AppConfig') {
       return deserialize<_i5.AppConfig>(data['data']);
     }
+    if (dataClassName == 'AuthKeyMetadata') {
+      return deserialize<_i6.AuthKeyMetadata>(data['data']);
+    }
     if (dataClassName == 'DailyAvgPrice') {
-      return deserialize<_i6.DailyAvgPrice>(data['data']);
+      return deserialize<_i7.DailyAvgPrice>(data['data']);
     }
     if (dataClassName == 'DailyEnergyAggregate') {
-      return deserialize<_i7.DailyEnergyAggregate>(data['data']);
+      return deserialize<_i8.DailyEnergyAggregate>(data['data']);
     }
     if (dataClassName == 'Device') {
-      return deserialize<_i8.Device>(data['data']);
+      return deserialize<_i9.Device>(data['data']);
     }
     if (dataClassName == 'DeviceTelemetry') {
-      return deserialize<_i9.DeviceTelemetry>(data['data']);
+      return deserialize<_i10.DeviceTelemetry>(data['data']);
     }
     if (dataClassName == 'EnergyPrice') {
-      return deserialize<_i10.EnergyPrice>(data['data']);
+      return deserialize<_i11.EnergyPrice>(data['data']);
     }
     if (dataClassName == 'Example') {
-      return deserialize<_i11.Example>(data['data']);
+      return deserialize<_i12.Example>(data['data']);
     }
     if (dataClassName == 'HistoryDayData') {
-      return deserialize<_i12.HistoryDayData>(data['data']);
+      return deserialize<_i13.HistoryDayData>(data['data']);
     }
     if (dataClassName == 'HistoryPeriodData') {
-      return deserialize<_i13.HistoryPeriodData>(data['data']);
+      return deserialize<_i14.HistoryPeriodData>(data['data']);
     }
     if (dataClassName == 'IntegrationCredentials') {
-      return deserialize<_i14.IntegrationCredentials>(data['data']);
+      return deserialize<_i15.IntegrationCredentials>(data['data']);
     }
     if (dataClassName == 'InverterData') {
-      return deserialize<_i15.InverterData>(data['data']);
+      return deserialize<_i16.InverterData>(data['data']);
     }
     if (dataClassName == 'InverterModel') {
-      return deserialize<_i16.InverterModel>(data['data']);
+      return deserialize<_i17.InverterModel>(data['data']);
     }
     if (dataClassName == 'LicenseKey') {
-      return deserialize<_i17.LicenseKey>(data['data']);
+      return deserialize<_i18.LicenseKey>(data['data']);
     }
     if (dataClassName == 'OptimizationFrame') {
-      return deserialize<_i18.OptimizationFrame>(data['data']);
+      return deserialize<_i19.OptimizationFrame>(data['data']);
     }
     if (dataClassName == 'OutageReserve') {
-      return deserialize<_i19.OutageReserve>(data['data']);
+      return deserialize<_i20.OutageReserve>(data['data']);
     }
     if (dataClassName == 'PriceTimeRange') {
-      return deserialize<_i20.PriceTimeRange>(data['data']);
+      return deserialize<_i21.PriceTimeRange>(data['data']);
     }
     if (dataClassName == 'PvForecast') {
-      return deserialize<_i21.PvForecast>(data['data']);
+      return deserialize<_i22.PvForecast>(data['data']);
     }
     if (dataClassName == 'TierSyncConfig') {
-      return deserialize<_i22.TierSyncConfig>(data['data']);
+      return deserialize<_i23.TierSyncConfig>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1742,30 +1813,32 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i4.AdminUser.t;
       case _i5.AppConfig:
         return _i5.AppConfig.t;
-      case _i8.Device:
-        return _i8.Device.t;
-      case _i9.DeviceTelemetry:
-        return _i9.DeviceTelemetry.t;
-      case _i10.EnergyPrice:
-        return _i10.EnergyPrice.t;
-      case _i14.IntegrationCredentials:
-        return _i14.IntegrationCredentials.t;
-      case _i15.InverterData:
-        return _i15.InverterData.t;
-      case _i16.InverterModel:
-        return _i16.InverterModel.t;
-      case _i17.LicenseKey:
-        return _i17.LicenseKey.t;
-      case _i18.OptimizationFrame:
-        return _i18.OptimizationFrame.t;
-      case _i19.OutageReserve:
-        return _i19.OutageReserve.t;
-      case _i20.PriceTimeRange:
-        return _i20.PriceTimeRange.t;
-      case _i21.PvForecast:
-        return _i21.PvForecast.t;
-      case _i22.TierSyncConfig:
-        return _i22.TierSyncConfig.t;
+      case _i6.AuthKeyMetadata:
+        return _i6.AuthKeyMetadata.t;
+      case _i9.Device:
+        return _i9.Device.t;
+      case _i10.DeviceTelemetry:
+        return _i10.DeviceTelemetry.t;
+      case _i11.EnergyPrice:
+        return _i11.EnergyPrice.t;
+      case _i15.IntegrationCredentials:
+        return _i15.IntegrationCredentials.t;
+      case _i16.InverterData:
+        return _i16.InverterData.t;
+      case _i17.InverterModel:
+        return _i17.InverterModel.t;
+      case _i18.LicenseKey:
+        return _i18.LicenseKey.t;
+      case _i19.OptimizationFrame:
+        return _i19.OptimizationFrame.t;
+      case _i20.OutageReserve:
+        return _i20.OutageReserve.t;
+      case _i21.PriceTimeRange:
+        return _i21.PriceTimeRange.t;
+      case _i22.PvForecast:
+        return _i22.PvForecast.t;
+      case _i23.TierSyncConfig:
+        return _i23.TierSyncConfig.t;
     }
     return null;
   }
