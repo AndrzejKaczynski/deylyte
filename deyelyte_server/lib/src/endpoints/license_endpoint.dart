@@ -60,20 +60,19 @@ class LicenseEndpoint extends Endpoint {
     // Include the inverter register map if the user has selected a model.
     // The add-on saves this to disk and uses it instead of built-in constants.
     Map<String, dynamic>? registerMap;
-    if (row.userId != null) {
-      final config = await AppConfig.db.findFirstRow(
+    final config = await AppConfig.db.findFirstRow(
+      session,
+      where: (t) => t.userInfoId.equals(row.userId),
+    );
+    if (config?.inverterModelId != null) {
+      final model = await InverterModel.db.findFirstRow(
         session,
-        where: (t) => t.userInfoId.equals(row.userId!),
+        where: (t) => t.modelId.equals(config!.inverterModelId!),
       );
-      if (config?.inverterModelId != null) {
-        final model = await InverterModel.db.findFirstRow(
-          session,
-          where: (t) => t.modelId.equals(config!.inverterModelId!),
-        );
-        if (model != null) {
-          final decoded = jsonDecode(model.registerMapJson) as Map<String, dynamic>;
-          registerMap = {'modelId': model.modelId, ...decoded};
-        }
+      if (model != null) {
+        final decoded =
+            jsonDecode(model.registerMapJson) as Map<String, dynamic>;
+        registerMap = {'modelId': model.modelId, ...decoded};
       }
     }
 
@@ -103,7 +102,8 @@ class LicenseEndpoint extends Endpoint {
       where: (t) => t.userId.equals(uid) & t.isActive.equals(true),
     );
 
-    if (row == null || (row.expiresAt != null && row.expiresAt!.isBefore(now))) {
+    if (row == null ||
+        (row.expiresAt != null && row.expiresAt!.isBefore(now))) {
       return jsonEncode({'tier': null});
     }
 

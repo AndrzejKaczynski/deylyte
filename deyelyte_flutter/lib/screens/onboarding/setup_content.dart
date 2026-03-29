@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../components/components.dart';
 import '../../theme/theme.dart';
 import 'onboarding_shared.dart';
 import 'setup_connection_status.dart';
