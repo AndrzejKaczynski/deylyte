@@ -101,15 +101,18 @@ class EndpointAdmin extends _i1.EndpointRef {
 
   /// Updates (or inserts) the permissions for the given [tier].
   /// syncIntervalSeconds minimum is 300 s (logger hardware limitation).
+  /// historyMonths null = unlimited; positive int = months back from start of current month.
   _i2.Future<void> updateTierPermissions({
     required String tier,
     required int syncIntervalSeconds,
+    int? historyMonths,
   }) => caller.callServerEndpoint<void>(
     'admin',
     'updateTierPermissions',
     {
       'tier': tier,
       'syncIntervalSeconds': syncIntervalSeconds,
+      'historyMonths': historyMonths,
     },
   );
 }

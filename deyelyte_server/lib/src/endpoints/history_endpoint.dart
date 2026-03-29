@@ -13,8 +13,7 @@ class HistoryEndpoint extends Endpoint {
   // ── Tier enforcement ──────────────────────────────────────────────────────
 
   /// Earliest UTC date the user may browse.
-  /// Pro: back to dataGatheringSince (effectively unlimited).
-  /// Basic / beta_free: 1st of the previous calendar month.
+  /// Limit is driven by TierSyncConfig.historyMonths (null = unlimited).
   Future<DateTime> _earliestAllowedDate(Session session, int uid) async {
     final results = await Future.wait([
       LicenseKey.db.findFirstRow(
@@ -30,13 +29,21 @@ class HistoryEndpoint extends Endpoint {
     final config = results[1] as AppConfig?;
     final dataStart = config?.dataGatheringSince;
 
-    if (license?.tier == 'pro') {
+    final tierConfig = license?.tier == null
+        ? null
+        : await TierSyncConfig.db.findFirstRow(
+            session,
+            where: (t) => t.tier.equals(license!.tier),
+          );
+    final historyMonths = tierConfig?.historyMonths;
+
+    if (historyMonths == null) {
+      // Unlimited — back to when data collection started (or 2020 as fallback).
       return dataStart ?? DateTime.utc(2020);
     }
 
-    // basic / beta_free: current + previous month
     final now = DateTime.now().toUtc();
-    final limit = DateTime.utc(now.year, now.month - 1, 1);
+    final limit = DateTime.utc(now.year, now.month - historyMonths, 1);
     if (dataStart != null && dataStart.isAfter(limit)) return dataStart;
     return limit;
   }

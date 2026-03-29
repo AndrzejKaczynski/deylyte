@@ -28,8 +28,8 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
         ]),
         const SizedBox(height: 8),
         Text(
-          'Controls per-tier feature limits. History access is calendar-based '
-          '(basic = current + previous month, pro = unlimited).',
+          'Controls per-tier feature limits. '
+          'History months: null = unlimited, 1 = current + previous month.',
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -57,15 +57,17 @@ class AdminSyncSettingsScreen extends ConsumerWidget {
                 separatorBuilder: (_, __) =>
                     const SizedBox(height: AppSpacing.sp4),
                 itemBuilder: (_, i) => _TierCard(
-                  key: ValueKey('${rows[i]['tier']}_${rows[i]['syncIntervalSeconds']}'),
+                  key: ValueKey(
+                      '${rows[i]['tier']}_${rows[i]['syncIntervalSeconds']}_${rows[i]['historyMonths']}'),
                   config: rows[i],
-                  onSave: (tier, seconds) async {
+                  onSave: (tier, seconds, historyMonths) async {
                     await ref
                         .read(clientProvider)
                         .admin
                         .updateTierPermissions(
                           tier: tier,
                           syncIntervalSeconds: seconds,
+                          historyMonths: historyMonths,
                         );
                     ref.invalidate(adminSyncSettingsProvider);
                   },
@@ -85,7 +87,7 @@ class _TierCard extends StatefulWidget {
   const _TierCard({super.key, required this.config, required this.onSave});
 
   final Map<String, dynamic> config;
-  final Future<void> Function(String tier, int seconds) onSave;
+  final Future<void> Function(String tier, int seconds, int? historyMonths) onSave;
 
   @override
   State<_TierCard> createState() => _TierCardState();
@@ -93,6 +95,7 @@ class _TierCard extends StatefulWidget {
 
 class _TierCardState extends State<_TierCard> {
   late final TextEditingController _syncCtrl;
+  late final TextEditingController _historyCtrl;
   bool _saving = false;
   String? _error;
 
@@ -102,11 +105,16 @@ class _TierCardState extends State<_TierCard> {
     _syncCtrl = TextEditingController(
       text: '${widget.config['syncIntervalSeconds'] ?? 300}',
     );
+    final historyMonths = widget.config['historyMonths'] as int?;
+    _historyCtrl = TextEditingController(
+      text: historyMonths != null ? '$historyMonths' : '',
+    );
   }
 
   @override
   void dispose() {
     _syncCtrl.dispose();
+    _historyCtrl.dispose();
     super.dispose();
   }
 
@@ -116,12 +124,21 @@ class _TierCardState extends State<_TierCard> {
       setState(() => _error = 'Sync interval minimum is 300 s');
       return;
     }
+    final historyText = _historyCtrl.text.trim();
+    int? historyMonths;
+    if (historyText.isNotEmpty) {
+      historyMonths = int.tryParse(historyText);
+      if (historyMonths == null || historyMonths < 1) {
+        setState(() => _error = 'History months must be a positive number (or blank for unlimited)');
+        return;
+      }
+    }
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      await widget.onSave(widget.config['tier'] as String, seconds);
+      await widget.onSave(widget.config['tier'] as String, seconds, historyMonths);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
@@ -185,6 +202,17 @@ class _TierCardState extends State<_TierCard> {
             suffix: 'seconds',
             readable: _readableSeconds(
                 int.tryParse(_syncCtrl.text.trim()) ?? 300),
+          ),
+          const SizedBox(height: AppSpacing.sp4),
+          _PermissionRow(
+            icon: Icons.history_rounded,
+            label: 'History access',
+            hint: 'Months of history (blank = unlimited)',
+            controller: _historyCtrl,
+            suffix: 'months',
+            readable: _historyCtrl.text.trim().isEmpty
+                ? 'Unlimited'
+                : '${_historyCtrl.text.trim()} mo',
           ),
         ]),
       ),

@@ -1,12 +1,11 @@
-# Per-tier sync interval configuration. Managed via admin panel.
-# Controls how often the HA add-on is expected to post telemetry.
-# History access is now calendar-based (computed from tier in HistoryEndpoint).
-# Seed rows: beta_free=300, basic=900, pro=300.
+# Per-tier feature configuration. Managed via admin panel.
+# Seed rows: beta_free=300/1, basic=900/1, pro=300/null.
 class: TierSyncConfig
 table: tier_sync_configs
 fields:
   tier: String          # 'beta_free' | 'basic' | 'pro'
   syncIntervalSeconds: int
+  historyMonths: int?   # null = unlimited; N = months back from start of current month
 indexes:
   tier_sync_configs_tier_idx:
     fields: tier

@@ -190,16 +190,19 @@ class AdminEndpoint extends Endpoint {
               'id': c.id,
               'tier': c.tier,
               'syncIntervalSeconds': c.syncIntervalSeconds,
+              'historyMonths': c.historyMonths,
             })
         .toList());
   }
 
   /// Updates (or inserts) the permissions for the given [tier].
   /// syncIntervalSeconds minimum is 300 s (logger hardware limitation).
+  /// historyMonths null = unlimited; positive int = months back from start of current month.
   Future<void> updateTierPermissions(
     Session session, {
     required String tier,
     required int syncIntervalSeconds,
+    int? historyMonths,
   }) async {
     await _requireAdmin(session);
 
@@ -214,6 +217,7 @@ class AdminEndpoint extends Endpoint {
         TierSyncConfig(
           tier: tier,
           syncIntervalSeconds: clampedInterval,
+          historyMonths: historyMonths,
         ),
       );
     } else {
@@ -221,6 +225,7 @@ class AdminEndpoint extends Endpoint {
         session,
         existing.copyWith(
           syncIntervalSeconds: clampedInterval,
+          historyMonths: historyMonths,
         ),
       );
     }

@@ -245,6 +245,11 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<int>(),
               nullable: false,
             ),
+            'historyMonths': _i1.ParameterDescription(
+              name: 'historyMonths',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -255,6 +260,7 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     tier: params['tier'],
                     syncIntervalSeconds: params['syncIntervalSeconds'],
+                    historyMonths: params['historyMonths'],
                   ),
         ),
       },

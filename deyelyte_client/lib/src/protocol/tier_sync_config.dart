@@ -17,12 +17,14 @@ abstract class TierSyncConfig implements _i1.SerializableModel {
     this.id,
     required this.tier,
     required this.syncIntervalSeconds,
+    this.historyMonths,
   });
 
   factory TierSyncConfig({
     int? id,
     required String tier,
     required int syncIntervalSeconds,
+    int? historyMonths,
   }) = _TierSyncConfigImpl;
 
   factory TierSyncConfig.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -30,6 +32,7 @@ abstract class TierSyncConfig implements _i1.SerializableModel {
       id: jsonSerialization['id'] as int?,
       tier: jsonSerialization['tier'] as String,
       syncIntervalSeconds: jsonSerialization['syncIntervalSeconds'] as int,
+      historyMonths: jsonSerialization['historyMonths'] as int?,
     );
   }
 
@@ -42,6 +45,8 @@ abstract class TierSyncConfig implements _i1.SerializableModel {
 
   int syncIntervalSeconds;
 
+  int? historyMonths;
+
   /// Returns a shallow copy of this [TierSyncConfig]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -49,6 +54,7 @@ abstract class TierSyncConfig implements _i1.SerializableModel {
     int? id,
     String? tier,
     int? syncIntervalSeconds,
+    int? historyMonths,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -57,6 +63,7 @@ abstract class TierSyncConfig implements _i1.SerializableModel {
       if (id != null) 'id': id,
       'tier': tier,
       'syncIntervalSeconds': syncIntervalSeconds,
+      if (historyMonths != null) 'historyMonths': historyMonths,
     };
   }
 
@@ -73,10 +80,12 @@ class _TierSyncConfigImpl extends TierSyncConfig {
     int? id,
     required String tier,
     required int syncIntervalSeconds,
+    int? historyMonths,
   }) : super._(
          id: id,
          tier: tier,
          syncIntervalSeconds: syncIntervalSeconds,
+         historyMonths: historyMonths,
        );
 
   /// Returns a shallow copy of this [TierSyncConfig]
@@ -87,11 +96,13 @@ class _TierSyncConfigImpl extends TierSyncConfig {
     Object? id = _Undefined,
     String? tier,
     int? syncIntervalSeconds,
+    Object? historyMonths = _Undefined,
   }) {
     return TierSyncConfig(
       id: id is int? ? id : this.id,
       tier: tier ?? this.tier,
       syncIntervalSeconds: syncIntervalSeconds ?? this.syncIntervalSeconds,
+      historyMonths: historyMonths is int? ? historyMonths : this.historyMonths,
     );
   }
 }

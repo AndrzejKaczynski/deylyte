@@ -107,18 +107,21 @@ class LicenseEndpoint extends Endpoint {
       return jsonEncode({'tier': null});
     }
 
-    // Compute calendar-based earliest date (same logic as HistoryEndpoint).
-    final config = await AppConfig.db.findFirstRow(
-      session,
-      where: (t) => t.userInfoId.equals(uid),
-    );
+    // Compute earliest allowed date from the tier's configured historyMonths.
+    final results = await Future.wait([
+      AppConfig.db.findFirstRow(session, where: (t) => t.userInfoId.equals(uid)),
+      TierSyncConfig.db.findFirstRow(session, where: (t) => t.tier.equals(row.tier)),
+    ]);
+    final config = results[0] as AppConfig?;
+    final tierConfig = results[1] as TierSyncConfig?;
     final dataStart = config?.dataGatheringSince;
+    final historyMonths = tierConfig?.historyMonths;
 
     DateTime earliestAllowedDate;
-    if (row.tier == 'pro') {
+    if (historyMonths == null) {
       earliestAllowedDate = dataStart ?? DateTime.utc(2020);
     } else {
-      final limit = DateTime.utc(now.year, now.month - 1, 1);
+      final limit = DateTime.utc(now.year, now.month - historyMonths, 1);
       earliestAllowedDate =
           (dataStart != null && dataStart.isAfter(limit)) ? dataStart : limit;
     }
